@@ -1,0 +1,39 @@
+# dependencies
+/node_modules
+
+# build output
+/dist
+/.vite
+/.output
+/out
+
+# local env files
+.env
+.env.local
+.env.*.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor / OS
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Tailwind and postcss
+postcss.config.js
+tailwind.config.js
+
+# Optional: ignore lock files if each teammate uses their own manager
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
