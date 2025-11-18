@@ -1,0 +1,407 @@
+/* Manager Dashboard Styles */
+
+.manager-dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.manager-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.badge {
+  background: #ef4444;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+/* Overview Tab */
+.overview-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.overview-tab .stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.overview-tab .stat-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.overview-tab .stat-card.highlight {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.overview-tab .stat-card.success {
+  background: linear-gradient(135deg, #13b0b0 0%, #2dce89 100%);
+}
+
+.leaderboards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.leaderboard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.leaderboard h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.leaderboard-item .rank {
+  font-weight: 700;
+  color: #f59e0b;
+  font-size: 16px;
+  min-width: 30px;
+}
+
+.leaderboard-item .name {
+  flex: 1;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.leaderboard-item .stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.leaderboard-item .rating {
+  color: #f59e0b;
+}
+
+.leaderboard-item .count {
+  color: #6b7280;
+}
+
+/* Complaints Tab */
+.complaints-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.complaints-tab .section h3 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.complaints-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.complaint-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.complaint-card.resolved {
+  opacity: 0.7;
+}
+
+.complaint-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.complaint-id {
+  font-weight: 700;
+  color: #374151;
+}
+
+.complaint-type {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.complaint-date {
+  margin-left: auto;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.complaint-body {
+  margin-bottom: 16px;
+}
+
+.complaint-description {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+}
+
+.complaint-description strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #92400e;
+}
+
+.complaint-description p {
+  margin: 0;
+  color: #78350f;
+  line-height: 1.5;
+}
+
+.manager-notes {
+  margin-top: 12px;
+  padding: 12px;
+  background: #d1fae5;
+  border-left: 3px solid #10b981;
+  border-radius: 6px;
+}
+
+.manager-notes strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #065f46;
+}
+
+.manager-notes p {
+  margin: 0;
+  color: #047857;
+  line-height: 1.5;
+}
+
+.resolution-form {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.resolution-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.resolution-form textarea {
+  margin-top: 4px;
+}
+
+.resolution-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.status-badge.resolved_no_action {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.status-badge.resolved_warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.resolved_refund {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Delivery Bids Tab */
+.delivery-bids-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.order-bids h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.delivery-bids-tab .bids-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.delivery-bids-tab .bid-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delivery-bids-tab .bid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delivery-person {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 16px;
+}
+
+.reputation {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.bid-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+/* Orders Tab */
+.orders-tab {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.filter-bar label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.filter-bar .input {
+  max-width: 200px;
+}
+
+.orders-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.orders-tab .order-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.status-badge.created {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.in_kitchen {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.ready_for_delivery {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.status-badge.assigned {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.out_for_delivery {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.delivered {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .manager-dashboard {
+    padding: 0 12px;
+  }
+  
+  .leaderboards {
+    grid-template-columns: 1fr;
+  }
+  
+  .overview-tab .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .delivery-bids-tab .bids-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .orders-list {
+    grid-template-columns: 1fr;
+  }
+}

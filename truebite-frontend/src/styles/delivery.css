@@ -1,0 +1,210 @@
+/* Delivery Dashboard Styles */
+
+.delivery-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Available Orders Tab */
+.available-orders-tab {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.delivery-order-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-info {
+  flex: 1;
+}
+
+.order-price {
+  font-weight: 700;
+  color: #059669;
+  font-size: 18px;
+}
+
+.order-details {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.detail-row .label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.detail-row > span:last-child {
+  color: #1f2937;
+}
+
+/* Bid Form */
+.bid-form {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.bid-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.bid-form input {
+  margin-top: 4px;
+}
+
+.bid-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* My Bids Tab */
+.mybids-tab {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.bids-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bid-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.bid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.accepted {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.declined {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.bid-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Active Deliveries Tab */
+.active-deliveries-tab {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.deliveries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.active-delivery-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.delivery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-badge.assigned {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.out_for_delivery {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.delivery-details {
+  margin-bottom: 16px;
+}
+
+.delivery-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Analytics specific to delivery */
+.analytics-tab .stat-card:nth-child(odd) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.analytics-tab .stat-card:nth-child(even) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .delivery-order-card {
+    padding: 12px;
+  }
+  
+  .bid-actions {
+    flex-direction: column;
+  }
+  
+  .bid-actions .btn {
+    width: 100%;
+  }
+}
