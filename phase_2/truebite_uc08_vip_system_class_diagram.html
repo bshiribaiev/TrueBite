@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-08 VIP Discount / VIP Promotion Class Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #f093fb;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "👑";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #f093fb15 0%, #f5576c15 100%);
+            border-left: 4px solid #f093fb;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .vip-benefits {
+            background: linear-gradient(135deg, #ffd93d15 0%, #f39c1215 100%);
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .downgrade-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1350px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #f093fb;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .customer { background: #3498db; color: white; }
+        .vip { background: #f39c12; color: white; }
+        .manager { background: #2ecc71; color: white; }
+        .vip-card {
+            background: linear-gradient(135deg, #f39c12 0%, #ff9800 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .vip-card h3 {
+            margin-top: 0;
+        }
+        .benefits-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .benefits-list li {
+            padding: 5px 0;
+        }
+        .benefits-list li::before {
+            content: "✨ ";
+            color: #ffd93d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-08: VIP Discount / VIP Promotion</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-08 - VIP Status Management & Discount Application<br>
+            <strong>Actors:</strong> 
+            <span class="user-badge customer">Customer</span>
+            <span class="user-badge vip">VIP Customer</span>
+            <span class="user-badge manager">Manager</span><br>
+            <strong>Goal:</strong> Apply VIP discounts, manage automatic promotions/demotions<br>
+            <strong>Preconditions:</strong> User authenticated, order processing or background check running<br>
+            <strong>Postconditions:</strong> Discounts applied or user status updated
+        </div>
+
+        <div class="vip-card">
+            <h3>🌟 VIP Membership Benefits</h3>
+            <ul class="benefits-list">
+                <li>10% discount on all orders</li>
+                <li>Free delivery on orders over $30</li>
+                <li>Priority customer support</li>
+                <li>Early access to new dishes</li>
+                <li>Exclusive VIP-only menu items</li>
+                <li>Higher complaint priority</li>
+            </ul>
+        </div>
+
+        <h2>📊 Class/Collaboration Diagram - VIP System Architecture</h2>
+        <svg viewBox="0 0 1350 1100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1350" height="1100" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="675" y="30" text-anchor="middle" font-size="22" font-weight="bold" fill="#2c3e50">
+                VIP System - Class Collaboration Diagram
+            </text>
+            
+            <!-- Class: User (Abstract) -->
+            <g transform="translate(100, 80)">
+                <rect x="0" y="0" width="200" height="120" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="200" y2="30" stroke="#1976d2" stroke-width="1"/>
+                <text x="100" y="20" text-anchor="middle" font-size="14" font-weight="bold" font-style="italic">«abstract» User</text>
+                <text x="10" y="50" font-size="11">- userId: String</text>
+                <text x="10" y="65" font-size="11">- email: String</text>
+                <text x="10" y="80" font-size="11">- status: UserStatus</text>
+                <line x1="0" y1="90" x2="200" y2="90" stroke="#1976d2" stroke-width="1"/>
+                <text x="10" y="110" font-size="11">+ getRole(): String</text>
+            </g>
+            
+            <!-- Class: Customer -->
+            <g transform="translate(50, 250)">
+                <rect x="0" y="0" width="200" height="150" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="200" y2="30" stroke="#4caf50" stroke-width="1"/>
+                <text x="100" y="20" text-anchor="middle" font-size="14" font-weight="bold">Customer</text>
+                <text x="10" y="50" font-size="11">- totalSpent: Decimal</text>
+                <text x="10" y="65" font-size="11">- orderCount: Integer</text>
+                <text x="10" y="80" font-size="11">- joinedDate: Date</text>
+                <line x1="0" y1="90" x2="200" y2="90" stroke="#4caf50" stroke-width="1"/>
+                <text x="10" y="110" font-size="11">+ placeOrder()</text>
+                <text x="10" y="125" font-size="11">+ getDiscountRate(): 0</text>
+                <text x="10" y="140" font-size="11">+ checkVipEligibility(): Boolean</text>
+            </g>
+            
+            <!-- Class: VIPCustomer -->
+            <g transform="translate(50, 450)">
+                <rect x="0" y="0" width="200" height="180" fill="#fff3e0" stroke="#f39c12" stroke-width="3" rx="5"/>
+                <line x1="0" y1="30" x2="200" y2="30" stroke="#f39c12" stroke-width="1"/>
+                <text x="100" y="20" text-anchor="middle" font-size="14" font-weight="bold">VIPCustomer</text>
+                <text x="10" y="50" font-size="11">- vipSince: Date</text>
+                <text x="10" y="65" font-size="11">- vipTier: String</text>
+                <text x="10" y="80" font-size="11">- totalSavings: Decimal</text>
+                <text x="10" y="95" font-size="11">- exclusiveAccess: Boolean</text>
+                <line x1="0" y1="105" x2="200" y2="105" stroke="#f39c12" stroke-width="1"/>
+                <text x="10" y="125" font-size="11">+ getDiscountRate(): 0.1</text>
+                <text x="10" y="140" font-size="11">+ getFreeDelivery(): Boolean</text>
+                <text x="10" y="155" font-size="11">+ accessVIPMenu(): List</text>
+                <text x="10" y="170" font-size="11">+ getPriority(): HIGH</text>
+            </g>
+            
+            <!-- Inheritance arrows -->
+            <line x1="150" y1="250" x2="200" y2="200" stroke="#333" stroke-width="2" marker-end="url(#triangle)"/>
+            <line x1="150" y1="450" x2="150" y2="400" stroke="#333" stroke-width="2" marker-end="url(#triangle)"/>
+            
+            <!-- Class: OrderService -->
+            <g transform="translate(350, 100)">
+                <rect x="0" y="0" width="220" height="180" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="220" y2="30" stroke="#9c27b0" stroke-width="1"/>
+                <text x="110" y="20" text-anchor="middle" font-size="14" font-weight="bold">OrderService</text>
+                <text x="10" y="50" font-size="11">- financeService: FinanceService</text>
+                <text x="10" y="65" font-size="11">- userRepository: UserRepository</text>
+                <line x1="0" y1="75" x2="220" y2="75" stroke="#9c27b0" stroke-width="1"/>
+                <text x="10" y="95" font-size="11">+ createOrder(userId, items)</text>
+                <text x="10" y="110" font-size="11">+ checkUserStatus(userId)</text>
+                <text x="10" y="125" font-size="11">+ applyVIPDiscount(order)</text>
+                <text x="10" y="140" font-size="11">+ calculateTotal(order)</text>
+                <text x="10" y="155" font-size="11">+ processPayment(order)</text>
+                <text x="10" y="170" font-size="11">+ notifyVIPBenefits()</text>
+            </g>
+            
+            <!-- Class: FinanceService -->
+            <g transform="translate(620, 100)">
+                <rect x="0" y="0" width="230" height="180" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="230" y2="30" stroke="#009688" stroke-width="1"/>
+                <text x="115" y="20" text-anchor="middle" font-size="14" font-weight="bold">FinanceService</text>
+                <text x="10" y="50" font-size="11">- discountRates: Map</text>
+                <text x="10" y="65" font-size="11">- vipThresholds: Config</text>
+                <line x1="0" y1="75" x2="230" y2="75" stroke="#009688" stroke-width="1"/>
+                <text x="10" y="95" font-size="11">+ applyDiscount(amount, rate)</text>
+                <text x="10" y="110" font-size="11">+ applyVIPDiscount(amount)</text>
+                <text x="10" y="125" font-size="11">+ calculateDeliveryFee(order, isVIP)</text>
+                <text x="10" y="140" font-size="11">+ trackSavings(userId, saved)</text>
+                <text x="10" y="155" font-size="11">+ getTotalSpent(userId)</text>
+                <text x="10" y="170" font-size="11">+ processRefund(order)</text>
+            </g>
+            
+            <!-- Class: HRService -->
+            <g transform="translate(900, 100)">
+                <rect x="0" y="0" width="250" height="200" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="250" y2="30" stroke="#f44336" stroke-width="1"/>
+                <text x="125" y="20" text-anchor="middle" font-size="14" font-weight="bold">HRService</text>
+                <text x="10" y="50" font-size="11">- promotionRules: List&lt;Rule&gt;</text>
+                <text x="10" y="65" font-size="11">- demotionRules: List&lt;Rule&gt;</text>
+                <text x="10" y="80" font-size="11">- managerOverrides: Map</text>
+                <line x1="0" y1="90" x2="250" y2="90" stroke="#f44336" stroke-width="1"/>
+                <text x="10" y="110" font-size="11">+ evaluateVIPPromotion(userId)</text>
+                <text x="10" y="125" font-size="11">+ promoteToVIP(userId)</text>
+                <text x="10" y="140" font-size="11">+ demoteFromVIP(userId)</text>
+                <text x="10" y="155" font-size="11">+ checkPromotionCriteria(user)</text>
+                <text x="10" y="170" font-size="11">+ checkDemotionCriteria(user)</text>
+                <text x="10" y="185" font-size="11">+ managerOverride(userId, action)</text>
+            </g>
+            
+            <!-- Class: ReputationService -->
+            <g transform="translate(350, 330)">
+                <rect x="0" y="0" width="250" height="180" fill="#fce4ec" stroke="#e91e63" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="250" y2="30" stroke="#e91e63" stroke-width="1"/>
+                <text x="125" y="20" text-anchor="middle" font-size="14" font-weight="bold">ReputationService</text>
+                <text x="10" y="50" font-size="11">- reputationRepository: Repository</text>
+                <text x="10" y="65" font-size="11">- warningThresholds: Config</text>
+                <line x1="0" y1="75" x2="250" y2="75" stroke="#e91e63" stroke-width="1"/>
+                <text x="10" y="95" font-size="11">+ getReputationScore(userId)</text>
+                <text x="10" y="110" font-size="11">+ getComplaintCount(userId)</text>
+                <text x="10" y="125" font-size="11">+ getWarningCount(userId)</text>
+                <text x="10" y="140" font-size="11">+ checkVIPEligibility(userId)</text>
+                <text x="10" y="155" font-size="11">+ recommendDemotion(userId)</text>
+                <text x="10" y="170" font-size="11">+ updateReputation(userId, delta)</text>
+            </g>
+            
+            <!-- Class: VIPPromotionJob (Background) -->
+            <g transform="translate(650, 330)">
+                <rect x="0" y="0" width="230" height="150" fill="#e8eaf6" stroke="#5e35b1" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="230" y2="30" stroke="#5e35b1" stroke-width="1"/>
+                <text x="115" y="20" text-anchor="middle" font-size="14" font-weight="bold">VIPPromotionJob</text>
+                <text x="10" y="50" font-size="11">- schedule: CronExpression</text>
+                <text x="10" y="65" font-size="11">- lastRun: DateTime</text>
+                <line x1="0" y1="75" x2="230" y2="75" stroke="#5e35b1" stroke-width="1"/>
+                <text x="10" y="95" font-size="11">+ runDaily()</text>
+                <text x="10" y="110" font-size="11">+ evaluateAllCustomers()</text>
+                <text x="10" y="125" font-size="11">+ processPromotions()</text>
+                <text x="10" y="140" font-size="11">+ processDemotions()</text>
+            </g>
+            
+            <!-- Class: Manager -->
+            <g transform="translate(930, 330)">
+                <rect x="0" y="0" width="200" height="130" fill="#e8f5e9" stroke="#2ecc71" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="200" y2="30" stroke="#2ecc71" stroke-width="1"/>
+                <text x="100" y="20" text-anchor="middle" font-size="14" font-weight="bold">Manager</text>
+                <text x="10" y="50" font-size="11">- authorityLevel: String</text>
+                <line x1="0" y1="60" x2="200" y2="60" stroke="#2ecc71" stroke-width="1"/>
+                <text x="10" y="80" font-size="11">+ overridePromotion(userId)</text>
+                <text x="10" y="95" font-size="11">+ overrideDemotion(userId)</text>
+                <text x="10" y="110" font-size="11">+ grantVIPTrial(userId)</text>
+                <text x="10" y="125" font-size="11">+ viewVIPMetrics()</text>
+            </g>
+            
+            <!-- Data Transfer Objects -->
+            <g transform="translate(350, 550)">
+                <rect x="0" y="0" width="200" height="120" fill="#fff9c4" stroke="#f9a825" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="200" y2="30" stroke="#f9a825" stroke-width="1"/>
+                <text x="100" y="20" text-anchor="middle" font-size="14" font-weight="bold">VIPEligibilityDTO</text>
+                <text x="10" y="50" font-size="11">+ userId: String</text>
+                <text x="10" y="65" font-size="11">+ totalSpent: Decimal</text>
+                <text x="10" y="80" font-size="11">+ orderCount: Integer</text>
+                <text x="10" y="95" font-size="11">+ reputationScore: Float</text>
+                <text x="10" y="110" font-size="11">+ isEligible: Boolean</text>
+            </g>
+            
+            <g transform="translate(600, 550)">
+                <rect x="0" y="0" width="200" height="120" fill="#fff9c4" stroke="#f9a825" stroke-width="2" rx="5"/>
+                <line x1="0" y1="30" x2="200" y2="30" stroke="#f9a825" stroke-width="1"/>
+                <text x="100" y="20" text-anchor="middle" font-size="14" font-weight="bold">DiscountDTO</text>
+                <text x="10" y="50" font-size="11">+ originalAmount: Decimal</text>
+                <text x="10" y="65" font-size="11">+ discountRate: Float</text>
+                <text x="10" y="80" font-size="11">+ discountAmount: Decimal</text>
+                <text x="10" y="95" font-size="11">+ finalAmount: Decimal</text>
+                <text x="10" y="110" font-size="11">+ reason: String</text>
+            </g>
+            
+            <!-- Collaboration Messages/Relationships -->
+            
+            <!-- OrderService -> Customer/VIPCustomer -->
+            <line x1="350" y1="180" x2="250" y2="325" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="280" y="250" font-size="10" transform="rotate(-35 280 250)">1: checkStatus()</text>
+            
+            <!-- OrderService -> FinanceService -->
+            <line x1="570" y1="180" x2="620" y2="180" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="595" y="175" text-anchor="middle" font-size="10">2: applyDiscount()</text>
+            
+            <!-- HRService -> Customer promotion -->
+            <line x1="900" y1="250" x2="250" y2="350" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-green)"/>
+            <text x="575" y="290" text-anchor="middle" font-size="10" fill="#4caf50">promoteToVIP()</text>
+            
+            <!-- HRService -> VIPCustomer demotion -->
+            <line x1="900" y1="280" x2="250" y2="530" stroke="#f44336" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-red)"/>
+            <text x="575" y="400" text-anchor="middle" font-size="10" fill="#f44336">demoteFromVIP()</text>
+            
+            <!-- ReputationService -> HRService -->
+            <line x1="600" y1="420" x2="900" y2="280" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="750" y="340" text-anchor="middle" font-size="10">recommendAction()</text>
+            
+            <!-- VIPPromotionJob -> HRService -->
+            <line x1="765" y1="330" x2="900" y2="280" stroke="#5e35b1" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="832" y="300" text-anchor="middle" font-size="10">3: evaluateUsers()</text>
+            
+            <!-- Manager -> HRService -->
+            <line x1="1030" y1="330" x2="1025" y2="300" stroke="#2ecc71" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="1040" y="315" font-size="10">override()</text>
+            
+            <!-- Annotations -->
+            <rect x="50" y="700" width="300" height="100" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="60" y="720" font-size="11" font-weight="bold">Promotion Criteria:</text>
+            <text x="60" y="740" font-size="10">• Total spent ≥ $100 OR</text>
+            <text x="60" y="755" font-size="10">• Completed orders ≥ 3 AND</text>
+            <text x="60" y="770" font-size="10">• Reputation score ≥ 0.7 AND</text>
+            <text x="60" y="785" font-size="10">• No recent warnings</text>
+            
+            <rect x="400" y="700" width="300" height="100" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="410" y="720" font-size="11" font-weight="bold">Demotion Criteria:</text>
+            <text x="410" y="740" font-size="10">• Warnings count ≥ 3 OR</text>
+            <text x="410" y="755" font-size="10">• Reputation score &lt; 0.3 OR</text>
+            <text x="410" y="770" font-size="10">• Complaint rate &gt; 50% OR</text>
+            <text x="410" y="785" font-size="10">• Manager decision</text>
+            
+            <rect x="750" y="700" width="300" height="100" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="760" y="720" font-size="11" font-weight="bold">VIP Benefits Applied:</text>
+            <text x="760" y="740" font-size="10">• 10% discount on all orders</text>
+            <text x="760" y="755" font-size="10">• Free delivery (orders &gt; $30)</text>
+            <text x="760" y="770" font-size="10">• Priority support queue</text>
+            <text x="760" y="785" font-size="10">• Exclusive menu access</text>
+            
+            <!-- Sequence Numbers for Collaboration -->
+            <g transform="translate(100, 850)">
+                <rect x="0" y="0" width="1150" height="200" fill="#f5f5f5" stroke="#999" rx="5"/>
+                <text x="20" y="30" font-size="14" font-weight="bold">Collaboration Sequence:</text>
+                
+                <text x="20" y="55" font-size="11" font-weight="bold">Order Placement (VIP Discount):</text>
+                <text x="30" y="75" font-size="10">1. Customer/VIP places order → OrderService.createOrder()</text>
+                <text x="30" y="90" font-size="10">2. OrderService checks user status (Customer vs VIPCustomer)</text>
+                <text x="30" y="105" font-size="10">3. If VIP: FinanceService.applyVIPDiscount(10%)</text>
+                <text x="30" y="120" font-size="10">4. Calculate final total with discount</text>
+                <text x="30" y="135" font-size="10">5. Process payment and record savings</text>
+                
+                <text x="20" y="160" font-size="11" font-weight="bold">Background Promotion Check:</text>
+                <text x="30" y="180" font-size="10">1. VIPPromotionJob runs daily at 2 AM</text>
+                <text x="30" y="195" font-size="10">2. Queries all Customers with totalSpent ≥ $100 or orders ≥ 3</text>
+                
+                <text x="600" y="55" font-size="11" font-weight="bold">Promotion Flow:</text>
+                <text x="610" y="75" font-size="10">3. ReputationService checks user reputation and warnings</text>
+                <text x="610" y="90" font-size="10">4. If eligible: HRService.promoteToVIP()</text>
+                <text x="610" y="105" font-size="10">5. Update User role from Customer to VIPCustomer</text>
+                <text x="610" y="120" font-size="10">6. Send congratulations email with benefits</text>
+                
+                <text x="600" y="145" font-size="11" font-weight="bold">Demotion Flow:</text>
+                <text x="610" y="165" font-size="10">1. ReputationService detects high complaints/warnings</text>
+                <text x="610" y="180" font-size="10">2. HRService.demoteFromVIP() if criteria met</text>
+                <text x="610" y="195" font-size="10">3. Notify user of status change</text>
+            </g>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+                <marker id="triangle" markerWidth="15" markerHeight="15" refX="15" refY="7.5" orient="auto">
+                    <polygon points="0 0, 15 7.5, 0 15" fill="white" stroke="#333" stroke-width="2"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>💻 Detailed Implementation</h2>
+        <div class="pseudocode">
+<span class="comment">// UC-08: VIP Discount and Promotion System</span>
+
+<span class="keyword">CLASS</span> <span class="function">Customer</span> <span class="keyword">EXTENDS</span> User:
+    <span class="comment">// Attributes</span>
+    totalSpent: Decimal = 0.00
+    orderCount: Integer = 0
+    joinedDate: Date
+    lastOrderDate: Date
+    
+    <span class="keyword">FUNCTION</span> getDiscountRate():
+        <span class="keyword">RETURN</span> 0.0  <span class="comment">// No discount for regular customers</span>
+    
+    <span class="keyword">FUNCTION</span> checkVipEligibility():
+        <span class="keyword">RETURN</span> totalSpent >= VIP_SPEND_THRESHOLD OR 
+               orderCount >= VIP_ORDER_THRESHOLD
+
+<span class="keyword">CLASS</span> <span class="function">VIPCustomer</span> <span class="keyword">EXTENDS</span> Customer:
+    <span class="comment">// Additional VIP attributes</span>
+    vipSince: Date
+    vipTier: String = <span class="string">"GOLD"</span>  <span class="comment">// GOLD, PLATINUM, DIAMOND</span>
+    totalSavings: Decimal = 0.00
+    exclusiveAccess: Boolean = true
+    
+    <span class="keyword">FUNCTION</span> getDiscountRate():
+        <span class="keyword">SWITCH</span> vipTier:
+            <span class="keyword">CASE</span> <span class="string">"GOLD"</span>: <span class="keyword">RETURN</span> 0.10
+            <span class="keyword">CASE</span> <span class="string">"PLATINUM"</span>: <span class="keyword">RETURN</span> 0.15
+            <span class="keyword">CASE</span> <span class="string">"DIAMOND"</span>: <span class="keyword">RETURN</span> 0.20
+            <span class="keyword">DEFAULT</span>: <span class="keyword">RETURN</span> 0.10
+    
+    <span class="keyword">FUNCTION</span> getFreeDelivery():
+        <span class="keyword">RETURN</span> true  <span class="comment">// All VIPs get free delivery</span>
+    
+    <span class="keyword">FUNCTION</span> getPriority():
+        <span class="keyword">RETURN</span> <span class="string">"HIGH"</span>
+
+<span class="keyword">CLASS</span> <span class="function">OrderService</span>:
+    
+    <span class="keyword">FUNCTION</span> createOrder(userId: String, cartItems: List):
+        <span class="comment">// Step 1: Check user status</span>
+        user = UserRepository.findById(userId)
+        
+        <span class="comment">// Step 2: Calculate base total</span>
+        subtotal = calculateSubtotal(cartItems)
+        deliveryFee = STANDARD_DELIVERY_FEE
+        
+        <span class="comment">// Step 3: Apply VIP benefits if applicable</span>
+        discountAmount = 0
+        finalDeliveryFee = deliveryFee
+        
+        <span class="keyword">IF</span> user <span class="keyword">INSTANCEOF</span> VIPCustomer:
+            vipCustomer = (VIPCustomer) user
+            
+            <span class="comment">// Apply percentage discount</span>
+            discountRate = vipCustomer.getDiscountRate()
+            discountAmount = subtotal * discountRate
+            
+            <span class="comment">// Free delivery for VIP</span>
+            <span class="keyword">IF</span> vipCustomer.getFreeDelivery() OR subtotal >= 30:
+                finalDeliveryFee = 0
+            
+            <span class="comment">// Track savings</span>
+            vipCustomer.totalSavings += discountAmount + (deliveryFee - finalDeliveryFee)
+            
+            <span class="comment">// Log VIP benefit usage</span>
+            logVIPBenefitUsage(userId, discountAmount, <span class="string">"ORDER_DISCOUNT"</span>)
+            
+            <span class="comment">// Show VIP message</span>
+            notifyVIPBenefits(vipCustomer, discountAmount)
+        
+        <span class="comment">// Step 4: Calculate final total</span>
+        finalTotal = subtotal - discountAmount + finalDeliveryFee
+        
+        <span class="comment">// Step 5: Process order</span>
+        order = new Order()
+        order.userId = userId
+        order.subtotal = subtotal
+        order.discountAmount = discountAmount
+        order.deliveryFee = finalDeliveryFee
+        order.total = finalTotal
+        order.isVIPOrder = user <span class="keyword">INSTANCEOF</span> VIPCustomer
+        
+        <span class="comment">// Update customer spending</span>
+        user.totalSpent += finalTotal
+        user.orderCount += 1
+        UserRepository.update(user)
+        
+        <span class="keyword">RETURN</span> order
+
+<span class="keyword">CLASS</span> <span class="function">HRService</span>:
+    
+    <span class="keyword">FUNCTION</span> evaluateVIPPromotion(userId: String):
+        user = UserRepository.findById(userId)
+        
+        <span class="comment">// Skip if already VIP</span>
+        <span class="keyword">IF</span> user <span class="keyword">INSTANCEOF</span> VIPCustomer:
+            <span class="keyword">RETURN</span> Result(status: <span class="string">"ALREADY_VIP"</span>)
+        
+        customer = (Customer) user
+        
+        <span class="comment">// Check promotion criteria</span>
+        eligibility = new VIPEligibilityDTO()
+        eligibility.userId = userId
+        eligibility.totalSpent = customer.totalSpent
+        eligibility.orderCount = customer.orderCount
+        eligibility.reputationScore = ReputationService.getScore(userId)
+        
+        <span class="comment">// Criteria checks</span>
+        spendCriteria = customer.totalSpent >= 100.00
+        orderCriteria = customer.orderCount >= 3
+        reputationCriteria = eligibility.reputationScore >= 0.7
+        noWarnings = ReputationService.getWarningCount(userId) == 0
+        
+        eligibility.isEligible = (spendCriteria OR orderCriteria) 
+                                 AND reputationCriteria 
+                                 AND noWarnings
+        
+        <span class="keyword">IF</span> eligibility.isEligible:
+            promoteToVIP(userId)
+            <span class="keyword">RETURN</span> Result(status: <span class="string">"PROMOTED"</span>, eligibility: eligibility)
+        
+        <span class="keyword">RETURN</span> Result(status: <span class="string">"NOT_ELIGIBLE"</span>, eligibility: eligibility)
+    
+    <span class="keyword">FUNCTION</span> promoteToVIP(userId: String):
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Get current customer</span>
+            customer = UserRepository.findById(userId)
+            
+            <span class="comment">// Create VIP customer with same base data</span>
+            vipCustomer = new VIPCustomer()
+            vipCustomer.copyFrom(customer)
+            vipCustomer.vipSince = now()
+            vipCustomer.vipTier = <span class="string">"GOLD"</span>
+            vipCustomer.totalSavings = 0
+            
+            <span class="comment">// Update user record</span>
+            UserRepository.updateRole(userId, <span class="string">"VIP"</span>)
+            UserRepository.save(vipCustomer)
+            
+            <span class="comment">// Send notification</span>
+            NotificationService.sendVIPWelcome(userId, vipCustomer.vipTier)
+            
+            <span class="comment">// Log promotion</span>
+            AuditLog.record(<span class="string">"VIP_PROMOTION"</span>, userId, <span class="string">"Automatic promotion"</span>)
+            
+        <span class="keyword">COMMIT</span>
+    
+    <span class="keyword">FUNCTION</span> demoteFromVIP(userId: String, reason: String):
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            vipCustomer = UserRepository.findById(userId)
+            
+            <span class="keyword">IF NOT</span> vipCustomer <span class="keyword">INSTANCEOF</span> VIPCustomer:
+                <span class="keyword">RETURN</span> Result(error: <span class="string">"Not a VIP customer"</span>)
+            
+            <span class="comment">// Convert back to regular customer</span>
+            customer = new Customer()
+            customer.copyFrom(vipCustomer)
+            
+            <span class="comment">// Keep historical data</span>
+            customer.metadata[<span class="string">"wasVIP"</span>] = true
+            customer.metadata[<span class="string">"vipFrom"</span>] = vipCustomer.vipSince
+            customer.metadata[<span class="string">"vipUntil"</span>] = now()
+            customer.metadata[<span class="string">"demotionReason"</span>] = reason
+            
+            <span class="comment">// Update user record</span>
+            UserRepository.updateRole(userId, <span class="string">"CUSTOMER"</span>)
+            UserRepository.save(customer)
+            
+            <span class="comment">// Send notification</span>
+            NotificationService.sendVIPDemotion(userId, reason)
+            
+            <span class="comment">// Log demotion</span>
+            AuditLog.record(<span class="string">"VIP_DEMOTION"</span>, userId, reason)
+            
+        <span class="keyword">COMMIT</span>
+    
+    <span class="keyword">FUNCTION</span> checkDemotionCriteria(userId: String):
+        vipCustomer = UserRepository.findById(userId)
+        
+        <span class="keyword">IF NOT</span> vipCustomer <span class="keyword">INSTANCEOF</span> VIPCustomer:
+            <span class="keyword">RETURN</span> false
+        
+        <span class="comment">// Check demotion criteria</span>
+        warnings = ReputationService.getWarningCount(userId)
+        reputation = ReputationService.getScore(userId)
+        complaintRate = ReputationService.getComplaintRate(userId)
+        
+        shouldDemote = warnings >= 3 OR 
+                      reputation < 0.3 OR 
+                      complaintRate > 0.5
+        
+        <span class="keyword">IF</span> shouldDemote:
+            reason = determineDemotionReason(warnings, reputation, complaintRate)
+            demoteFromVIP(userId, reason)
+            <span class="keyword">RETURN</span> true
+        
+        <span class="keyword">RETURN</span> false
+
+<span class="comment">// Background Job for automatic promotions/demotions</span>
+<span class="keyword">CLASS</span> <span class="function">VIPPromotionJob</span>:
+    schedule = <span class="string">"0 2 * * *"</span>  <span class="comment">// Run at 2 AM daily</span>
+    
+    <span class="keyword">FUNCTION</span> runDaily():
+        log.info(<span class="string">"Starting VIP evaluation job"</span>)
+        
+        <span class="comment">// Process promotions</span>
+        eligibleCustomers = UserRepository.findCustomersEligibleForVIP()
+        promotedCount = 0
+        
+        <span class="keyword">FOR EACH</span> customer <span class="keyword">IN</span> eligibleCustomers:
+            result = HRService.evaluateVIPPromotion(customer.userId)
+            <span class="keyword">IF</span> result.status == <span class="string">"PROMOTED"</span>:
+                promotedCount++
+        
+        <span class="comment">// Process demotions</span>
+        vipCustomers = UserRepository.findAllVIPCustomers()
+        demotedCount = 0
+        
+        <span class="keyword">FOR EACH</span> vip <span class="keyword">IN</span> vipCustomers:
+            wasDemoted = HRService.checkDemotionCriteria(vip.userId)
+            <span class="keyword">IF</span> wasDemoted:
+                demotedCount++
+        
+        log.info(<span class="string">"VIP job completed. Promoted: "</span> + promotedCount + 
+                <span class="string">", Demoted: "</span> + demotedCount)
+
+<span class="comment">// Manager override capabilities</span>
+<span class="keyword">CLASS</span> <span class="function">Manager</span>:
+    
+    <span class="keyword">FUNCTION</span> overridePromotion(userId: String, reason: String):
+        <span class="keyword">IF NOT</span> hasAuthority(<span class="string">"VIP_OVERRIDE"</span>):
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Insufficient authority"</span>)
+        
+        HRService.promoteToVIP(userId)
+        AuditLog.record(<span class="string">"MANAGER_VIP_OVERRIDE"</span>, userId, 
+                       <span class="string">"Manual promotion by "</span> + this.managerId + 
+                       <span class="string">": "</span> + reason)
+        
+        <span class="keyword">RETURN</span> Result(success: true)
+    
+    <span class="keyword">FUNCTION</span> grantVIPTrial(userId: String, days: Integer):
+        <span class="keyword">IF NOT</span> hasAuthority(<span class="string">"VIP_TRIAL"</span>):
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Insufficient authority"</span>)
+        
+        customer = UserRepository.findById(userId)
+        
+        <span class="comment">// Create temporary VIP status</span>
+        tempVIP = new VIPCustomer()
+        tempVIP.copyFrom(customer)
+        tempVIP.vipSince = now()
+        tempVIP.vipTier = <span class="string">"TRIAL"</span>
+        tempVIP.metadata[<span class="string">"trialEnds"</span>] = now() + days.days
+        
+        UserRepository.save(tempVIP)
+        
+        <span class="comment">// Schedule automatic reversion</span>
+        SchedulerService.schedule(
+            taskId: <span class="string">"TRIAL_END_"</span> + userId,
+            runAt: now() + days.days,
+            action: () -> HRService.demoteFromVIP(userId, <span class="string">"Trial ended"</span>)
+        )
+        
+        <span class="keyword">RETURN</span> Result(success: true, trialDays: days)
+</div>
+
+        <h2>🏆 VIP Tiers & Benefits</h2>
+        <table>
+            <tr>
+                <th>Tier</th>
+                <th>Requirements</th>
+                <th>Discount</th>
+                <th>Delivery</th>
+                <th>Other Benefits</th>
+            </tr>
+            <tr>
+                <td><strong>Gold</strong></td>
+                <td>$100 spent OR 3 orders</td>
+                <td>10%</td>
+                <td>Free on $30+</td>
+                <td>Priority support</td>
+            </tr>
+            <tr>
+                <td><strong>Platinum</strong></td>
+                <td>$500 spent AND 10 orders</td>
+                <td>15%</td>
+                <td>Always free</td>
+                <td>Exclusive menu, Birthday bonus</td>
+            </tr>
+            <tr>
+                <td><strong>Diamond</strong></td>
+                <td>$1000 spent AND 25 orders</td>
+                <td>20%</td>
+                <td>Express free</td>
+                <td>Personal chef consult, Event catering discount</td>
+            </tr>
+        </table>
+
+        <h2>🔄 State Transitions</h2>
+        <div class="normal-flow">
+            <strong>Promotion Flow:</strong>
+            <ol>
+                <li>Customer accumulates spending/orders</li>
+                <li>Daily job evaluates eligibility at 2 AM</li>
+                <li>System checks: spending ≥ $100 OR orders ≥ 3</li>
+                <li>Reputation check: score ≥ 0.7, no warnings</li>
+                <li>If eligible: Customer → VIPCustomer transformation</li>
+                <li>Welcome email sent with benefits guide</li>
+                <li>VIP badge appears on profile</li>
+                <li>Discounts automatically apply on next order</li>
+            </ol>
+        </div>
+
+        <div class="downgrade-flow">
+            <strong>Demotion Flow:</strong>
+            <ol>
+                <li>VIP customer accumulates warnings/complaints</li>
+                <li>Daily job detects: warnings ≥ 3 OR reputation < 0.3</li>
+                <li>System initiates demotion process</li>
+                <li>VIPCustomer → Customer transformation</li>
+                <li>Benefits immediately revoked</li>
+                <li>Notification sent explaining reason</li>
+                <li>30-day cooldown before re-eligibility</li>
+            </ol>
+        </div>
+
+        <h2>🧪 Test Scenarios</h2>
+        <div class="normal-flow">
+            <strong>Test 1: Automatic Promotion</strong><br>
+            • Customer places 3rd order, total spent: $105<br>
+            • Daily job runs at 2 AM<br>
+            • Expected: Promoted to VIP Gold<br>
+            • Next order: 10% discount applied automatically
+        </div>
+
+        <div class="vip-benefits">
+            <strong>Test 2: VIP Order Processing</strong><br>
+            • VIP places $50 order<br>
+            • Expected: $5 discount (10%)<br>
+            • Free delivery (normally $5)<br>
+            • Total savings: $10<br>
+            • Priority queue for preparation
+        </div>
+
+        <div class="downgrade-flow">
+            <strong>Test 3: Demotion for Violations</strong><br>
+            • VIP receives 3rd warning<br>
+            • Daily job detects violation<br>
+            • Expected: Demoted to regular Customer<br>
+            • Benefits revoked immediately<br>
+            • Must wait 30 days to re-qualify
+        </div>
+    </div>
+</body>
+</html>

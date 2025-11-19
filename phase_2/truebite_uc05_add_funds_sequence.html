@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-05 Add Funds / Check Balance Sequence Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "💰";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1250px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .customer { background: #3498db; color: white; }
+        .vip { background: #f39c12; color: white; }
+        .wallet-display {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .transaction-list {
+            list-style: none;
+            padding: 0;
+        }
+        .transaction-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f5f5f5;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .transaction-list .credit {
+            color: #4caf50;
+        }
+        .transaction-list .debit {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-05: Add Funds / Check Balance</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-05 - Wallet Management & Fund Addition<br>
+            <strong>Actors:</strong> 
+            <span class="user-badge customer">Customer</span>
+            <span class="user-badge vip">VIP Customer</span><br>
+            <strong>Goal:</strong> View wallet balance, transaction history, and add funds to account<br>
+            <strong>Preconditions:</strong> User logged in with initialized wallet<br>
+            <strong>Postconditions:</strong> Balance updated (if funds added), transaction recorded
+        </div>
+
+        <h2>💳 Wallet Interface Preview</h2>
+        <div class="wallet-display">
+            Current Balance: $125.50
+        </div>
+        <ul class="transaction-list">
+            <li>
+                <span>Order #1234 - Lunch Special</span>
+                <span class="debit">-$15.99</span>
+            </li>
+            <li>
+                <span>Funds Added</span>
+                <span class="credit">+$50.00</span>
+            </li>
+            <li>
+                <span>Order #1233 - Dinner (VIP Discount)</span>
+                <span class="debit">-$27.00</span>
+            </li>
+        </ul>
+
+        <h2>📊 Main Sequence Diagram - Check Balance & Add Funds Flow</h2>
+        <svg viewBox="0 0 1250 1200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1250" height="1200" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="625" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">
+                Wallet Management - Complete Flow
+            </text>
+            
+            <!-- Actors and Objects -->
+            <!-- User/UI -->
+            <rect x="50" y="60" width="100" height="40" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+            <text x="100" y="85" text-anchor="middle" font-weight="bold">User/UI</text>
+            <line x1="100" y1="100" x2="100" y2="1150" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- FinanceService -->
+            <rect x="220" y="60" width="130" height="40" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+            <text x="285" y="85" text-anchor="middle" font-weight="bold">FinanceService</text>
+            <line x1="285" y1="100" x2="285" y2="1150" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- WalletRepository -->
+            <rect x="420" y="60" width="140" height="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+            <text x="490" y="85" text-anchor="middle" font-weight="bold">WalletRepository</text>
+            <line x1="490" y1="100" x2="490" y2="1150" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- PaymentGateway -->
+            <rect x="630" y="60" width="140" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+            <text x="700" y="85" text-anchor="middle" font-weight="bold">PaymentGateway</text>
+            <line x1="700" y1="100" x2="700" y2="1150" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- TransactionRepository -->
+            <rect x="840" y="60" width="160" height="40" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+            <text x="920" y="85" text-anchor="middle" font-weight="bold">TransactionRepository</text>
+            <line x1="920" y1="100" x2="920" y2="1150" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Database -->
+            <rect x="1070" y="60" width="100" height="40" fill="#fce4ec" stroke="#e91e63" stroke-width="2" rx="5"/>
+            <text x="1120" y="85" text-anchor="middle" font-weight="bold">Database</text>
+            <line x1="1120" y1="100" x2="1120" y2="1150" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- PART 1: Check Balance Flow -->
+            <rect x="30" y="120" width="1190" height="320" fill="none" stroke="#1976d2" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="140" font-size="14" fill="#1976d2" font-weight="bold">FLOW 1: Check Balance & Transaction History</text>
+            
+            <!-- 1. Open Wallet Page -->
+            <line x1="100" y1="160" x2="285" y2="160" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="192" y="155" text-anchor="middle" font-size="12">1: openWalletPage(userId)</text>
+            
+            <!-- 2. Get Balance -->
+            <line x1="285" y1="190" x2="490" y2="190" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="387" y="185" text-anchor="middle" font-size="12">2: getBalance(userId)</text>
+            
+            <!-- 3. Query Database -->
+            <line x1="490" y1="210" x2="1120" y2="210" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="805" y="205" text-anchor="middle" font-size="11">3: SELECT balance FROM wallets</text>
+            <text x="805" y="220" text-anchor="middle" font-size="11">WHERE user_id = ?</text>
+            
+            <!-- 4. Return Balance -->
+            <line x1="1120" y1="240" x2="490" y2="240" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="805" y="235" text-anchor="middle" font-size="12">4: balance: $125.50</text>
+            
+            <!-- 5. Get Transaction History -->
+            <line x1="285" y1="270" x2="920" y2="270" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="602" y="265" text-anchor="middle" font-size="12">5: getTransactionHistory(userId, limit=10)</text>
+            
+            <!-- 6. Query Transactions -->
+            <line x1="920" y1="290" x2="1120" y2="290" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="1020" y="285" text-anchor="middle" font-size="11">6: SELECT * FROM transactions</text>
+            <text x="1020" y="300" text-anchor="middle" font-size="11">WHERE wallet_id = ? ORDER BY created_at DESC</text>
+            
+            <!-- 7. Return Transactions -->
+            <line x1="1120" y1="320" x2="920" y2="320" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="1020" y="315" text-anchor="middle" font-size="12">7: List&lt;Transaction&gt;</text>
+            
+            <!-- 8. Format Data -->
+            <rect x="290" y="340" width="120" height="30" fill="#e8f5e9" stroke="#333" rx="3"/>
+            <text x="350" y="358" text-anchor="middle" font-size="11">formatWalletData()</text>
+            
+            <!-- 9. Return to UI -->
+            <line x1="285" y1="390" x2="100" y2="390" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="192" y="385" text-anchor="middle" font-size="12">9: WalletDTO {balance, transactions}</text>
+            
+            <!-- 10. Display Wallet -->
+            <rect x="105" y="400" width="100" height="25" fill="#e3f2fd" stroke="#333" rx="3"/>
+            <text x="155" y="417" text-anchor="middle" font-size="11">displayWallet()</text>
+            
+            <!-- PART 2: Add Funds Flow -->
+            <rect x="30" y="450" width="1190" height="520" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="470" font-size="14" fill="#4caf50" font-weight="bold">FLOW 2: Add Funds (Success Path)</text>
+            
+            <!-- 11. Click Add Funds -->
+            <line x1="100" y1="490" x2="100" y2="510" stroke="#333" stroke-width="2"/>
+            <rect x="105" y="500" width="100" height="20" fill="#fff9c4" stroke="#333" rx="3"/>
+            <text x="155" y="513" text-anchor="middle" font-size="11">clickAddFunds()</text>
+            
+            <!-- 12. Enter Amount -->
+            <line x1="100" y1="540" x2="285" y2="540" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="192" y="535" text-anchor="middle" font-size="12">12: addFunds(userId, amount=$50,</text>
+            <text x="192" y="550" text-anchor="middle" font-size="12">paymentMethod="card")</text>
+            
+            <!-- 13. Validate Amount -->
+            <rect x="290" y="570" width="100" height="30" fill="#e8f5e9" stroke="#333" rx="3"/>
+            <text x="340" y="585" text-anchor="middle" font-size="11">validateAmount()</text>
+            <text x="340" y="595" text-anchor="middle" font-size="9">amount > 0</text>
+            
+            <!-- 14. Process Payment -->
+            <line x1="285" y1="620" x2="700" y2="620" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="492" y="615" text-anchor="middle" font-size="12">14: processPayment(amount, card)</text>
+            
+            <!-- 15. Mock Gateway Processing -->
+            <rect x="705" y="640" width="140" height="40" fill="#f3e5f5" stroke="#333" rx="3"/>
+            <text x="775" y="655" text-anchor="middle" font-size="11">validateCard()</text>
+            <text x="775" y="668" text-anchor="middle" font-size="11">chargeCard($50)</text>
+            
+            <!-- 16. Payment Success -->
+            <line x1="700" y1="700" x2="285" y2="700" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="492" y="695" text-anchor="middle" font-size="12" fill="#4caf50">16: success, transactionId: TX123</text>
+            
+            <!-- 17. Update Wallet -->
+            <line x1="285" y1="730" x2="490" y2="730" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="387" y="725" text-anchor="middle" font-size="12">17: updateBalance(userId, +$50)</text>
+            
+            <!-- 18. Update in DB -->
+            <line x1="490" y1="750" x2="1120" y2="750" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="805" y="745" text-anchor="middle" font-size="11">18: UPDATE wallets SET balance = balance + 50</text>
+            <text x="805" y="760" text-anchor="middle" font-size="11">WHERE user_id = ?</text>
+            
+            <!-- 19. Record Transaction -->
+            <line x1="285" y1="790" x2="920" y2="790" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="602" y="785" text-anchor="middle" font-size="12">19: recordTransaction(type="DEPOSIT", amount=$50)</text>
+            
+            <!-- 20. Save Transaction -->
+            <line x1="920" y1="810" x2="1120" y2="810" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="1020" y="805" text-anchor="middle" font-size="11">20: INSERT INTO transactions</text>
+            <text x="1020" y="820" text-anchor="middle" font-size="11">(wallet_id, amount, type, status)</text>
+            
+            <!-- 21. Confirm -->
+            <line x1="920" y1="840" x2="285" y2="840" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="602" y="835" text-anchor="middle" font-size="12">21: transactionSaved</text>
+            
+            <!-- 22. Success Response -->
+            <line x1="285" y1="870" x2="100" y2="870" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="192" y="865" text-anchor="middle" font-size="12" fill="#4caf50">22: success {newBalance: $175.50}</text>
+            
+            <!-- 23. Update UI -->
+            <rect x="105" y="890" width="120" height="30" fill="#e3f2fd" stroke="#4caf50" rx="3"/>
+            <text x="165" y="905" text-anchor="middle" font-size="11">updateBalance()</text>
+            <text x="165" y="915" text-anchor="middle" font-size="9" fill="#4caf50">Show: $175.50</text>
+            
+            <!-- Final Success State -->
+            <rect x="30" y="940" width="140" height="30" fill="#4caf50" stroke="#333" rx="5"/>
+            <text x="100" y="960" text-anchor="middle" font-size="12" fill="white" font-weight="bold">Funds Added</text>
+            
+            <!-- PART 3: Error Flows -->
+            <rect x="30" y="990" width="1190" height="150" fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="1010" font-size="14" fill="#f44336" font-weight="bold">EXCEPTIONAL FLOWS</text>
+            
+            <!-- E1: Invalid Amount -->
+            <g transform="translate(50, 1030)">
+                <rect x="0" y="0" width="250" height="40" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="125" y="15" text-anchor="middle" font-size="11" font-weight="bold">E1: Invalid Amount</text>
+                <text x="125" y="30" text-anchor="middle" font-size="10">amount ≤ 0 → "Invalid amount"</text>
+            </g>
+            
+            <!-- E2: Payment Failed -->
+            <g transform="translate(320, 1030)">
+                <rect x="0" y="0" width="250" height="40" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="125" y="15" text-anchor="middle" font-size="11" font-weight="bold">E2: Payment Failed</text>
+                <text x="125" y="30" text-anchor="middle" font-size="10">Gateway error → "Payment failed"</text>
+            </g>
+            
+            <!-- E3: Card Declined -->
+            <g transform="translate(590, 1030)">
+                <rect x="0" y="0" width="250" height="40" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="125" y="15" text-anchor="middle" font-size="11" font-weight="bold">E3: Card Declined</text>
+                <text x="125" y="30" text-anchor="middle" font-size="10">Insufficient funds → "Card declined"</text>
+            </g>
+            
+            <!-- E4: DB Error -->
+            <g transform="translate(860, 1030)">
+                <rect x="0" y="0" width="250" height="40" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="125" y="15" text-anchor="middle" font-size="11" font-weight="bold">E4: Database Error</text>
+                <text x="125" y="30" text-anchor="middle" font-size="10">Connection lost → Rollback transaction</text>
+            </g>
+            
+            <!-- Alternative Payment Flow Arrow -->
+            <line x1="700" y1="680" x2="850" y2="680" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3"/>
+            <line x1="850" y1="680" x2="850" y2="1030" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-red)"/>
+            <text x="870" y="855" font-size="10" fill="#f44336">Payment Failed Path</text>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>💻 Detailed Pseudocode</h2>
+        <div class="pseudocode">
+<span class="comment">// TrueBite Wallet Management System - UC-05</span>
+
+<span class="keyword">CLASS</span> <span class="function">FinanceService</span>:
+    
+    <span class="keyword">FUNCTION</span> getWalletInfo(userId: String):
+        <span class="keyword">INPUT</span>: {
+            userId: String <span class="comment">// Authenticated user ID</span>
+        }
+        
+        <span class="comment">// Fetch wallet balance</span>
+        wallet = WalletRepository.findByUserId(userId)
+        <span class="keyword">IF</span> wallet == null:
+            <span class="comment">// Should not happen - wallet created at registration</span>
+            <span class="keyword">THROW</span> WalletException(<span class="string">"Wallet not found"</span>)
+        
+        <span class="comment">// Fetch transaction history</span>
+        transactions = TransactionRepository.getRecentTransactions(
+            walletId: wallet.id,
+            limit: 10,
+            orderBy: <span class="string">"created_at DESC"</span>
+        )
+        
+        <span class="comment">// Build DTO</span>
+        walletDTO = new WalletDTO()
+        walletDTO.userId = userId
+        walletDTO.balance = wallet.balance
+        walletDTO.currency = <span class="string">"USD"</span>
+        walletDTO.lastUpdated = wallet.lastUpdated
+        
+        <span class="comment">// Format transaction history</span>
+        walletDTO.transactions = []
+        <span class="keyword">FOR EACH</span> tx <span class="keyword">IN</span> transactions:
+            txDTO = new TransactionDTO()
+            txDTO.id = tx.id
+            txDTO.type = tx.type <span class="comment">// DEPOSIT, PAYMENT, REFUND</span>
+            txDTO.amount = tx.amount
+            txDTO.description = tx.description
+            txDTO.status = tx.status
+            txDTO.createdAt = tx.createdAt
+            
+            <span class="comment">// Add visual indicators</span>
+            <span class="keyword">IF</span> tx.type == <span class="string">"DEPOSIT"</span> OR tx.type == <span class="string">"REFUND"</span>:
+                txDTO.isCredit = true
+                txDTO.displayAmount = <span class="string">"+$"</span> + tx.amount
+            <span class="keyword">ELSE</span>:
+                txDTO.isCredit = false
+                txDTO.displayAmount = <span class="string">"-$"</span> + tx.amount
+            
+            walletDTO.transactions.append(txDTO)
+        
+        <span class="keyword">RETURN</span> walletDTO
+    
+    <span class="keyword">FUNCTION</span> addFunds(userId: String, amount: Decimal, paymentMethod: PaymentMethod):
+        <span class="keyword">INPUT</span>: {
+            userId: String,
+            amount: Decimal,
+            paymentMethod: {
+                type: String, <span class="comment">// "card", "bank", "paypal"</span>
+                details: Object <span class="comment">// Card number, CVV, etc (encrypted)</span>
+            }
+        }
+        
+        <span class="comment">// Step 1: Validate amount</span>
+        <span class="keyword">IF</span> amount <= 0:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Invalid amount. Must be positive."</span>)
+        
+        <span class="keyword">IF</span> amount > MAX_DEPOSIT_AMOUNT:  <span class="comment">// e.g., $1000</span>
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Amount exceeds maximum limit"</span>)
+        
+        <span class="comment">// Step 2: Get wallet</span>
+        wallet = WalletRepository.findByUserId(userId)
+        <span class="keyword">IF</span> wallet == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Wallet not found"</span>)
+        
+        <span class="comment">// Step 3: Process payment through gateway</span>
+        <span class="keyword">TRY</span>:
+            paymentResult = PaymentGateway.processPayment(
+                amount: amount,
+                method: paymentMethod,
+                metadata: {
+                    userId: userId,
+                    walletId: wallet.id,
+                    type: <span class="string">"WALLET_DEPOSIT"</span>
+                }
+            )
+            
+            <span class="keyword">IF NOT</span> paymentResult.success:
+                <span class="comment">// Log failed attempt</span>
+                LogService.logPaymentFailure(userId, amount, paymentResult.reason)
+                <span class="keyword">RETURN</span> Result(error: paymentResult.errorMessage)
+            
+        <span class="keyword">CATCH</span> PaymentException e:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Payment processing failed: "</span> + e.message)
+        
+        <span class="comment">// Step 4: Update wallet balance (with transaction)</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Lock wallet for update to prevent race conditions</span>
+            wallet = WalletRepository.lockForUpdate(wallet.id)
+            
+            <span class="comment">// Update balance</span>
+            oldBalance = wallet.balance
+            wallet.balance += amount
+            wallet.lastUpdated = now()
+            WalletRepository.update(wallet)
+            
+            <span class="comment">// Create transaction record</span>
+            transaction = new Transaction()
+            transaction.walletId = wallet.id
+            transaction.type = <span class="string">"DEPOSIT"</span>
+            transaction.amount = amount
+            transaction.balanceBefore = oldBalance
+            transaction.balanceAfter = wallet.balance
+            transaction.status = <span class="string">"COMPLETED"</span>
+            transaction.paymentGatewayId = paymentResult.transactionId
+            transaction.description = <span class="string">"Funds added via "</span> + paymentMethod.type
+            transaction.createdAt = now()
+            
+            TransactionRepository.save(transaction)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Step 5: Send confirmation</span>
+        NotificationService.sendDepositConfirmation(
+            userId: userId,
+            amount: amount,
+            newBalance: wallet.balance,
+            transactionId: transaction.id
+        )
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            newBalance: wallet.balance,
+            transactionId: transaction.id,
+            message: <span class="string">"Successfully added $"</span> + amount
+        )
+    
+    <span class="keyword">FUNCTION</span> hasSufficientBalance(userId: String, requiredAmount: Decimal):
+        wallet = WalletRepository.findByUserId(userId)
+        <span class="keyword">RETURN</span> wallet != null AND wallet.balance >= requiredAmount
+    
+    <span class="keyword">FUNCTION</span> charge(userId: String, amount: Decimal, type: String):
+        <span class="comment">// Used for order payments</span>
+        wallet = WalletRepository.findByUserId(userId)
+        
+        <span class="keyword">IF</span> wallet.balance < amount:
+            <span class="keyword">THROW</span> InsufficientFundsException()
+        
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            wallet.balance -= amount
+            WalletRepository.update(wallet)
+            
+            transaction = new Transaction(
+                walletId: wallet.id,
+                type: type,
+                amount: -amount, <span class="comment">// Negative for debits</span>
+                status: <span class="string">"COMPLETED"</span>
+            )
+            TransactionRepository.save(transaction)
+        <span class="keyword">COMMIT</span>
+        
+        <span class="keyword">RETURN</span> Result(success: true)
+
+<span class="comment">// Mock Payment Gateway for Testing</span>
+<span class="keyword">CLASS</span> <span class="function">PaymentGateway</span>:
+    
+    <span class="keyword">FUNCTION</span> processPayment(amount: Decimal, method: PaymentMethod, metadata: Object):
+        <span class="comment">// Simulate payment processing</span>
+        
+        <span class="comment">// Validate card (mock)</span>
+        <span class="keyword">IF</span> method.type == <span class="string">"card"</span>:
+            <span class="keyword">IF NOT</span> validateCardNumber(method.details.cardNumber):
+                <span class="keyword">RETURN</span> PaymentResult(
+                    success: false,
+                    errorMessage: <span class="string">"Invalid card number"</span>
+                )
+            
+            <span class="comment">// Simulate different test scenarios</span>
+            <span class="keyword">IF</span> method.details.cardNumber.endsWith(<span class="string">"0000"</span>):
+                <span class="comment">// Test card for declined payment</span>
+                <span class="keyword">RETURN</span> PaymentResult(
+                    success: false,
+                    errorMessage: <span class="string">"Card declined by issuer"</span>
+                )
+            
+            <span class="keyword">IF</span> method.details.cardNumber.endsWith(<span class="string">"9999"</span>):
+                <span class="comment">// Test card for timeout</span>
+                sleep(5000)
+                <span class="keyword">THROW</span> PaymentTimeoutException()
+        
+        <span class="comment">// Simulate successful payment</span>
+        transactionId = generateUUID()
+        
+        <span class="comment">// Log to payment processor (mock)</span>
+        PaymentLog.record({
+            transactionId: transactionId,
+            amount: amount,
+            timestamp: now(),
+            status: <span class="string">"SUCCESS"</span>
+        })
+        
+        <span class="keyword">RETURN</span> PaymentResult(
+            success: true,
+            transactionId: transactionId,
+            processedAt: now()
+        )
+    
+    <span class="keyword">FUNCTION</span> validateCardNumber(cardNumber: String):
+        <span class="comment">// Luhn algorithm validation</span>
+        <span class="keyword">IF</span> cardNumber.length < 13 OR cardNumber.length > 19:
+            <span class="keyword">RETURN</span> false
+        
+        sum = 0
+        isEven = false
+        
+        <span class="keyword">FOR</span> i = cardNumber.length - 1; i >= 0; i--:
+            digit = parseInt(cardNumber[i])
+            
+            <span class="keyword">IF</span> isEven:
+                digit *= 2
+                <span class="keyword">IF</span> digit > 9:
+                    digit -= 9
+            
+            sum += digit
+            isEven = !isEven
+        
+        <span class="keyword">RETURN</span> sum % 10 == 0
+
+<span class="comment">// Repository Classes</span>
+<span class="keyword">CLASS</span> <span class="function">WalletRepository</span>:
+    
+    <span class="keyword">FUNCTION</span> findByUserId(userId: String):
+        sql = <span class="string">"SELECT * FROM wallets WHERE user_id = ?"</span>
+        result = database.queryOne(sql, userId)
+        <span class="keyword">RETURN</span> result ? mapToWallet(result) : null
+    
+    <span class="keyword">FUNCTION</span> update(wallet: Wallet):
+        sql = <span class="string">"""
+            UPDATE wallets 
+            SET balance = ?, last_updated = ? 
+            WHERE wallet_id = ?
+        """</span>
+        database.execute(sql, wallet.balance, wallet.lastUpdated, wallet.id)
+    
+    <span class="keyword">FUNCTION</span> lockForUpdate(walletId: String):
+        <span class="comment">// Pessimistic locking to prevent concurrent updates</span>
+        sql = <span class="string">"SELECT * FROM wallets WHERE wallet_id = ? FOR UPDATE"</span>
+        result = database.queryOne(sql, walletId)
+        <span class="keyword">RETURN</span> mapToWallet(result)
+
+<span class="keyword">CLASS</span> <span class="function">TransactionRepository</span>:
+    
+    <span class="keyword">FUNCTION</span> getRecentTransactions(walletId: String, limit: Integer, orderBy: String):
+        sql = <span class="string">"""
+            SELECT * FROM transactions 
+            WHERE wallet_id = ? 
+            ORDER BY """ + orderBy + """
+            LIMIT ?
+        """</span>
+        results = database.query(sql, walletId, limit)
+        <span class="keyword">RETURN</span> results.map(r -> mapToTransaction(r))
+    
+    <span class="keyword">FUNCTION</span> save(transaction: Transaction):
+        sql = <span class="string">"""
+            INSERT INTO transactions (
+                transaction_id, wallet_id, type, amount, 
+                balance_before, balance_after, status, 
+                payment_gateway_id, description, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """</span>
+        database.execute(sql, transaction.toArray())
+</div>
+
+        <h2>📋 Data Structures</h2>
+        <table>
+            <tr>
+                <th>Entity</th>
+                <th>Fields</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><strong>Wallet</strong></td>
+                <td>walletId, userId, balance, currency, createdAt, lastUpdated</td>
+                <td>User's financial account in system</td>
+            </tr>
+            <tr>
+                <td><strong>Transaction</strong></td>
+                <td>transactionId, walletId, type, amount, balanceBefore, balanceAfter, status, description, createdAt</td>
+                <td>Record of all financial movements</td>
+            </tr>
+            <tr>
+                <td><strong>PaymentMethod</strong></td>
+                <td>type, cardNumber (encrypted), expiryDate, cvv (encrypted), billingAddress</td>
+                <td>Payment information for deposits</td>
+            </tr>
+            <tr>
+                <td><strong>WalletDTO</strong></td>
+                <td>userId, balance, transactions[], lastUpdated, currency</td>
+                <td>Data transfer for UI display</td>
+            </tr>
+        </table>
+
+        <h2>🗄️ Database Schema</h2>
+        <div class="pseudocode">
+<span class="comment">-- Wallets table</span>
+<span class="keyword">CREATE TABLE</span> wallets (
+    wallet_id <span class="keyword">UUID PRIMARY KEY DEFAULT</span> uuid_generate_v4(),
+    user_id <span class="keyword">INTEGER REFERENCES</span> users(user_id) <span class="keyword">UNIQUE</span>,
+    balance <span class="keyword">DECIMAL</span>(10,2) <span class="keyword">DEFAULT</span> 0.00 <span class="keyword">CHECK</span> (balance >= 0),
+    currency <span class="keyword">VARCHAR</span>(3) <span class="keyword">DEFAULT</span> 'USD',
+    is_active <span class="keyword">BOOLEAN DEFAULT</span> true,
+    created_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>,
+    last_updated <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>
+);
+
+<span class="comment">-- Transactions table</span>
+<span class="keyword">CREATE TABLE</span> transactions (
+    transaction_id <span class="keyword">UUID PRIMARY KEY DEFAULT</span> uuid_generate_v4(),
+    wallet_id <span class="keyword">UUID REFERENCES</span> wallets(wallet_id),
+    type <span class="keyword">VARCHAR</span>(20) <span class="keyword">NOT NULL</span>, <span class="comment">-- DEPOSIT, PAYMENT, REFUND, ADJUSTMENT</span>
+    amount <span class="keyword">DECIMAL</span>(10,2) <span class="keyword">NOT NULL</span>,
+    balance_before <span class="keyword">DECIMAL</span>(10,2),
+    balance_after <span class="keyword">DECIMAL</span>(10,2),
+    status <span class="keyword">VARCHAR</span>(20) <span class="keyword">DEFAULT</span> 'PENDING',
+    payment_gateway_id <span class="keyword">VARCHAR</span>(100),
+    order_id <span class="keyword">INTEGER REFERENCES</span> orders(order_id),
+    description <span class="keyword">TEXT</span>,
+    created_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>
+);
+
+<span class="comment">-- Indexes for performance</span>
+<span class="keyword">CREATE INDEX</span> idx_wallet_user <span class="keyword">ON</span> wallets(user_id);
+<span class="keyword">CREATE INDEX</span> idx_transaction_wallet <span class="keyword">ON</span> transactions(wallet_id);
+<span class="keyword">CREATE INDEX</span> idx_transaction_created <span class="keyword">ON</span> transactions(created_at <span class="keyword">DESC</span>);
+<span class="keyword">CREATE INDEX</span> idx_transaction_type <span class="keyword">ON</span> transactions(type);
+</div>
+
+        <h2>⚡ Performance & Security</h2>
+        <div class="info-box">
+            <strong>Performance Optimizations:</strong><br>
+            • Database indexing on wallet_id and created_at<br>
+            • Transaction history limited to 10 recent items by default<br>
+            • Pessimistic locking prevents race conditions<br>
+            • Connection pooling for database queries<br><br>
+            
+            <strong>Security Measures:</strong><br>
+            • Card details encrypted at rest and in transit<br>
+            • PCI DSS compliance for payment processing<br>
+            • Transaction logging for audit trail<br>
+            • Balance can never go negative (CHECK constraint)<br>
+            • Idempotency keys prevent duplicate charges
+        </div>
+
+        <h2>🧪 Test Cases</h2>
+        <div class="success-flow">
+            <strong>Test 1: Successful Fund Addition</strong><br>
+            • Initial balance: $100.00<br>
+            • Add amount: $50.00<br>
+            • Payment: Success<br>
+            • Expected balance: $150.00<br>
+            • Transaction recorded with type "DEPOSIT"
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 2: Invalid Amount</strong><br>
+            • Add amount: -$10.00 or $0.00<br>
+            • Expected: Validation error before payment<br>
+            • Balance unchanged<br>
+            • No transaction recorded
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 3: Payment Gateway Failure</strong><br>
+            • Add amount: $50.00<br>
+            • Payment: Gateway timeout/error<br>
+            • Expected: Error message shown<br>
+            • Balance unchanged<br>
+            • Failed attempt logged
+        </div>
+
+        <div class="normal-flow">
+            <strong>Test 4: Concurrent Updates</strong><br>
+            • Two simultaneous $50 deposits<br>
+            • Initial balance: $100<br>
+            • Expected final balance: $200<br>
+            • Both transactions recorded<br>
+            • No race condition issues
+        </div>
+    </div>
+</body>
+</html>

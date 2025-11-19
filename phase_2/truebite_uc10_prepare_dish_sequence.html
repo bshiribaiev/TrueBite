@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-10 Prepare Dish (Chef) Sequence Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #fa8231 0%, #fd5c63 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #fa8231;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "🍳";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #fa823115 0%, #fd5c6315 100%);
+            border-left: 4px solid #fa8231;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning-flow {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1250px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #fa8231;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .chef { background: #e74c3c; color: white; }
+        .order-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .order-status {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-created { background: #e3f2fd; color: #1976d2; }
+        .status-in-kitchen { background: #fff3e0; color: #f57c00; }
+        .status-ready { background: #e8f5e9; color: #2e7d32; }
+        .status-cancelled { background: #ffebee; color: #c62828; }
+        .order-items {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-start { background: #ff9800; color: white; }
+        .btn-ready { background: #4caf50; color: white; }
+        .btn-cancel { background: #f44336; color: white; }
+        .kitchen-dashboard {
+            border: 2px solid #fa8231;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #fff8f5;
+        }
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-10: Prepare Dish (Chef)</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-10 - Chef Dish Preparation Workflow<br>
+            <strong>Actor:</strong> 
+            <span class="user-badge chef">Chef</span><br>
+            <strong>Goal:</strong> View assigned orders, prepare dishes, update order status<br>
+            <strong>Preconditions:</strong> Chef authenticated, orders assigned, kitchen active<br>
+            <strong>Postconditions:</strong> Orders prepared and marked ready for delivery
+        </div>
+
+        <h2>👨‍🍳 Kitchen Dashboard Interface</h2>
+        <div class="kitchen-dashboard">
+            <h3>Kitchen Orders Queue - Chef Maria</h3>
+            
+            <div class="order-card">
+                <div class="order-header">
+                    <div>
+                        <strong>Order #1234</strong> | Customer: John Doe | 
+                        <span class="order-status status-created">CREATED</span>
+                    </div>
+                    <div class="timer">⏱️ 5 min ago</div>
+                </div>
+                <div class="order-items">
+                    <div class="order-item">
+                        <span>1x Grilled Salmon</span>
+                        <span>Notes: No garlic</span>
+                    </div>
+                    <div class="order-item">
+                        <span>1x Caesar Salad</span>
+                        <span>Regular</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-start">🔥 Start Cooking</button>
+                    <button class="btn btn-cancel">❌ Cannot Prepare</button>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <div class="order-header">
+                    <div>
+                        <strong>Order #1235</strong> | Customer: Jane Smith | 
+                        <span class="order-status status-in-kitchen">IN_KITCHEN</span>
+                    </div>
+                    <div class="timer">⏱️ 12 min elapsed</div>
+                </div>
+                <div class="order-items">
+                    <div class="order-item">
+                        <span>2x Truffle Pasta</span>
+                        <span>Extra cheese</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-ready">✅ Mark Ready</button>
+                    <button class="btn btn-cancel">❌ Problem Occurred</button>
+                </div>
+            </div>
+        </div>
+
+        <h2>📊 Main Sequence Diagram - Dish Preparation Flow</h2>
+        <svg viewBox="0 0 1250 1500" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1250" height="1500" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="625" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">
+                Chef Dish Preparation Workflow - Status Transitions
+            </text>
+            
+            <!-- Actors and Objects -->
+            <!-- Chef/UI -->
+            <rect x="50" y="60" width="100" height="40" fill="#ffebee" stroke="#e74c3c" stroke-width="2" rx="5"/>
+            <text x="100" y="85" text-anchor="middle" font-weight="bold">Chef/UI</text>
+            <line x1="100" y1="100" x2="100" y2="1450" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- KitchenController -->
+            <rect x="200" y="60" width="140" height="40" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+            <text x="270" y="85" text-anchor="middle" font-weight="bold">KitchenController</text>
+            <line x1="270" y1="100" x2="270" y2="1450" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- OrderService -->
+            <rect x="390" y="60" width="120" height="40" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+            <text x="450" y="85" text-anchor="middle" font-weight="bold">OrderService</text>
+            <line x1="450" y1="100" x2="450" y2="1450" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- OrderRepository -->
+            <rect x="560" y="60" width="130" height="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+            <text x="625" y="85" text-anchor="middle" font-weight="bold">OrderRepository</text>
+            <line x1="625" y1="100" x2="625" y2="1450" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- NotificationService -->
+            <rect x="740" y="60" width="150" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+            <text x="815" y="85" text-anchor="middle" font-weight="bold">NotificationService</text>
+            <line x1="815" y1="100" x2="815" y2="1450" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- TimerService -->
+            <rect x="940" y="60" width="110" height="40" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+            <text x="995" y="85" text-anchor="middle" font-weight="bold">TimerService</text>
+            <line x1="995" y1="100" x2="995" y2="1450" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Database -->
+            <rect x="1100" y="60" width="100" height="40" fill="#fce4ec" stroke="#e91e63" stroke-width="2" rx="5"/>
+            <text x="1150" y="85" text-anchor="middle" font-weight="bold">Database</text>
+            <line x1="1150" y1="100" x2="1150" y2="1450" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- PART 1: View Assigned Orders -->
+            <rect x="30" y="120" width="1190" height="250" fill="none" stroke="#1976d2" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="140" font-size="14" fill="#1976d2" font-weight="bold">STEP 1: View Assigned Orders</text>
+            
+            <!-- 1. Open Kitchen Dashboard -->
+            <line x1="100" y1="170" x2="270" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="185" y="165" text-anchor="middle" font-size="12">1: openKitchenDashboard(chefId)</text>
+            
+            <!-- 2. Get Assigned Orders -->
+            <line x1="270" y1="200" x2="450" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="360" y="195" text-anchor="middle" font-size="12">2: getChefOrders(chefId)</text>
+            
+            <!-- 3. Query Orders -->
+            <line x1="450" y1="230" x2="625" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="537" y="225" text-anchor="middle" font-size="12">3: findByChefAndStatus(chefId,</text>
+            <text x="537" y="240" text-anchor="middle" font-size="11">[CREATED, IN_KITCHEN])</text>
+            
+            <!-- 4. Database Query -->
+            <line x1="625" y1="260" x2="1150" y2="260" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="887" y="255" text-anchor="middle" font-size="11">4: SELECT * FROM orders</text>
+            <text x="887" y="270" text-anchor="middle" font-size="11">WHERE chef_id = ? AND status IN (?, ?)</text>
+            
+            <!-- 5. Return Orders List -->
+            <line x1="1150" y1="290" x2="625" y2="290" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="887" y="285" text-anchor="middle" font-size="12">5: List&lt;Order&gt;</text>
+            
+            <!-- 6. Display Orders -->
+            <line x1="450" y1="320" x2="100" y2="320" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="275" y="315" text-anchor="middle" font-size="12">6: displayOrders(orders)</text>
+            
+            <!-- Queue Display -->
+            <rect x="105" y="340" width="140" height="25" fill="#e3f2fd" stroke="#1976d2" rx="3"/>
+            <text x="175" y="357" text-anchor="middle" font-size="11">5 orders in queue</text>
+            
+            <!-- PART 2: Start Cooking (CREATED → IN_KITCHEN) -->
+            <rect x="30" y="390" width="1190" height="380" fill="none" stroke="#ff9800" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="410" font-size="14" fill="#ff9800" font-weight="bold">STEP 2: Start Cooking (CREATED → IN_KITCHEN)</text>
+            
+            <!-- 7. Select Order to Prepare -->
+            <line x1="100" y1="440" x2="270" y2="440" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="185" y="435" text-anchor="middle" font-size="12">7: selectOrder(orderId=1234)</text>
+            
+            <!-- 8. Start Cooking -->
+            <line x1="100" y1="470" x2="270" y2="470" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="185" y="465" text-anchor="middle" font-size="12">8: startCooking(orderId)</text>
+            
+            <!-- 9. Update Status -->
+            <line x1="270" y1="500" x2="450" y2="500" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="360" y="495" text-anchor="middle" font-size="12">9: updateOrderStatus(orderId,</text>
+            <text x="360" y="510" text-anchor="middle" font-size="11">IN_KITCHEN)</text>
+            
+            <!-- 10. Verify Order Status -->
+            <line x1="450" y1="530" x2="625" y2="530" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="537" y="525" text-anchor="middle" font-size="12">10: getOrder(orderId)</text>
+            
+            <!-- 11. Check Current Status -->
+            <rect x="630" y="545" width="140" height="40" fill="#fff3e0" stroke="#333" rx="3"/>
+            <text x="700" y="560" text-anchor="middle" font-size="10">Verify status == CREATED</text>
+            <text x="700" y="575" text-anchor="middle" font-size="10">Not cancelled/delivered</text>
+            
+            <!-- 12. Update Status to IN_KITCHEN -->
+            <line x1="450" y1="600" x2="625" y2="600" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="537" y="595" text-anchor="middle" font-size="12">12: updateStatus(orderId,</text>
+            <text x="537" y="610" text-anchor="middle" font-size="11">IN_KITCHEN, chefId)</text>
+            
+            <!-- 13. Update Database -->
+            <line x1="625" y1="630" x2="1150" y2="630" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="887" y="625" text-anchor="middle" font-size="11">13: UPDATE orders SET status = 'IN_KITCHEN',</text>
+            <text x="887" y="640" text-anchor="middle" font-size="11">kitchen_start_time = NOW() WHERE order_id = ?</text>
+            
+            <!-- 14. Start Timer -->
+            <line x1="450" y1="670" x2="995" y2="670" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="722" y="665" text-anchor="middle" font-size="12">14: startTimer(orderId, estimatedTime)</text>
+            
+            <!-- 15. Notify Customer -->
+            <line x1="450" y1="700" x2="815" y2="700" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="632" y="695" text-anchor="middle" font-size="12">15: notifyCustomer(orderId,</text>
+            <text x="632" y="710" text-anchor="middle" font-size="11">"Your order is being prepared")</text>
+            
+            <!-- 16. Success Response -->
+            <line x1="270" y1="740" x2="100" y2="740" stroke="#ff9800" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-orange)"/>
+            <text x="185" y="735" text-anchor="middle" font-size="12" fill="#ff9800">16: status = IN_KITCHEN</text>
+            
+            <!-- PART 3: Mark as Ready (IN_KITCHEN → READY_FOR_DELIVERY) -->
+            <rect x="30" y="790" width="1190" height="330" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="810" font-size="14" fill="#4caf50" font-weight="bold">STEP 3: Mark Ready (IN_KITCHEN → READY_FOR_DELIVERY)</text>
+            
+            <!-- 17. Complete Preparation -->
+            <rect x="105" y="830" width="120" height="25" fill="#e8f5e9" stroke="#4caf50" rx="3"/>
+            <text x="165" y="847" text-anchor="middle" font-size="11">Dish Prepared ✓</text>
+            
+            <!-- 18. Mark as Ready -->
+            <line x1="100" y1="880" x2="270" y2="880" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="185" y="875" text-anchor="middle" font-size="12">18: markAsReady(orderId)</text>
+            
+            <!-- 19. Update to Ready -->
+            <line x1="270" y1="910" x2="450" y2="910" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="360" y="905" text-anchor="middle" font-size="12">19: updateOrderStatus(orderId,</text>
+            <text x="360" y="920" text-anchor="middle" font-size="11">READY_FOR_DELIVERY)</text>
+            
+            <!-- 20. Verify IN_KITCHEN Status -->
+            <line x1="450" y1="940" x2="625" y2="940" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="537" y="935" text-anchor="middle" font-size="12">20: verifyStatus(orderId,</text>
+            <text x="537" y="950" text-anchor="middle" font-size="11">IN_KITCHEN)</text>
+            
+            <!-- 21. Update to Ready -->
+            <line x1="625" y1="970" x2="1150" y2="970" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="887" y="965" text-anchor="middle" font-size="11">21: UPDATE orders SET status = 'READY_FOR_DELIVERY',</text>
+            <text x="887" y="980" text-anchor="middle" font-size="11">kitchen_end_time = NOW() WHERE order_id = ?</text>
+            
+            <!-- 22. Stop Timer -->
+            <line x1="450" y1="1010" x2="995" y2="1010" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="722" y="1005" text-anchor="middle" font-size="12">22: stopTimer(orderId)</text>
+            
+            <!-- Calculate Preparation Time -->
+            <rect x="1000" y="1020" width="140" height="30" fill="#e0f2f1" stroke="#333" rx="3"/>
+            <text x="1070" y="1038" text-anchor="middle" font-size="10">Prep time: 15 min</text>
+            
+            <!-- 23. Notify Delivery Team -->
+            <line x1="450" y1="1060" x2="815" y2="1060" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="632" y="1055" text-anchor="middle" font-size="12">23: notifyDeliveryTeam(orderId)</text>
+            
+            <!-- 24. Success Response -->
+            <line x1="270" y1="1090" x2="100" y2="1090" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="185" y="1085" text-anchor="middle" font-size="12" fill="#4caf50">24: success "Ready for pickup"</text>
+            
+            <!-- PART 4: Exceptional Flow - Order Cancelled -->
+            <rect x="30" y="1140" width="1190" height="280" fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="1160" font-size="14" fill="#f44336" font-weight="bold">EXCEPTIONAL: Order Cancelled Mid-Process</text>
+            
+            <!-- E1. Customer Cancels -->
+            <rect x="105" y="1180" width="140" height="25" fill="#ffebee" stroke="#f44336" rx="3"/>
+            <text x="175" y="1197" text-anchor="middle" font-size="11">Customer Cancels</text>
+            
+            <!-- E2. Order Status Changed -->
+            <line x1="100" y1="1220" x2="450" y2="1220" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3"/>
+            <text x="275" y="1215" text-anchor="middle" font-size="11" fill="#f44336">External cancellation event</text>
+            
+            <!-- E3. Check Status Before Update -->
+            <line x1="450" y1="1250" x2="625" y2="1250" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="537" y="1245" text-anchor="middle" font-size="12">E3: getOrder(orderId)</text>
+            
+            <!-- E4. Status = CANCELLED -->
+            <line x1="625" y1="1280" x2="450" y2="1280" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-red)"/>
+            <text x="537" y="1275" text-anchor="middle" font-size="12" fill="#f44336">E4: status = CANCELLED</text>
+            
+            <!-- E5. Cannot Mark Ready -->
+            <line x1="450" y1="1310" x2="270" y2="1310" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            <text x="360" y="1305" text-anchor="middle" font-size="12" fill="#f44336">E5: Error "Order cancelled"</text>
+            
+            <!-- E6. Display Error -->
+            <line x1="270" y1="1340" x2="100" y2="1340" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-red)"/>
+            <text x="185" y="1335" text-anchor="middle" font-size="12" fill="#f44336">E6: "Cannot prepare cancelled order"</text>
+            
+            <!-- E7. Remove from Queue -->
+            <rect x="275" y="1360" width="150" height="30" fill="#ffebee" stroke="#f44336" rx="3"/>
+            <text x="350" y="1378" text-anchor="middle" font-size="11">removeFromQueue(orderId)</text>
+            
+            <!-- Additional Exception Scenarios -->
+            <g transform="translate(650, 1180)">
+                <rect x="0" y="0" width="280" height="60" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="140" y="20" text-anchor="middle" font-size="11" font-weight="bold">Other Exceptions:</text>
+                <text x="140" y="35" text-anchor="middle" font-size="10">• Ingredients unavailable</text>
+                <text x="140" y="50" text-anchor="middle" font-size="10">• Kitchen equipment failure</text>
+            </g>
+            
+            <g transform="translate(950, 1180)">
+                <rect x="0" y="0" width="250" height="60" fill="#fff3e0" stroke="#ff9800" rx="3"/>
+                <text x="125" y="20" text-anchor="middle" font-size="11" font-weight="bold">Timeout Handling:</text>
+                <text x="125" y="35" text-anchor="middle" font-size="10">• Alert if prep > estimated time</text>
+                <text x="125" y="50" text-anchor="middle" font-size="10">• Manager notification after 2x time</text>
+            </g>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#ff9800"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>🔄 Order Status State Machine</h2>
+        <div class="info-box">
+            <strong>Status Transitions:</strong><br>
+            • <strong>CREATED</strong> → IN_KITCHEN (Chef starts cooking)<br>
+            • <strong>IN_KITCHEN</strong> → READY_FOR_DELIVERY (Chef completes dish)<br>
+            • <strong>IN_KITCHEN</strong> → CANCELLED (Customer cancels or problem occurs)<br>
+            • <strong>READY_FOR_DELIVERY</strong> → OUT_FOR_DELIVERY (Delivery person picks up)<br><br>
+            
+            <strong>Invalid Transitions:</strong><br>
+            • CANCELLED → Any other status (terminal state)<br>
+            • DELIVERED → Any other status (terminal state)<br>
+            • READY_FOR_DELIVERY → IN_KITCHEN (cannot go backward)
+        </div>
+
+        <h2>💻 Detailed Pseudocode</h2>
+        <div class="pseudocode">
+<span class="comment">// TrueBite Kitchen Management System - UC-10</span>
+
+<span class="keyword">CLASS</span> <span class="function">KitchenController</span>:
+    
+    <span class="keyword">FUNCTION</span> getChefOrders(chefId: String):
+        <span class="comment">// Fetch all active orders assigned to chef</span>
+        chef = UserRepository.findById(chefId)
+        
+        <span class="keyword">IF</span> chef == null OR chef.role != <span class="string">"CHEF"</span>:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Unauthorized access"</span>)
+        
+        <span class="comment">// Get orders with relevant statuses</span>
+        activeStatuses = [<span class="string">"CREATED"</span>, <span class="string">"IN_KITCHEN"</span>]
+        orders = OrderRepository.findByChefAndStatus(chefId, activeStatuses)
+        
+        <span class="comment">// Sort by priority and time</span>
+        orders.sort((a, b) -> {
+            <span class="comment">// VIP orders first</span>
+            <span class="keyword">IF</span> a.isVIP != b.isVIP:
+                <span class="keyword">RETURN</span> b.isVIP ? 1 : -1
+            
+            <span class="comment">// Then by creation time (FIFO)</span>
+            <span class="keyword">RETURN</span> a.createdAt.compareTo(b.createdAt)
+        })
+        
+        <span class="comment">// Add preparation time estimates</span>
+        <span class="keyword">FOR EACH</span> order <span class="keyword">IN</span> orders:
+            order.estimatedPrepTime = calculatePrepTime(order)
+            order.timeInQueue = now() - order.createdAt
+            
+            <span class="keyword">IF</span> order.status == <span class="string">"IN_KITCHEN"</span>:
+                order.cookingTime = now() - order.kitchenStartTime
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            orders: orders,
+            totalCount: orders.size(),
+            inKitchenCount: orders.filter(o -> o.status == <span class="string">"IN_KITCHEN"</span>).size()
+        )
+
+<span class="keyword">CLASS</span> <span class="function">OrderService</span>:
+    
+    <span class="keyword">FUNCTION</span> startCooking(orderId: String, chefId: String):
+        <span class="keyword">INPUT</span>: {
+            orderId: String,
+            chefId: String
+        }
+        
+        <span class="comment">// Step 1: Fetch and validate order</span>
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">IF</span> order == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not found"</span>)
+        
+        <span class="comment">// Step 2: Verify chef assignment</span>
+        <span class="keyword">IF</span> order.assignedChefId != chefId:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not assigned to this chef"</span>)
+        
+        <span class="comment">// Step 3: Check current status</span>
+        <span class="keyword">IF</span> order.status != <span class="string">"CREATED"</span>:
+            <span class="keyword">IF</span> order.status == <span class="string">"CANCELLED"</span>:
+                <span class="keyword">RETURN</span> Result(
+                    error: <span class="string">"Order has been cancelled"</span>,
+                    currentStatus: order.status
+                )
+            <span class="keyword">ELSE IF</span> order.status == <span class="string">"IN_KITCHEN"</span>:
+                <span class="keyword">RETURN</span> Result(
+                    warning: <span class="string">"Order already being prepared"</span>,
+                    currentStatus: order.status
+                )
+            <span class="keyword">ELSE</span>:
+                <span class="keyword">RETURN</span> Result(
+                    error: <span class="string">"Invalid status transition"</span>,
+                    currentStatus: order.status
+                )
+        
+        <span class="comment">// Step 4: Begin transaction for status update</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Update status to IN_KITCHEN</span>
+            order.status = <span class="string">"IN_KITCHEN"</span>
+            order.kitchenStartTime = now()
+            order.lastUpdated = now()
+            
+            <span class="comment">// Calculate estimated completion time</span>
+            estimatedTime = calculatePrepTime(order)
+            order.estimatedReadyTime = now() + estimatedTime.minutes
+            
+            <span class="comment">// Save to database</span>
+            OrderRepository.update(order)
+            
+            <span class="comment">// Create kitchen log entry</span>
+            kitchenLog = new KitchenLog()
+            kitchenLog.orderId = orderId
+            kitchenLog.chefId = chefId
+            kitchenLog.action = <span class="string">"START_COOKING"</span>
+            kitchenLog.timestamp = now()
+            kitchenLog.details = <span class="string">"Preparation started"</span>
+            KitchenLogRepository.save(kitchenLog)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Step 5: Start preparation timer</span>
+        TimerService.startTimer(
+            timerId: <span class="string">"ORDER_"</span> + orderId,
+            duration: estimatedTime,
+            callback: () -> alertIfOverdue(orderId)
+        )
+        
+        <span class="comment">// Step 6: Send notifications</span>
+        NotificationService.notifyCustomer(
+            userId: order.customerId,
+            message: <span class="string">"Your order is being prepared by Chef "</span> + getChefName(chefId),
+            orderId: orderId,
+            estimatedTime: estimatedTime
+        )
+        
+        <span class="comment">// Update real-time dashboard</span>
+        DashboardService.updateOrderStatus(orderId, <span class="string">"IN_KITCHEN"</span>)
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            message: <span class="string">"Cooking started"</span>,
+            orderId: orderId,
+            status: <span class="string">"IN_KITCHEN"</span>,
+            estimatedReadyTime: order.estimatedReadyTime
+        )
+    
+    <span class="keyword">FUNCTION</span> markAsReady(orderId: String, chefId: String):
+        <span class="keyword">INPUT</span>: {
+            orderId: String,
+            chefId: String
+        }
+        
+        <span class="comment">// Step 1: Fetch and validate order</span>
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">IF</span> order == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not found"</span>)
+        
+        <span class="comment">// Step 2: Verify chef</span>
+        <span class="keyword">IF</span> order.assignedChefId != chefId:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Not authorized for this order"</span>)
+        
+        <span class="comment">// Step 3: Check current status</span>
+        <span class="keyword">IF</span> order.status != <span class="string">"IN_KITCHEN"</span>:
+            <span class="keyword">IF</span> order.status == <span class="string">"CANCELLED"</span>:
+                <span class="comment">// Order was cancelled while cooking</span>
+                handleCancelledOrder(order, chefId)
+                <span class="keyword">RETURN</span> Result(
+                    error: <span class="string">"Order was cancelled"</span>,
+                    action: <span class="string">"Please discard the prepared food"</span>
+                )
+            <span class="keyword">ELSE IF</span> order.status == <span class="string">"READY_FOR_DELIVERY"</span>:
+                <span class="keyword">RETURN</span> Result(
+                    warning: <span class="string">"Order already marked as ready"</span>
+                )
+            <span class="keyword">ELSE</span>:
+                <span class="keyword">RETURN</span> Result(
+                    error: <span class="string">"Order must be in kitchen to mark ready"</span>,
+                    currentStatus: order.status
+                )
+        
+        <span class="comment">// Step 4: Update to ready status</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Calculate actual preparation time</span>
+            actualPrepTime = now() - order.kitchenStartTime
+            
+            <span class="comment">// Update order</span>
+            order.status = <span class="string">"READY_FOR_DELIVERY"</span>
+            order.kitchenEndTime = now()
+            order.actualPrepTime = actualPrepTime
+            order.lastUpdated = now()
+            
+            <span class="comment">// Quality check flag</span>
+            order.qualityChecked = true
+            order.qualityCheckBy = chefId
+            
+            OrderRepository.update(order)
+            
+            <span class="comment">// Log completion</span>
+            kitchenLog = new KitchenLog()
+            kitchenLog.orderId = orderId
+            kitchenLog.chefId = chefId
+            kitchenLog.action = <span class="string">"MARK_READY"</span>
+            kitchenLog.timestamp = now()
+            kitchenLog.details = <span class="string">"Prep time: "</span> + actualPrepTime.toMinutes() + <span class="string">" min"</span>
+            KitchenLogRepository.save(kitchenLog)
+            
+            <span class="comment">// Update chef statistics</span>
+            updateChefStats(chefId, actualPrepTime)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Step 5: Stop timer</span>
+        TimerService.stopTimer(<span class="string">"ORDER_"</span> + orderId)
+        
+        <span class="comment">// Step 6: Notify delivery team</span>
+        NotificationService.notifyDeliveryTeam(
+            message: <span class="string">"Order #"</span> + orderId + <span class="string">" ready for pickup"</span>,
+            orderId: orderId,
+            priority: order.isVIP ? <span class="string">"HIGH"</span> : <span class="string">"NORMAL"</span>
+        )
+        
+        <span class="comment">// Notify customer</span>
+        NotificationService.notifyCustomer(
+            userId: order.customerId,
+            message: <span class="string">"Your order is ready and will be delivered soon!"</span>,
+            orderId: orderId
+        )
+        
+        <span class="comment">// Update dashboard</span>
+        DashboardService.updateOrderStatus(orderId, <span class="string">"READY_FOR_DELIVERY"</span>)
+        DashboardService.moveToDeliveryQueue(orderId)
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            message: <span class="string">"Order marked as ready"</span>,
+            orderId: orderId,
+            preparationTime: actualPrepTime.toMinutes(),
+            status: <span class="string">"READY_FOR_DELIVERY"</span>
+        )
+    
+    <span class="keyword">FUNCTION</span> handleCancelledOrder(order: Order, chefId: String):
+        <span class="comment">// Handle food waste and logging for cancelled orders</span>
+        
+        wasteLog = new FoodWasteLog()
+        wasteLog.orderId = order.orderId
+        wasteLog.chefId = chefId
+        wasteLog.reason = <span class="string">"ORDER_CANCELLED"</span>
+        wasteLog.items = order.items
+        wasteLog.estimatedCost = calculateFoodCost(order.items)
+        wasteLog.timestamp = now()
+        
+        FoodWasteRepository.save(wasteLog)
+        
+        <span class="comment">// Notify manager about waste</span>
+        <span class="keyword">IF</span> wasteLog.estimatedCost > WASTE_THRESHOLD:
+            NotificationService.notifyManager(
+                <span class="string">"High value food waste due to cancellation"</span>,
+                wasteLog
+            )
+
+<span class="keyword">CLASS</span> <span class="function">TimerService</span>:
+    
+    activeTimers = new Map&lt;String, Timer&gt;()
+    
+    <span class="keyword">FUNCTION</span> startTimer(timerId: String, duration: Duration, callback: Function):
+        timer = new Timer()
+        timer.id = timerId
+        timer.startTime = now()
+        timer.duration = duration
+        timer.callback = callback
+        
+        <span class="comment">// Schedule alert if overdue</span>
+        timer.task = schedule(duration, () -> {
+            callback()
+            alertOverdue(timerId)
+        })
+        
+        activeTimers.put(timerId, timer)
+    
+    <span class="keyword">FUNCTION</span> stopTimer(timerId: String):
+        timer = activeTimers.get(timerId)
+        
+        <span class="keyword">IF</span> timer != null:
+            timer.task.cancel()
+            actualDuration = now() - timer.startTime
+            activeTimers.remove(timerId)
+            
+            <span class="keyword">RETURN</span> actualDuration
+        
+        <span class="keyword">RETURN</span> null
+    
+    <span class="keyword">FUNCTION</span> alertOverdue(timerId: String):
+        <span class="keyword">IF</span> timerId.startsWith(<span class="string">"ORDER_"</span>):
+            orderId = timerId.substring(6)
+            order = OrderRepository.findById(orderId)
+            
+            <span class="keyword">IF</span> order.status == <span class="string">"IN_KITCHEN"</span>:
+                overdueTime = now() - order.estimatedReadyTime
+                
+                <span class="keyword">IF</span> overdueTime > 10.minutes:
+                    NotificationService.alertManager(
+                        <span class="string">"Order significantly overdue"</span>,
+                        orderId,
+                        overdueTime
+                    )
+
+<span class="comment">// Helper Functions</span>
+<span class="keyword">FUNCTION</span> calculatePrepTime(order: Order):
+    baseTime = 0
+    
+    <span class="keyword">FOR EACH</span> item <span class="keyword">IN</span> order.items:
+        dish = DishRepository.findById(item.dishId)
+        baseTime += dish.preparationTime * item.quantity
+    
+    <span class="comment">// Adjust for parallel cooking</span>
+    parallelFactor = 0.7  <span class="comment">// Can cook multiple items somewhat in parallel</span>
+    adjustedTime = baseTime * parallelFactor
+    
+    <span class="comment">// Add buffer time</span>
+    bufferTime = 5  <span class="comment">// 5 minutes buffer</span>
+    
+    <span class="keyword">RETURN</span> Duration.ofMinutes(adjustedTime + bufferTime)
+
+<span class="keyword">FUNCTION</span> updateChefStats(chefId: String, prepTime: Duration):
+    stats = ChefStatsRepository.findByChefId(chefId) ?? new ChefStats(chefId)
+    
+    stats.totalOrders++
+    stats.totalPrepTime += prepTime.toMinutes()
+    stats.averagePrepTime = stats.totalPrepTime / stats.totalOrders
+    stats.lastOrderTime = now()
+    
+    <span class="comment">// Update efficiency rating</span>
+    <span class="keyword">IF</span> prepTime < stats.averagePrepTime * 0.8:
+        stats.efficiencyScore += 0.1
+    <span class="keyword">ELSE IF</span> prepTime > stats.averagePrepTime * 1.2:
+        stats.efficiencyScore -= 0.05
+    
+    ChefStatsRepository.save(stats)
+</div>
+
+        <h2>📋 Data Structures</h2>
+        <table>
+            <tr>
+                <th>Entity</th>
+                <th>Fields</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><strong>Order</strong></td>
+                <td>orderId, customerId, assignedChefId, status, items[], kitchenStartTime, kitchenEndTime, actualPrepTime</td>
+                <td>Order tracking through kitchen</td>
+            </tr>
+            <tr>
+                <td><strong>KitchenLog</strong></td>
+                <td>logId, orderId, chefId, action, timestamp, details</td>
+                <td>Kitchen activity audit trail</td>
+            </tr>
+            <tr>
+                <td><strong>ChefStats</strong></td>
+                <td>chefId, totalOrders, averagePrepTime, efficiencyScore, lastOrderTime</td>
+                <td>Chef performance metrics</td>
+            </tr>
+            <tr>
+                <td><strong>FoodWasteLog</strong></td>
+                <td>orderId, chefId, reason, items[], estimatedCost, timestamp</td>
+                <td>Track wasted food from cancellations</td>
+            </tr>
+            <tr>
+                <td><strong>Timer</strong></td>
+                <td>id, startTime, duration, callback, task</td>
+                <td>Preparation time tracking</td>
+            </tr>
+        </table>
+
+        <h2>🧪 Test Scenarios</h2>
+        <div class="success-flow">
+            <strong>Test 1: Normal Flow</strong><br>
+            • Chef views 5 assigned orders<br>
+            • Selects order #1234 (CREATED)<br>
+            • Starts cooking → IN_KITCHEN<br>
+            • Completes preparation in 15 minutes<br>
+            • Marks ready → READY_FOR_DELIVERY<br>
+            • Delivery team notified
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 2: Order Cancelled During Prep</strong><br>
+            • Order status: IN_KITCHEN<br>
+            • Customer cancels order<br>
+            • Chef attempts to mark ready<br>
+            • Expected: Error "Order was cancelled"<br>
+            • Food waste logged<br>
+            • Manager notified if high value
+        </div>
+
+        <div class="warning-flow">
+            <strong>Test 3: Preparation Overdue</strong><br>
+            • Estimated time: 20 minutes<br>
+            • After 30 minutes still IN_KITCHEN<br>
+            • Expected: Manager alert triggered<br>
+            • Dashboard shows overdue indicator<br>
+            • Customer notified of delay
+        </div>
+
+        <div class="normal-flow">
+            <strong>Test 4: VIP Order Priority</strong><br>
+            • VIP order appears at top of queue<br>
+            • Marked with priority indicator<br>
+            • Faster notification to delivery team<br>
+            • Priority pickup assignment
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-12 Deliver Order Sequence Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #5ee7df 0%, #b490ca 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #5ee7df;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "🚚";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #5ee7df15 0%, #b490ca15 100%);
+            border-left: 4px solid #5ee7df;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning-flow {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1250px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #5ee7df;
+            color: #2c3e50;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .delivery { background: #3498db; color: white; }
+        .customer { background: #2ecc71; color: white; }
+        .manager { background: #e74c3c; color: white; }
+        .delivery-card {
+            border: 2px solid #5ee7df;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #f8ffff;
+        }
+        .delivery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .delivery-status {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-assigned { background: #e3f2fd; color: #1976d2; }
+        .status-out-delivery { background: #fff3e0; color: #f57c00; }
+        .status-delivered { background: #e8f5e9; color: #2e7d32; }
+        .status-failed { background: #ffebee; color: #c62828; }
+        .delivery-map {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .btn-start { background: #3498db; color: white; }
+        .btn-delivered { background: #4caf50; color: white; }
+        .btn-problem { background: #f44336; color: white; }
+        .btn-navigate { background: #9c27b0; color: white; }
+        .delivery-timeline {
+            margin: 20px 0;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .dot-complete { background: #4caf50; }
+        .dot-current { background: #ff9800; animation: pulse 2s infinite; }
+        .dot-pending { background: #ccc; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-12: Deliver Order</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-12 - Order Delivery Process<br>
+            <strong>Actors:</strong> 
+            <span class="user-badge delivery">Delivery Person</span>
+            <span class="user-badge customer">Customer</span>
+            <span class="user-badge manager">Manager</span><br>
+            <strong>Goal:</strong> Pick up order from kitchen and deliver to customer<br>
+            <strong>Preconditions:</strong> Order assigned to delivery person, status = READY_FOR_DELIVERY<br>
+            <strong>Postconditions:</strong> Order delivered to customer, payment confirmed, ratings prompted
+        </div>
+
+        <h2>📱 Delivery Dashboard Interface</h2>
+        <div class="delivery-card">
+            <div class="delivery-header">
+                <div>
+                    <h3>Order #1234 <span class="delivery-status status-assigned">ASSIGNED</span></h3>
+                    <p><strong>Customer:</strong> John Doe<br>
+                    <strong>Phone:</strong> +1 555-0123</p>
+                </div>
+                <div style="text-align: right;">
+                    <strong>Delivery Fee:</strong> $5.00<br>
+                    <strong>ETA:</strong> 25 min<br>
+                    <strong>Distance:</strong> 2.3 miles
+                </div>
+            </div>
+            
+            <div class="delivery-timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot dot-complete"></div>
+                    <span>✓ Order Ready</span>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot dot-current"></div>
+                    <span>→ Pickup from Kitchen</span>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot dot-pending"></div>
+                    <span>Deliver to Customer</span>
+                </div>
+            </div>
+            
+            <div class="delivery-map">
+                🗺️ Map View<br>
+                <small>123 Main St → 456 Oak Ave</small>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-navigate">📍 Navigate</button>
+                <button class="btn btn-start">🚴 Start Delivery</button>
+                <button class="btn btn-problem">⚠️ Report Issue</button>
+            </div>
+        </div>
+
+        <h2>📊 Main Sequence Diagram - Delivery Flow</h2>
+        <svg viewBox="0 0 1250 1600" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1250" height="1600" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="625" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">
+                Order Delivery Process - Complete Flow with Exception Handling
+            </text>
+            
+            <!-- Actors and Objects -->
+            <!-- Delivery Person/UI -->
+            <rect x="50" y="60" width="130" height="40" fill="#e3f2fd" stroke="#3498db" stroke-width="2" rx="5"/>
+            <text x="115" y="85" text-anchor="middle" font-weight="bold">DeliveryPerson</text>
+            <line x1="115" y1="100" x2="115" y2="1550" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- DeliveryController -->
+            <rect x="230" y="60" width="140" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+            <text x="300" y="85" text-anchor="middle" font-weight="bold">DeliveryController</text>
+            <line x1="300" y1="100" x2="300" y2="1550" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- DeliveryService -->
+            <rect x="420" y="60" width="130" height="40" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+            <text x="485" y="85" text-anchor="middle" font-weight="bold">DeliveryService</text>
+            <line x1="485" y1="100" x2="485" y2="1550" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- OrderRepository -->
+            <rect x="600" y="60" width="130" height="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+            <text x="665" y="85" text-anchor="middle" font-weight="bold">OrderRepository</text>
+            <line x1="665" y1="100" x2="665" y2="1550" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- LocationService -->
+            <rect x="780" y="60" width="130" height="40" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+            <text x="845" y="85" text-anchor="middle" font-weight="bold">LocationService</text>
+            <line x1="845" y1="100" x2="845" y2="1550" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- NotificationService -->
+            <rect x="960" y="60" width="150" height="40" fill="#fce4ec" stroke="#e91e63" stroke-width="2" rx="5"/>
+            <text x="1035" y="85" text-anchor="middle" font-weight="bold">NotificationService</text>
+            <line x1="1035" y1="100" x2="1035" y2="1550" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Database -->
+            <rect x="1130" y="60" width="80" height="40" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="5"/>
+            <text x="1170" y="85" text-anchor="middle" font-weight="bold">Database</text>
+            <line x1="1170" y1="100" x2="1170" y2="1550" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- PART 1: View Assigned Orders -->
+            <rect x="30" y="120" width="1190" height="200" fill="none" stroke="#1976d2" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="140" font-size="14" fill="#1976d2" font-weight="bold">STEP 1: View Assigned Deliveries</text>
+            
+            <!-- 1. Open Delivery Dashboard -->
+            <line x1="115" y1="170" x2="300" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="207" y="165" text-anchor="middle" font-size="12">1: viewAssignedDeliveries(deliveryId)</text>
+            
+            <!-- 2. Get Assigned Orders -->
+            <line x1="300" y1="200" x2="485" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="392" y="195" text-anchor="middle" font-size="12">2: getAssignedOrders(deliveryId)</text>
+            
+            <!-- 3. Query Orders -->
+            <line x1="485" y1="230" x2="665" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="575" y="225" text-anchor="middle" font-size="11">3: findByDeliveryPerson(deliveryId,</text>
+            <text x="575" y="240" text-anchor="middle" font-size="11">status=['ASSIGNED', 'OUT_FOR_DELIVERY'])</text>
+            
+            <!-- 4. Return Orders -->
+            <line x1="665" y1="270" x2="485" y2="270" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="575" y="265" text-anchor="middle" font-size="12">4: List&lt;Order&gt;</text>
+            
+            <!-- 5. Display Orders -->
+            <line x1="300" y1="300" x2="115" y2="300" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="207" y="295" text-anchor="middle" font-size="12">5: displayOrders(orders)</text>
+            
+            <!-- PART 2: Start Delivery (ASSIGNED → OUT_FOR_DELIVERY) -->
+            <rect x="30" y="340" width="1190" height="400" fill="none" stroke="#ff9800" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="360" font-size="14" fill="#ff9800" font-weight="bold">STEP 2: Start Delivery (Pickup Order)</text>
+            
+            <!-- 6. Click Start Delivery -->
+            <line x1="115" y1="390" x2="300" y2="390" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="207" y="385" text-anchor="middle" font-size="12">6: startDelivery(orderId=1234)</text>
+            
+            <!-- 7. Initiate Delivery -->
+            <line x1="300" y1="420" x2="485" y2="420" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="392" y="415" text-anchor="middle" font-size="12">7: initiateDelivery(orderId, deliveryId)</text>
+            
+            <!-- 8. Verify Order Status -->
+            <line x1="485" y1="450" x2="665" y2="450" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="575" y="445" text-anchor="middle" font-size="12">8: getOrder(orderId)</text>
+            
+            <!-- 9. Check Status = ASSIGNED -->
+            <rect x="670" y="460" width="140" height="40" fill="#fff3e0" stroke="#333" rx="3"/>
+            <text x="740" y="475" text-anchor="middle" font-size="10">Verify status == ASSIGNED</text>
+            <text x="740" y="490" text-anchor="middle" font-size="10">or READY_FOR_DELIVERY</text>
+            
+            <!-- 10. Update Status -->
+            <line x1="485" y1="520" x2="665" y2="520" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="575" y="515" text-anchor="middle" font-size="12">10: updateStatus(orderId,</text>
+            <text x="575" y="530" text-anchor="middle" font-size="11">OUT_FOR_DELIVERY)</text>
+            
+            <!-- 11. Update Database -->
+            <line x1="665" y1="550" x2="1170" y2="550" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="917" y="545" text-anchor="middle" font-size="11">11: UPDATE orders SET status = 'OUT_FOR_DELIVERY',</text>
+            <text x="917" y="560" text-anchor="middle" font-size="11">pickup_time = NOW() WHERE order_id = ?</text>
+            
+            <!-- 12. Start Location Tracking -->
+            <line x1="485" y1="590" x2="845" y2="590" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="665" y="585" text-anchor="middle" font-size="12">12: startTracking(deliveryId, orderId)</text>
+            
+            <!-- 13. Enable GPS -->
+            <rect x="850" y="600" width="120" height="30" fill="#e0f2f1" stroke="#333" rx="3"/>
+            <text x="910" y="618" text-anchor="middle" font-size="11">enableGPS()</text>
+            
+            <!-- 14. Notify Customer -->
+            <line x1="485" y1="640" x2="1035" y2="640" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="760" y="635" text-anchor="middle" font-size="12">14: notifyCustomer(orderId,</text>
+            <text x="760" y="650" text-anchor="middle" font-size="11">"Order on the way")</text>
+            
+            <!-- 15. Share Tracking Link -->
+            <rect x="1040" y="660" width="140" height="30" fill="#fce4ec" stroke="#333" rx="3"/>
+            <text x="1110" y="678" text-anchor="middle" font-size="11">sendTrackingLink()</text>
+            
+            <!-- 16. Success Response -->
+            <line x1="300" y1="710" x2="115" y2="710" stroke="#ff9800" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-orange)"/>
+            <text x="207" y="705" text-anchor="middle" font-size="12" fill="#ff9800">16: "Delivery started"</text>
+            
+            <!-- PART 3: Complete Delivery (OUT_FOR_DELIVERY → DELIVERED) -->
+            <rect x="30" y="760" width="1190" height="450" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="780" font-size="14" fill="#4caf50" font-weight="bold">STEP 3: Complete Delivery</text>
+            
+            <!-- 17. Arrive at Location -->
+            <rect x="120" y="800" width="120" height="25" fill="#e8f5e9" stroke="#4caf50" rx="3"/>
+            <text x="180" y="817" text-anchor="middle" font-size="11">Arrived at address</text>
+            
+            <!-- 18. Confirm Delivery -->
+            <line x1="115" y1="850" x2="300" y2="850" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="207" y="845" text-anchor="middle" font-size="12">18: confirmDelivery(orderId)</text>
+            
+            <!-- 19. Process Delivery -->
+            <line x1="300" y1="880" x2="485" y2="880" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="392" y="875" text-anchor="middle" font-size="12">19: completeDelivery(orderId,</text>
+            <text x="392" y="890" text-anchor="middle" font-size="11">deliveryProof)</text>
+            
+            <!-- 20. Verify Location -->
+            <line x1="485" y1="920" x2="845" y2="920" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="665" y="915" text-anchor="middle" font-size="12">20: verifyDeliveryLocation()</text>
+            
+            <!-- 21. Location Match -->
+            <line x1="845" y1="950" x2="485" y2="950" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="665" y="945" text-anchor="middle" font-size="12" fill="#4caf50">21: locationVerified = true</text>
+            
+            <!-- 22. Update to Delivered -->
+            <line x1="485" y1="980" x2="665" y2="980" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="575" y="975" text-anchor="middle" font-size="12">22: updateStatus(orderId,</text>
+            <text x="575" y="990" text-anchor="middle" font-size="11">DELIVERED)</text>
+            
+            <!-- 23. Update Database -->
+            <line x1="665" y1="1010" x2="1170" y2="1010" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="917" y="1005" text-anchor="middle" font-size="11">23: UPDATE orders SET status = 'DELIVERED',</text>
+            <text x="917" y="1020" text-anchor="middle" font-size="11">delivery_time = NOW(), proof = ? WHERE order_id = ?</text>
+            
+            <!-- 24. Stop Tracking -->
+            <line x1="485" y1="1050" x2="845" y2="1050" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="665" y="1045" text-anchor="middle" font-size="12">24: stopTracking(deliveryId)</text>
+            
+            <!-- 25. Process Payment -->
+            <rect x="490" y="1070" width="120" height="30" fill="#e8f5e9" stroke="#333" rx="3"/>
+            <text x="550" y="1088" text-anchor="middle" font-size="11">processPayment()</text>
+            
+            <!-- 26. Trigger Rating Prompt -->
+            <line x1="485" y1="1120" x2="1035" y2="1120" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="760" y="1115" text-anchor="middle" font-size="12">26: triggerRatingPrompt(orderId)</text>
+            
+            <!-- 27. Send Confirmation -->
+            <line x1="1035" y1="1150" x2="115" y2="1150" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="575" y="1145" text-anchor="middle" font-size="12" fill="#4caf50">27: "Order delivered successfully"</text>
+            
+            <!-- 28. Update Earnings -->
+            <rect x="305" y="1170" width="140" height="30" fill="#e8f5e9" stroke="#4caf50" rx="3"/>
+            <text x="375" y="1188" text-anchor="middle" font-size="11">updateEarnings(+$5.00)</text>
+            
+            <!-- PART 4: Exceptional Flows -->
+            <rect x="30" y="1230" width="1190" height="300" fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="1250" font-size="14" fill="#f44336" font-weight="bold">EXCEPTIONAL FLOWS</text>
+            
+            <!-- E1: Customer Unreachable -->
+            <g transform="translate(50, 1270)">
+                <rect x="0" y="0" width="350" height="80" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="175" y="20" text-anchor="middle" font-size="12" font-weight="bold">E1: Customer Unreachable</text>
+                <text x="175" y="35" text-anchor="middle" font-size="10">• Call customer → No answer</text>
+                <text x="175" y="50" text-anchor="middle" font-size="10">• Wait 5 minutes → Try again</text>
+                <text x="175" y="65" text-anchor="middle" font-size="10">• After 3 attempts → Mark FAILED_DELIVERY</text>
+            </g>
+            
+            <!-- E2: Wrong Address -->
+            <g transform="translate(420, 1270)">
+                <rect x="0" y="0" width="350" height="80" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="175" y="20" text-anchor="middle" font-size="12" font-weight="bold">E2: Wrong Address</text>
+                <text x="175" y="35" text-anchor="middle" font-size="10">• GPS doesn't match delivery address</text>
+                <text x="175" y="50" text-anchor="middle" font-size="10">• Contact customer for clarification</text>
+                <text x="175" y="65" text-anchor="middle" font-size="10">• Flag order → Possible complaint</text>
+            </g>
+            
+            <!-- E3: Delivery Refused -->
+            <g transform="translate(790, 1270)">
+                <rect x="0" y="0" width="380" height="80" fill="#fff3e0" stroke="#ff9800" rx="3"/>
+                <text x="190" y="20" text-anchor="middle" font-size="12" font-weight="bold">E3: Delivery Refused</text>
+                <text x="190" y="35" text-anchor="middle" font-size="10">• Customer refuses to accept order</text>
+                <text x="190" y="50" text-anchor="middle" font-size="10">• Document reason (wrong order, quality, etc.)</text>
+                <text x="190" y="65" text-anchor="middle" font-size="10">• Return to restaurant → Manager review</text>
+            </g>
+            
+            <!-- Failed Delivery Flow -->
+            <line x1="115" y1="1380" x2="300" y2="1380" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            <text x="207" y="1375" text-anchor="middle" font-size="11" fill="#f44336">E4: markFailedDelivery(orderId, reason)</text>
+            
+            <line x1="300" y1="1410" x2="485" y2="1410" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            <text x="392" y="1405" text-anchor="middle" font-size="11" fill="#f44336">E5: handleDeliveryFailure()</text>
+            
+            <line x1="485" y1="1440" x2="1035" y2="1440" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            <text x="760" y="1435" text-anchor="middle" font-size="11" fill="#f44336">E6: notifyManager(failure)</text>
+            
+            <rect x="490" y="1460" width="150" height="40" fill="#ffebee" stroke="#f44336" rx="3"/>
+            <text x="565" y="1475" text-anchor="middle" font-size="11">status = FAILED_DELIVERY</text>
+            <text x="565" y="1490" text-anchor="middle" font-size="11">Return order to restaurant</text>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#ff9800"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>🔄 Delivery Status State Machine</h2>
+        <div class="info-box">
+            <strong>Status Transitions:</strong><br>
+            • <strong>READY_FOR_DELIVERY</strong> → ASSIGNED (Manager assigns courier)<br>
+            • <strong>ASSIGNED</strong> → OUT_FOR_DELIVERY (Courier starts delivery)<br>
+            • <strong>OUT_FOR_DELIVERY</strong> → DELIVERED (Successful delivery)<br>
+            • <strong>OUT_FOR_DELIVERY</strong> → FAILED_DELIVERY (Customer unreachable)<br>
+            • <strong>FAILED_DELIVERY</strong> → ASSIGNED (Retry with same/different courier)<br><br>
+            
+            <strong>Terminal States:</strong><br>
+            • DELIVERED - Order successfully completed<br>
+            • CANCELLED - Order cancelled (refund processed)<br>
+            • FAILED_DELIVERY - After max retry attempts
+        </div>
+
+        <h2>💻 Detailed Pseudocode</h2>
+        <div class="pseudocode">
+<span class="comment">// TrueBite Delivery System - UC-12</span>
+
+<span class="keyword">CLASS</span> <span class="function">DeliveryService</span>:
+    
+    <span class="keyword">FUNCTION</span> startDelivery(orderId: String, deliveryPersonId: String):
+        <span class="keyword">INPUT</span>: {
+            orderId: String,
+            deliveryPersonId: String
+        }
+        
+        <span class="comment">// Step 1: Fetch and validate order</span>
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">IF</span> order == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not found"</span>)
+        
+        <span class="comment">// Step 2: Verify delivery person assignment</span>
+        <span class="keyword">IF</span> order.assignedDeliveryId != deliveryPersonId:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not assigned to you"</span>)
+        
+        <span class="comment">// Step 3: Check current status</span>
+        <span class="keyword">IF</span> order.status != <span class="string">"ASSIGNED"</span> AND order.status != <span class="string">"READY_FOR_DELIVERY"</span>:
+            <span class="keyword">IF</span> order.status == <span class="string">"OUT_FOR_DELIVERY"</span>:
+                <span class="keyword">RETURN</span> Result(
+                    warning: <span class="string">"Delivery already in progress"</span>,
+                    trackingId: order.trackingId
+                )
+            <span class="keyword">ELSE</span>:
+                <span class="keyword">RETURN</span> Result(
+                    error: <span class="string">"Invalid status for delivery start"</span>,
+                    currentStatus: order.status
+                )
+        
+        <span class="comment">// Step 4: Begin transaction for status update</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Update order status</span>
+            order.status = <span class="string">"OUT_FOR_DELIVERY"</span>
+            order.pickupTime = now()
+            order.estimatedDeliveryTime = now() + calculateDeliveryTime(order)
+            order.lastUpdated = now()
+            
+            <span class="comment">// Create tracking record</span>
+            tracking = new DeliveryTracking()
+            tracking.trackingId = generateTrackingId()
+            tracking.orderId = orderId
+            tracking.deliveryPersonId = deliveryPersonId
+            tracking.startTime = now()
+            tracking.pickupLocation = getRestaurantLocation(order.restaurantId)
+            tracking.deliveryLocation = order.deliveryAddress
+            tracking.status = <span class="string">"ACTIVE"</span>
+            
+            order.trackingId = tracking.trackingId
+            
+            <span class="comment">// Save to database</span>
+            OrderRepository.update(order)
+            TrackingRepository.save(tracking)
+            
+            <span class="comment">// Log delivery start</span>
+            deliveryLog = new DeliveryLog()
+            deliveryLog.orderId = orderId
+            deliveryLog.deliveryPersonId = deliveryPersonId
+            deliveryLog.action = <span class="string">"START_DELIVERY"</span>
+            deliveryLog.timestamp = now()
+            deliveryLog.location = tracking.pickupLocation
+            DeliveryLogRepository.save(deliveryLog)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Step 5: Start location tracking</span>
+        LocationService.startTracking(
+            deliveryPersonId: deliveryPersonId,
+            trackingId: tracking.trackingId,
+            updateInterval: 30  <span class="comment">// seconds</span>
+        )
+        
+        <span class="comment">// Step 6: Send notifications</span>
+        NotificationService.notifyCustomer(
+            userId: order.customerId,
+            message: <span class="string">"Your order is on the way!"</span>,
+            trackingLink: generateTrackingLink(tracking.trackingId),
+            estimatedTime: order.estimatedDeliveryTime
+        )
+        
+        <span class="comment">// Send SMS if enabled</span>
+        <span class="keyword">IF</span> customer.smsNotifications:
+            SMSService.send(
+                phone: order.customerPhone,
+                message: <span class="string">"TrueBite: Order #"</span> + orderId + <span class="string">" is on the way. Track: "</span> + 
+                        generateShortLink(tracking.trackingId)
+            )
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            message: <span class="string">"Delivery started"</span>,
+            orderId: orderId,
+            trackingId: tracking.trackingId,
+            estimatedDeliveryTime: order.estimatedDeliveryTime,
+            deliveryAddress: order.deliveryAddress,
+            customerPhone: order.customerPhone
+        )
+    
+    <span class="keyword">FUNCTION</span> confirmDelivery(orderId: String, deliveryPersonId: String, deliveryData: DeliveryConfirmation):
+        <span class="keyword">INPUT</span>: {
+            orderId: String,
+            deliveryPersonId: String,
+            deliveryData: {
+                deliveryPhoto: File (optional),
+                customerSignature: String (optional),
+                deliveryNotes: String,
+                actualLocation: GeoPoint
+            }
+        }
+        
+        <span class="comment">// Step 1: Validate order and delivery person</span>
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">IF</span> order == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not found"</span>)
+        
+        <span class="keyword">IF</span> order.assignedDeliveryId != deliveryPersonId:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Not authorized for this delivery"</span>)
+        
+        <span class="keyword">IF</span> order.status != <span class="string">"OUT_FOR_DELIVERY"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Order not out for delivery"</span>,
+                currentStatus: order.status
+            )
+        
+        <span class="comment">// Step 2: Verify delivery location</span>
+        locationVerification = LocationService.verifyDeliveryLocation(
+            expectedLocation: order.deliveryAddress.coordinates,
+            actualLocation: deliveryData.actualLocation
+        )
+        
+        <span class="keyword">IF NOT</span> locationVerification.isWithinRange:
+            <span class="comment">// Location mismatch - flag for review</span>
+            log.warn(<span class="string">"Delivery location mismatch for order "</span> + orderId)
+            order.deliveryFlags.add(<span class="string">"LOCATION_MISMATCH"</span>)
+            
+            <span class="comment">// Still allow delivery but notify manager</span>
+            NotificationService.notifyManager(
+                <span class="string">"Location mismatch on delivery"</span>,
+                orderId,
+                locationVerification.distance
+            )
+        
+        <span class="comment">// Step 3: Process delivery proof</span>
+        deliveryProof = new DeliveryProof()
+        deliveryProof.orderId = orderId
+        deliveryProof.deliveryPersonId = deliveryPersonId
+        deliveryProof.deliveryTime = now()
+        deliveryProof.actualLocation = deliveryData.actualLocation
+        deliveryProof.notes = deliveryData.deliveryNotes
+        
+        <span class="comment">// Upload photo if provided</span>
+        <span class="keyword">IF</span> deliveryData.deliveryPhoto != null:
+            photoUrl = FileService.uploadDeliveryPhoto(
+                orderId: orderId,
+                photo: deliveryData.deliveryPhoto
+            )
+            deliveryProof.photoUrl = photoUrl
+        
+        <span class="comment">// Store signature if provided</span>
+        <span class="keyword">IF</span> deliveryData.customerSignature != null:
+            deliveryProof.signatureData = deliveryData.customerSignature
+        
+        <span class="comment">// Step 4: Complete delivery</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Update order status</span>
+            order.status = <span class="string">"DELIVERED"</span>
+            order.deliveryTime = now()
+            order.actualDeliveryTime = now() - order.pickupTime
+            order.deliveryProofId = deliveryProof.id
+            order.lastUpdated = now()
+            
+            <span class="comment">// Save proof</span>
+            DeliveryProofRepository.save(deliveryProof)
+            
+            <span class="comment">// Update order</span>
+            OrderRepository.update(order)
+            
+            <span class="comment">// Stop tracking</span>
+            tracking = TrackingRepository.findById(order.trackingId)
+            tracking.endTime = now()
+            tracking.status = <span class="string">"COMPLETED"</span>
+            tracking.totalDistance = calculateTotalDistance(tracking.locationHistory)
+            TrackingRepository.update(tracking)
+            
+            <span class="comment">// Update delivery person stats</span>
+            updateDeliveryPersonStats(deliveryPersonId, order)
+            
+            <span class="comment">// Process payment</span>
+            processDeliveryPayment(order)
+            
+            <span class="comment">// Log completion</span>
+            deliveryLog = new DeliveryLog()
+            deliveryLog.orderId = orderId
+            deliveryLog.deliveryPersonId = deliveryPersonId
+            deliveryLog.action = <span class="string">"COMPLETE_DELIVERY"</span>
+            deliveryLog.timestamp = now()
+            deliveryLog.location = deliveryData.actualLocation
+            DeliveryLogRepository.save(deliveryLog)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Step 5: Stop location tracking</span>
+        LocationService.stopTracking(deliveryPersonId)
+        
+        <span class="comment">// Step 6: Trigger post-delivery actions</span>
+        <span class="comment">// Send confirmation to customer</span>
+        NotificationService.notifyCustomer(
+            userId: order.customerId,
+            message: <span class="string">"Your order has been delivered! Enjoy your meal."</span>,
+            orderId: orderId
+        )
+        
+        <span class="comment">// Trigger rating prompt after 5 minutes</span>
+        SchedulerService.schedule(
+            taskId: <span class="string">"RATING_PROMPT_"</span> + orderId,
+            runAt: now() + 5.minutes,
+            action: () -> triggerRatingPrompt(orderId)
+        )
+        
+        <span class="comment">// Update delivery person earnings</span>
+        updateEarnings(deliveryPersonId, order.deliveryFee)
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            message: <span class="string">"Delivery completed successfully"</span>,
+            orderId: orderId,
+            deliveryTime: order.deliveryTime,
+            earnings: order.deliveryFee,
+            nextAvailableOrder: getNextAvailableOrder(deliveryPersonId)
+        )
+    
+    <span class="keyword">FUNCTION</span> handleDeliveryFailure(orderId: String, deliveryPersonId: String, failureData: DeliveryFailure):
+        <span class="keyword">INPUT</span>: {
+            orderId: String,
+            deliveryPersonId: String,
+            failureData: {
+                reason: String, <span class="comment">// CUSTOMER_UNREACHABLE, WRONG_ADDRESS, REFUSED, OTHER</span>
+                attemptCount: Integer,
+                notes: String,
+                evidence: File[]
+            }
+        }
+        
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">SWITCH</span> failureData.reason:
+            <span class="keyword">CASE</span> <span class="string">"CUSTOMER_UNREACHABLE"</span>:
+                <span class="keyword">IF</span> failureData.attemptCount < MAX_DELIVERY_ATTEMPTS:
+                    <span class="comment">// Schedule retry</span>
+                    scheduleDeliveryRetry(order, failureData.attemptCount + 1)
+                    <span class="keyword">RETURN</span> Result(
+                        action: <span class="string">"RETRY_SCHEDULED"</span>,
+                        retryIn: RETRY_DELAY_MINUTES
+                    )
+                <span class="keyword">ELSE</span>:
+                    <span class="comment">// Max attempts reached</span>
+                    markAsFailedDelivery(order, failureData)
+                    returnOrderToRestaurant(order)
+                    processRefund(order)
+            
+            <span class="keyword">CASE</span> <span class="string">"WRONG_ADDRESS"</span>:
+                <span class="comment">// Flag order and create complaint</span>
+                createAutomaticComplaint(order, <span class="string">"Wrong delivery address provided"</span>)
+                
+                <span class="comment">// Attempt to contact customer</span>
+                contactResult = attemptCustomerContact(order.customerPhone)
+                
+                <span class="keyword">IF</span> contactResult.resolved:
+                    <span class="comment">// Update address and retry</span>
+                    order.deliveryAddress = contactResult.newAddress
+                    OrderRepository.update(order)
+                    <span class="keyword">RETURN</span> resumeDelivery(order)
+                <span class="keyword">ELSE</span>:
+                    markAsFailedDelivery(order, failureData)
+            
+            <span class="keyword">CASE</span> <span class="string">"REFUSED"</span>:
+                <span class="comment">// Customer refused delivery</span>
+                order.status = <span class="string">"DELIVERY_REFUSED"</span>
+                order.refusalReason = failureData.notes
+                OrderRepository.update(order)
+                
+                <span class="comment">// Return to restaurant</span>
+                returnOrderToRestaurant(order)
+                
+                <span class="comment">// Process based on refusal reason</span>
+                <span class="keyword">IF</span> isQualityIssue(failureData.notes):
+                    processFullRefund(order)
+                    createQualityComplaint(order)
+                <span class="keyword">ELSE</span>:
+                    <span class="comment">// Partial refund (minus delivery fee)</span>
+                    processPartialRefund(order)
+        
+        <span class="comment">// Notify all parties</span>
+        NotificationService.notifyManager(
+            <span class="string">"Delivery failed"</span>,
+            order,
+            failureData
+        )
+        
+        NotificationService.notifyCustomer(
+            userId: order.customerId,
+            message: <span class="string">"Delivery could not be completed: "</span> + failureData.reason
+        )
+        
+        <span class="comment">// Update delivery person stats</span>
+        updateFailureStats(deliveryPersonId, failureData.reason)
+        
+        <span class="keyword">RETURN</span> Result(
+            status: <span class="string">"FAILED_DELIVERY"</span>,
+            orderId: orderId,
+            reason: failureData.reason,
+            action: determineNextAction(order, failureData)
+        )
+
+<span class="comment">// Helper Functions</span>
+<span class="keyword">FUNCTION</span> calculateDeliveryTime(order: Order):
+    distance = LocationService.calculateDistance(
+        order.restaurantAddress,
+        order.deliveryAddress
+    )
+    
+    <span class="comment">// Base time calculation (avg 20 mph in city)</span>
+    travelTime = (distance / 20) * 60  <span class="comment">// minutes</span>
+    
+    <span class="comment">// Add factors</span>
+    trafficMultiplier = TrafficService.getCurrentTrafficFactor()
+    weatherMultiplier = WeatherService.getWeatherFactor()
+    
+    estimatedTime = travelTime * trafficMultiplier * weatherMultiplier
+    
+    <span class="comment">// Add buffer</span>
+    <span class="keyword">RETURN</span> estimatedTime + DELIVERY_BUFFER_MINUTES
+
+<span class="keyword">FUNCTION</span> updateDeliveryPersonStats(deliveryPersonId: String, order: Order):
+    stats = DeliveryStatsRepository.findByDeliveryPerson(deliveryPersonId)
+    
+    <span class="keyword">IF</span> stats == null:
+        stats = new DeliveryStats(deliveryPersonId)
+    
+    stats.totalDeliveries++
+    stats.totalEarnings += order.deliveryFee
+    stats.totalDistance += order.deliveryDistance
+    stats.averageDeliveryTime = 
+        ((stats.averageDeliveryTime * (stats.totalDeliveries - 1)) + 
+         order.actualDeliveryTime) / stats.totalDeliveries
+    
+    <span class="comment">// Update rating if this was on-time</span>
+    <span class="keyword">IF</span> order.deliveryTime <= order.estimatedDeliveryTime:
+        stats.onTimeDeliveries++
+        stats.onTimeRate = stats.onTimeDeliveries / stats.totalDeliveries
+    
+    stats.lastDeliveryTime = now()
+    
+    DeliveryStatsRepository.save(stats)
+
+<span class="keyword">FUNCTION</span> triggerRatingPrompt(orderId: String):
+    order = OrderRepository.findById(orderId)
+    
+    <span class="keyword">IF</span> order.status == <span class="string">"DELIVERED"</span> AND order.ratingId == null:
+        NotificationService.sendRatingPrompt(
+            userId: order.customerId,
+            orderId: orderId,
+            type: <span class="string">"DELIVERY_AND_FOOD"</span>
+        )
+</div>
+
+        <h2>📋 Data Structures</h2>
+        <table>
+            <tr>
+                <th>Entity</th>
+                <th>Fields</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><strong>Order</strong></td>
+                <td>orderId, status, assignedDeliveryId, pickupTime, deliveryTime, trackingId</td>
+                <td>Order tracking through delivery</td>
+            </tr>
+            <tr>
+                <td><strong>DeliveryTracking</strong></td>
+                <td>trackingId, orderId, deliveryPersonId, locationHistory[], status</td>
+                <td>Real-time location tracking</td>
+            </tr>
+            <tr>
+                <td><strong>DeliveryProof</strong></td>
+                <td>orderId, photoUrl, signatureData, actualLocation, notes</td>
+                <td>Proof of delivery</td>
+            </tr>
+            <tr>
+                <td><strong>DeliveryLog</strong></td>
+                <td>orderId, deliveryPersonId, action, timestamp, location</td>
+                <td>Delivery activity audit</td>
+            </tr>
+            <tr>
+                <td><strong>DeliveryStats</strong></td>
+                <td>deliveryPersonId, totalDeliveries, onTimeRate, averageTime, totalEarnings</td>
+                <td>Performance metrics</td>
+            </tr>
+        </table>
+
+        <h2>🧪 Test Scenarios</h2>
+        <div class="success-flow">
+            <strong>Test 1: Successful Delivery</strong><br>
+            • Courier picks up order (ASSIGNED → OUT_FOR_DELIVERY)<br>
+            • GPS tracking active<br>
+            • Customer notified with tracking link<br>
+            • Delivery completed at correct location<br>
+            • Status → DELIVERED<br>
+            • Payment processed, rating prompt scheduled
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 2: Customer Unreachable</strong><br>
+            • Courier arrives at location<br>
+            • Calls customer - no answer<br>
+            • Waits 5 minutes, tries again (3 attempts)<br>
+            • Expected: Mark as FAILED_DELIVERY<br>
+            • Manager notified<br>
+            • Order returned to restaurant
+        </div>
+
+        <div class="warning-flow">
+            <strong>Test 3: Wrong Address</strong><br>
+            • GPS shows different location<br>
+            • System flags location mismatch<br>
+            • Contact customer for clarification<br>
+            • If resolved: Update address and continue<br>
+            • If not: Mark as failed, create complaint
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 4: Delivery Refused</strong><br>
+            • Customer refuses order (wrong items, quality)<br>
+            • Document reason<br>
+            • Return to restaurant<br>
+            • Process refund based on reason<br>
+            • Quality complaint auto-created if applicable
+        </div>
+    </div>
+</body>
+</html>

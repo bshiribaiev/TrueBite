@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-06 Rate Order / Delivery Sequence Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #ffd93d;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "⭐";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #ffd93d15 0%, #ff6b6b15 100%);
+            border-left: 4px solid #ffd93d;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1250px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #ffd93d;
+            color: #2c3e50;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .customer { background: #3498db; color: white; }
+        .vip { background: #f39c12; color: white; }
+        .rating-display {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        .star {
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star.filled {
+            color: #ffd93d;
+        }
+        .rating-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #fafafa;
+        }
+        .rating-card h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .comment-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            min-height: 80px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-06: Rate Order / Delivery</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-06 - Rate Order and Delivery Service<br>
+            <strong>Actors:</strong> 
+            <span class="user-badge customer">Customer</span>
+            <span class="user-badge vip">VIP Customer</span><br>
+            <strong>Goal:</strong> Collect ratings for dishes and delivery service, update reputation scores<br>
+            <strong>Preconditions:</strong> Order status = DELIVERED, user authenticated<br>
+            <strong>Postconditions:</strong> Ratings recorded, reputation scores updated for chef and delivery person
+        </div>
+
+        <h2>🌟 Rating Interface Preview</h2>
+        <div class="rating-card">
+            <h3>Rate Your Order #1234</h3>
+            <p><strong>Dish: Grilled Salmon</strong> - Chef: Maria</p>
+            <div class="rating-display">
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star">★</span>
+                <span style="margin-left: 10px;">4/5</span>
+            </div>
+            
+            <p><strong>Delivery Service</strong> - Delivered by: John</p>
+            <div class="rating-display">
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span class="star filled">★</span>
+                <span style="margin-left: 10px;">5/5</span>
+            </div>
+            
+            <textarea class="comment-box" placeholder="Optional: Share your experience...">Great food! Delivery was on time and the driver was very friendly.</textarea>
+        </div>
+
+        <h2>📊 Main Sequence Diagram - Rating Flow</h2>
+        <svg viewBox="0 0 1250 1300" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1250" height="1300" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="625" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">
+                Order &amp; Delivery Rating System - Complete Flow
+            </text>
+            
+            <!-- Actors and Objects -->
+            <!-- User/UI -->
+            <rect x="50" y="60" width="100" height="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+            <text x="100" y="85" text-anchor="middle" font-weight="bold">User/UI</text>
+            <line x1="100" y1="100" x2="100" y2="1250" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- OrderService -->
+            <rect x="200" y="60" width="120" height="40" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+            <text x="260" y="85" text-anchor="middle" font-weight="bold">OrderService</text>
+            <line x1="260" y1="100" x2="260" y2="1250" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- ReputationService -->
+            <rect x="370" y="60" width="150" height="40" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+            <text x="445" y="85" text-anchor="middle" font-weight="bold">ReputationService</text>
+            <line x1="445" y1="100" x2="445" y2="1250" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- RatingRepository -->
+            <rect x="570" y="60" width="140" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+            <text x="640" y="85" text-anchor="middle" font-weight="bold">RatingRepository</text>
+            <line x1="640" y1="100" x2="640" y2="1250" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- ReputationRepository -->
+            <rect x="760" y="60" width="170" height="40" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="5"/>
+            <text x="845" y="85" text-anchor="middle" font-weight="bold">ReputationRepository</text>
+            <line x1="845" y1="100" x2="845" y2="1250" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Database -->
+            <rect x="980" y="60" width="100" height="40" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+            <text x="1030" y="85" text-anchor="middle" font-weight="bold">Database</text>
+            <line x1="1030" y1="100" x2="1030" y2="1250" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- NotificationService -->
+            <rect x="1130" y="60" width="100" height="40" fill="#fce4ec" stroke="#e91e63" stroke-width="2" rx="5"/>
+            <text x="1180" y="85" text-anchor="middle" font-weight="bold">Notification</text>
+            <line x1="1180" y1="100" x2="1180" y2="1250" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- PART 1: Order Completion Trigger -->
+            <rect x="30" y="120" width="1200" height="200" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="140" font-size="14" fill="#4caf50" font-weight="bold">TRIGGER: Order Delivered</text>
+            
+            <!-- 1. Order Marked Delivered -->
+            <rect x="105" y="160" width="150" height="30" fill="#e8f5e9" stroke="#4caf50" rx="3"/>
+            <text x="180" y="178" text-anchor="middle" font-size="11">Order #1234 Delivered</text>
+            
+            <!-- 2. Check Delivery Status -->
+            <line x1="100" y1="210" x2="260" y2="210" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="180" y="205" text-anchor="middle" font-size="12">2: checkOrderStatus(orderId)</text>
+            
+            <!-- 3. Verify Delivered -->
+            <line x1="260" y1="240" x2="100" y2="240" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="180" y="235" text-anchor="middle" font-size="12" fill="#4caf50">3: status = "DELIVERED"</text>
+            
+            <!-- 4. Show Rating Prompt -->
+            <rect x="105" y="260" width="120" height="30" fill="#fff3e0" stroke="#ff9800" rx="3"/>
+            <text x="165" y="275" text-anchor="middle" font-size="11">showRatingPrompt()</text>
+            <text x="165" y="285" text-anchor="middle" font-size="9">⭐ Rate Your Experience</text>
+            
+            <!-- PART 2: Normal Rating Flow -->
+            <rect x="30" y="330" width="1200" height="600" fill="none" stroke="#1976d2" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="350" font-size="14" fill="#1976d2" font-weight="bold">NORMAL FLOW: Submit Ratings</text>
+            
+            <!-- 5. Submit Ratings -->
+            <line x1="100" y1="380" x2="445" y2="380" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="272" y="370" text-anchor="middle" font-size="12">5: submitRatings(orderId=1234,</text>
+            <text x="272" y="385" text-anchor="middle" font-size="12">dishRating=4, deliveryRating=5,</text>
+            <text x="272" y="400" text-anchor="middle" font-size="12">comment="Great food!")</text>
+            
+            <!-- 6. Validate Order Status -->
+            <line x1="445" y1="420" x2="260" y2="420" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="352" y="415" text-anchor="middle" font-size="12">6: getOrder(orderId)</text>
+            
+            <!-- 7. Return Order -->
+            <line x1="260" y1="450" x2="445" y2="450" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="352" y="445" text-anchor="middle" font-size="12">7: Order{status: "DELIVERED",</text>
+            <text x="352" y="460" text-anchor="middle" font-size="12">chefId: 123, deliveryId: 456}</text>
+            
+            <!-- 8. Check Duplicate -->
+            <line x1="445" y1="490" x2="640" y2="490" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="542" y="485" text-anchor="middle" font-size="12">8: existsForOrder(orderId, userId)</text>
+            
+            <!-- 9. Query Database -->
+            <line x1="640" y1="510" x2="1030" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="835" y="505" text-anchor="middle" font-size="11">9: SELECT * FROM ratings</text>
+            <text x="835" y="520" text-anchor="middle" font-size="11">WHERE order_id = ? AND rater_id = ?</text>
+            
+            <!-- 10. No Duplicate Found -->
+            <line x1="1030" y1="540" x2="640" y2="540" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="835" y="535" text-anchor="middle" font-size="12">10: null (no duplicate)</text>
+            
+            <!-- 11. Create Dish Rating -->
+            <line x1="445" y1="570" x2="640" y2="570" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="542" y="565" text-anchor="middle" font-size="12">11: saveRating(type="DISH",</text>
+            <text x="542" y="580" text-anchor="middle" font-size="12">targetId=chefId, score=4)</text>
+            
+            <!-- 12. Insert Rating -->
+            <line x1="640" y1="600" x2="1030" y2="600" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="835" y="595" text-anchor="middle" font-size="11">12: INSERT INTO ratings</text>
+            <text x="835" y="610" text-anchor="middle" font-size="11">(order_id, rater_id, target_user_id, score, type)</text>
+            
+            <!-- 13. Create Delivery Rating -->
+            <line x1="445" y1="640" x2="640" y2="640" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="542" y="635" text-anchor="middle" font-size="12">13: saveRating(type="DELIVERY",</text>
+            <text x="542" y="650" text-anchor="middle" font-size="12">targetId=deliveryId, score=5)</text>
+            
+            <!-- 14. Insert Delivery Rating -->
+            <line x1="640" y1="670" x2="1030" y2="670" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="835" y="665" text-anchor="middle" font-size="11">14: INSERT INTO ratings</text>
+            
+            <!-- 15. Update Chef Reputation -->
+            <line x1="445" y1="700" x2="845" y2="700" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="645" y="695" text-anchor="middle" font-size="12">15: updateReputationScore(chefId, +4)</text>
+            
+            <!-- 16. Calculate New Score -->
+            <rect x="850" y="720" width="140" height="40" fill="#ffebee" stroke="#333" rx="3"/>
+            <text x="920" y="735" text-anchor="middle" font-size="11">recalculateScore()</text>
+            <text x="920" y="750" text-anchor="middle" font-size="10">AVG(ratings) = 4.3</text>
+            
+            <!-- 17. Update Delivery Reputation -->
+            <line x1="445" y1="780" x2="845" y2="780" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="645" y="775" text-anchor="middle" font-size="12">17: updateReputationScore(deliveryId, +5)</text>
+            
+            <!-- 18. Update Customer Fairness -->
+            <rect x="450" y="810" width="180" height="30" fill="#e8f5e9" stroke="#333" rx="3"/>
+            <text x="540" y="828" text-anchor="middle" font-size="11">updateCustomerFairness(userId)</text>
+            
+            <!-- 19. Send Notifications -->
+            <line x1="445" y1="860" x2="1180" y2="860" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="812" y="855" text-anchor="middle" font-size="12">19: notifyRatingReceived(chef, delivery)</text>
+            
+            <!-- 20. Success Response -->
+            <line x1="445" y1="890" x2="100" y2="890" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="272" y="885" text-anchor="middle" font-size="12" fill="#4caf50">20: success {message: "Thank you for rating!"}</text>
+            
+            <!-- Final Success State -->
+            <rect x="30" y="910" width="140" height="30" fill="#4caf50" stroke="#333" rx="5"/>
+            <text x="100" y="930" text-anchor="middle" font-size="12" fill="white" font-weight="bold">Ratings Recorded</text>
+            
+            <!-- PART 3: Exceptional Flows -->
+            <rect x="30" y="960" width="1200" height="250" fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="980" font-size="14" fill="#f44336" font-weight="bold">EXCEPTIONAL FLOWS</text>
+            
+            <!-- E1: Order Not Delivered -->
+            <g transform="translate(50, 1000)">
+                <rect x="0" y="0" width="350" height="60" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="175" y="20" text-anchor="middle" font-size="12" font-weight="bold">E1: Order Not Yet Delivered</text>
+                <text x="175" y="35" text-anchor="middle" font-size="10">Order status = "IN_KITCHEN" or "OUT_FOR_DELIVERY"</text>
+                <text x="175" y="50" text-anchor="middle" font-size="10">→ Return error: "Cannot rate undelivered order"</text>
+            </g>
+            
+            <!-- E2: Duplicate Rating -->
+            <g transform="translate(420, 1000)">
+                <rect x="0" y="0" width="350" height="60" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="175" y="20" text-anchor="middle" font-size="12" font-weight="bold">E2: Duplicate Rating Attempt</text>
+                <text x="175" y="35" text-anchor="middle" font-size="10">Rating already exists for this order by user</text>
+                <text x="175" y="50" text-anchor="middle" font-size="10">→ Return error: "You have already rated this order"</text>
+            </g>
+            
+            <!-- E3: Invalid Score -->
+            <g transform="translate(50, 1070)">
+                <rect x="0" y="0" width="350" height="60" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="175" y="20" text-anchor="middle" font-size="12" font-weight="bold">E3: Invalid Rating Score</text>
+                <text x="175" y="35" text-anchor="middle" font-size="10">Score not in range [1-5]</text>
+                <text x="175" y="50" text-anchor="middle" font-size="10">→ Validation error: "Rating must be 1-5 stars"</text>
+            </g>
+            
+            <!-- E4: Order Not Found -->
+            <g transform="translate(420, 1070)">
+                <rect x="0" y="0" width="350" height="60" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="175" y="20" text-anchor="middle" font-size="12" font-weight="bold">E4: Order Not Found</text>
+                <text x="175" y="35" text-anchor="middle" font-size="10">Invalid order ID or not owned by user</text>
+                <text x="175" y="50" text-anchor="middle" font-size="10">→ Return error: "Order not found"</text>
+            </g>
+            
+            <!-- E5: Rating Window Expired -->
+            <g transform="translate(790, 1070)">
+                <rect x="0" y="0" width="350" height="60" fill="#ffebee" stroke="#ff9800" rx="3"/>
+                <text x="175" y="20" text-anchor="middle" font-size="12" font-weight="bold">E5: Rating Window Expired (Optional)</text>
+                <text x="175" y="35" text-anchor="middle" font-size="10">Order delivered > 7 days ago</text>
+                <text x="175" y="50" text-anchor="middle" font-size="10">→ Warning: "Rating period has expired"</text>
+            </g>
+            
+            <!-- Alternative flow arrows for exceptions -->
+            <line x1="445" y1="430" x2="550" y2="430" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3"/>
+            <line x1="550" y1="430" x2="550" y2="1000" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-red)"/>
+            <text x="570" y="715" font-size="10" fill="#f44336">Exception Path</text>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>💻 Detailed Pseudocode</h2>
+        <div class="pseudocode">
+<span class="comment">// TrueBite Rating System - UC-06</span>
+
+<span class="keyword">CLASS</span> <span class="function">ReputationService</span>:
+    
+    <span class="keyword">FUNCTION</span> rateOrder(orderId: String, raterId: String, ratings: RatingData):
+        <span class="keyword">INPUT</span>: {
+            orderId: String,
+            raterId: String,
+            ratings: {
+                dishRating: Integer (1-5),
+                deliveryRating: Integer (1-5),
+                comment: String (optional)
+            }
+        }
+        
+        <span class="comment">// Step 1: Validate order status</span>
+        order = OrderService.getOrder(orderId)
+        
+        <span class="keyword">IF</span> order == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not found"</span>)
+        
+        <span class="keyword">IF</span> order.customerId != raterId:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Not authorized to rate this order"</span>)
+        
+        <span class="keyword">IF</span> order.status != <span class="string">"DELIVERED"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Cannot rate undelivered order"</span>,
+                currentStatus: order.status
+            )
+        
+        <span class="comment">// Step 2: Check for duplicate ratings</span>
+        existingRating = RatingRepository.existsForOrder(orderId, raterId)
+        
+        <span class="keyword">IF</span> existingRating:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"You have already rated this order"</span>,
+                existingRatingId: existingRating.id
+            )
+        
+        <span class="comment">// Step 3: Validate rating scores</span>
+        <span class="keyword">IF</span> ratings.dishRating < 1 OR ratings.dishRating > 5:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Dish rating must be between 1 and 5"</span>)
+        
+        <span class="keyword">IF</span> ratings.deliveryRating < 1 OR ratings.deliveryRating > 5:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Delivery rating must be between 1 and 5"</span>)
+        
+        <span class="comment">// Optional: Check rating window (e.g., 7 days)</span>
+        daysSinceDelivery = calculateDaysBetween(order.deliveredAt, now())
+        <span class="keyword">IF</span> daysSinceDelivery > RATING_WINDOW_DAYS:
+            <span class="comment">// Could be a soft warning or hard block</span>
+            log.warn(<span class="string">"Late rating attempt for order "</span> + orderId)
+        
+        <span class="comment">// Step 4: Create rating records</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            
+            <span class="comment">// Create dish/chef rating</span>
+            dishRating = new Rating()
+            dishRating.orderId = orderId
+            dishRating.raterId = raterId
+            dishRating.targetUserId = order.assignedChefId
+            dishRating.targetType = <span class="string">"CHEF"</span>
+            dishRating.score = ratings.dishRating
+            dishRating.comment = ratings.comment
+            dishRating.createdAt = now()
+            
+            RatingRepository.save(dishRating)
+            
+            <span class="comment">// Create delivery rating</span>
+            deliveryRating = new Rating()
+            deliveryRating.orderId = orderId
+            deliveryRating.raterId = raterId
+            deliveryRating.targetUserId = order.assignedDeliveryId
+            deliveryRating.targetType = <span class="string">"DELIVERY"</span>
+            deliveryRating.score = ratings.deliveryRating
+            deliveryRating.comment = ratings.comment
+            deliveryRating.createdAt = now()
+            
+            RatingRepository.save(deliveryRating)
+            
+            <span class="comment">// Step 5: Update reputation scores</span>
+            updateReputationScore(
+                userId: order.assignedChefId,
+                newRating: ratings.dishRating,
+                type: <span class="string">"CHEF"</span>
+            )
+            
+            updateReputationScore(
+                userId: order.assignedDeliveryId,
+                newRating: ratings.deliveryRating,
+                type: <span class="string">"DELIVERY"</span>
+            )
+            
+            <span class="comment">// Step 6: Update customer fairness score (optional)</span>
+            updateCustomerFairness(raterId, ratings)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Step 7: Send notifications</span>
+        NotificationService.notifyRatingReceived(
+            chefId: order.assignedChefId,
+            deliveryId: order.assignedDeliveryId,
+            score: {
+                dish: ratings.dishRating,
+                delivery: ratings.deliveryRating
+            }
+        )
+        
+        <span class="comment">// Step 8: Check for achievements/badges</span>
+        checkAndAwardBadges(order.assignedChefId, order.assignedDeliveryId)
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            message: <span class="string">"Thank you for rating! Your feedback helps us improve."</span>,
+            ratingIds: [dishRating.id, deliveryRating.id]
+        )
+    
+    <span class="keyword">FUNCTION</span> updateReputationScore(userId: String, newRating: Integer, type: String):
+        <span class="comment">// Fetch current reputation record</span>
+        reputation = ReputationRepository.findByUserId(userId)
+        
+        <span class="keyword">IF</span> reputation == null:
+            <span class="comment">// Create new reputation record</span>
+            reputation = new ReputationRecord()
+            reputation.userId = userId
+            reputation.role = type
+            reputation.score = newRating
+            reputation.totalRatings = 1
+            reputation.averageScore = newRating
+        <span class="keyword">ELSE</span>:
+            <span class="comment">// Update existing reputation</span>
+            oldTotal = reputation.totalRatings * reputation.averageScore
+            newTotal = oldTotal + newRating
+            reputation.totalRatings += 1
+            reputation.averageScore = newTotal / reputation.totalRatings
+            
+            <span class="comment">// Update score using weighted average</span>
+            reputation.score = calculateWeightedScore(
+                averageScore: reputation.averageScore,
+                totalRatings: reputation.totalRatings,
+                recentRatings: getRecentRatings(userId, 10)
+            )
+        
+        <span class="comment">// Check for warnings/rewards</span>
+        <span class="keyword">IF</span> reputation.averageScore < WARNING_THRESHOLD:
+            reputation.warningsCount += 1
+            <span class="keyword">IF</span> reputation.warningsCount >= MAX_WARNINGS:
+                reputation.blacklistedFlag = true
+                UserRepository.updateStatus(userId, <span class="string">"SUSPENDED"</span>)
+        
+        <span class="keyword">IF</span> reputation.averageScore >= EXCELLENCE_THRESHOLD:
+            <span class="comment">// Award bonus or badge</span>
+            AwardService.grantExcellenceBadge(userId)
+        
+        reputation.lastUpdated = now()
+        ReputationRepository.update(reputation)
+    
+    <span class="keyword">FUNCTION</span> updateCustomerFairness(customerId: String, ratings: RatingData):
+        <span class="comment">// Track if customer gives fair ratings</span>
+        customerRep = ReputationRepository.findByUserId(customerId)
+        
+        <span class="keyword">IF</span> customerRep == null:
+            customerRep = new ReputationRecord()
+            customerRep.userId = customerId
+            customerRep.role = <span class="string">"CUSTOMER"</span>
+        
+        <span class="comment">// Calculate fairness based on deviation from average</span>
+        avgDishRating = RatingRepository.getAverageForChef(order.assignedChefId)
+        avgDeliveryRating = RatingRepository.getAverageForDelivery(order.assignedDeliveryId)
+        
+        dishDeviation = abs(ratings.dishRating - avgDishRating)
+        deliveryDeviation = abs(ratings.deliveryRating - avgDeliveryRating)
+        
+        <span class="comment">// High deviation might indicate unfair rating patterns</span>
+        <span class="keyword">IF</span> dishDeviation > 2.0 OR deliveryDeviation > 2.0:
+            customerRep.fairnessScore -= 0.1
+            log.info(<span class="string">"Unusual rating pattern detected for customer "</span> + customerId)
+        <span class="keyword">ELSE</span>:
+            customerRep.fairnessScore += 0.05
+        
+        <span class="comment">// Clamp fairness score between 0 and 1</span>
+        customerRep.fairnessScore = max(0, min(1, customerRep.fairnessScore))
+        
+        ReputationRepository.update(customerRep)
+    
+    <span class="keyword">FUNCTION</span> calculateWeightedScore(averageScore: Float, totalRatings: Integer, recentRatings: List):
+        <span class="comment">// Weight recent ratings more heavily</span>
+        recentWeight = 0.3
+        overallWeight = 0.7
+        
+        recentAvg = recentRatings.average()
+        
+        <span class="comment">// Apply confidence factor based on number of ratings</span>
+        confidenceFactor = min(1.0, totalRatings / 20.0)
+        
+        weightedScore = (overallWeight * averageScore + 
+                        recentWeight * recentAvg) * confidenceFactor
+        
+        <span class="keyword">RETURN</span> round(weightedScore, 2)
+    
+    <span class="keyword">FUNCTION</span> getRatingsByOrder(orderId: String):
+        <span class="comment">// Retrieve all ratings for a specific order</span>
+        ratings = RatingRepository.findByOrderId(orderId)
+        
+        <span class="keyword">RETURN</span> ratings.map(r -> {
+            ratingDTO: new RatingDTO()
+            ratingDTO.id = r.id
+            ratingDTO.score = r.score
+            ratingDTO.comment = r.comment
+            ratingDTO.targetType = r.targetType
+            ratingDTO.createdAt = r.createdAt
+            <span class="keyword">RETURN</span> ratingDTO
+        })
+
+<span class="comment">// Repository Classes</span>
+<span class="keyword">CLASS</span> <span class="function">RatingRepository</span>:
+    
+    <span class="keyword">FUNCTION</span> existsForOrder(orderId: String, raterId: String):
+        sql = <span class="string">"""
+            SELECT COUNT(*) FROM ratings 
+            WHERE order_id = ? AND rater_id = ?
+        """</span>
+        count = database.queryScalar(sql, orderId, raterId)
+        <span class="keyword">RETURN</span> count > 0
+    
+    <span class="keyword">FUNCTION</span> save(rating: Rating):
+        sql = <span class="string">"""
+            INSERT INTO ratings (
+                rating_id, order_id, rater_id, target_user_id,
+                target_type, score, comment, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """</span>
+        database.execute(sql, rating.toArray())
+    
+    <span class="keyword">FUNCTION</span> getAverageForChef(chefId: String):
+        sql = <span class="string">"""
+            SELECT AVG(score) FROM ratings 
+            WHERE target_user_id = ? AND target_type = 'CHEF'
+        """</span>
+        <span class="keyword">RETURN</span> database.queryScalar(sql, chefId) ?? 0.0
+
+<span class="keyword">CLASS</span> <span class="function">ReputationRepository</span>:
+    
+    <span class="keyword">FUNCTION</span> findByUserId(userId: String):
+        sql = <span class="string">"""
+            SELECT * FROM reputation_records 
+            WHERE user_id = ?
+        """</span>
+        result = database.queryOne(sql, userId)
+        <span class="keyword">RETURN</span> result ? mapToReputationRecord(result) : null
+    
+    <span class="keyword">FUNCTION</span> update(reputation: ReputationRecord):
+        sql = <span class="string">"""
+            UPDATE reputation_records 
+            SET score = ?, average_score = ?, total_ratings = ?,
+                warnings_count = ?, blacklisted_flag = ?, 
+                fairness_score = ?, last_updated = ?
+            WHERE user_id = ?
+        """</span>
+        database.execute(sql, 
+            reputation.score, reputation.averageScore,
+            reputation.totalRatings, reputation.warningsCount,
+            reputation.blacklistedFlag, reputation.fairnessScore,
+            reputation.lastUpdated, reputation.userId
+        )
+</div>
+
+        <h2>📋 Data Structures</h2>
+        <table>
+            <tr>
+                <th>Entity</th>
+                <th>Fields</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><strong>Rating</strong></td>
+                <td>ratingId, orderId, raterId, targetUserId, targetType, score, comment, createdAt</td>
+                <td>Individual rating record</td>
+            </tr>
+            <tr>
+                <td><strong>ReputationRecord</strong></td>
+                <td>repId, userId, role, score, averageScore, totalRatings, warningsCount, blacklistedFlag, fairnessScore</td>
+                <td>Aggregated reputation metrics</td>
+            </tr>
+            <tr>
+                <td><strong>RatingData</strong></td>
+                <td>dishRating, deliveryRating, comment</td>
+                <td>Input DTO for rating submission</td>
+            </tr>
+            <tr>
+                <td><strong>RatingDTO</strong></td>
+                <td>id, score, comment, targetType, createdAt</td>
+                <td>Output DTO for rating display</td>
+            </tr>
+        </table>
+
+        <h2>🗄️ Database Schema</h2>
+        <div class="pseudocode">
+<span class="comment">-- Ratings table</span>
+<span class="keyword">CREATE TABLE</span> ratings (
+    rating_id <span class="keyword">UUID PRIMARY KEY DEFAULT</span> uuid_generate_v4(),
+    order_id <span class="keyword">INTEGER REFERENCES</span> orders(order_id),
+    rater_id <span class="keyword">INTEGER REFERENCES</span> users(user_id),
+    target_user_id <span class="keyword">INTEGER REFERENCES</span> users(user_id),
+    target_type <span class="keyword">VARCHAR</span>(20) <span class="keyword">NOT NULL</span>, <span class="comment">-- CHEF, DELIVERY</span>
+    score <span class="keyword">INTEGER CHECK</span> (score >= 1 AND score <= 5),
+    comment <span class="keyword">TEXT</span>,
+    created_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>,
+    <span class="keyword">UNIQUE</span>(order_id, rater_id, target_type)
+);
+
+<span class="comment">-- Reputation records table</span>
+<span class="keyword">CREATE TABLE</span> reputation_records (
+    rep_id <span class="keyword">UUID PRIMARY KEY DEFAULT</span> uuid_generate_v4(),
+    user_id <span class="keyword">INTEGER REFERENCES</span> users(user_id) <span class="keyword">UNIQUE</span>,
+    role <span class="keyword">VARCHAR</span>(20), <span class="comment">-- CUSTOMER, CHEF, DELIVERY</span>
+    score <span class="keyword">DECIMAL</span>(3,2) <span class="keyword">DEFAULT</span> 0.00,
+    average_score <span class="keyword">DECIMAL</span>(3,2) <span class="keyword">DEFAULT</span> 0.00,
+    total_ratings <span class="keyword">INTEGER DEFAULT</span> 0,
+    warnings_count <span class="keyword">INTEGER DEFAULT</span> 0,
+    blacklisted_flag <span class="keyword">BOOLEAN DEFAULT</span> false,
+    fairness_score <span class="keyword">DECIMAL</span>(3,2) <span class="keyword">DEFAULT</span> 1.00,
+    last_updated <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>
+);
+
+<span class="comment">-- Indexes for performance</span>
+<span class="keyword">CREATE INDEX</span> idx_rating_order <span class="keyword">ON</span> ratings(order_id);
+<span class="keyword">CREATE INDEX</span> idx_rating_rater <span class="keyword">ON</span> ratings(rater_id);
+<span class="keyword">CREATE INDEX</span> idx_rating_target <span class="keyword">ON</span> ratings(target_user_id);
+<span class="keyword">CREATE INDEX</span> idx_reputation_user <span class="keyword">ON</span> reputation_records(user_id);
+<span class="keyword">CREATE INDEX</span> idx_reputation_score <span class="keyword">ON</span> reputation_records(average_score);
+</div>
+
+        <h2>📈 Reputation Scoring Algorithm</h2>
+        <div class="info-box">
+            <strong>Score Calculation:</strong><br>
+            • Base Score = Average of all ratings (1-5)<br>
+            • Weighted Score = 70% overall average + 30% recent ratings<br>
+            • Confidence Factor = min(1.0, totalRatings / 20)<br>
+            • Final Score = Weighted Score × Confidence Factor<br><br>
+            
+            <strong>Thresholds:</strong><br>
+            • Excellence: ≥ 4.5 → Badge/Bonus<br>
+            • Good: 3.5 - 4.5 → Normal status<br>
+            • Warning: 2.5 - 3.5 → Performance review<br>
+            • Critical: < 2.5 → Suspension consideration
+        </div>
+
+        <h2>🧪 Test Cases</h2>
+        <div class="success-flow">
+            <strong>Test 1: Successful Rating Submission</strong><br>
+            • Order status: DELIVERED<br>
+            • Dish rating: 4 stars<br>
+            • Delivery rating: 5 stars<br>
+            • Expected: Both ratings saved, reputations updated<br>
+            • Chef average: Updated from 4.2 to 4.21<br>
+            • Delivery average: Updated from 4.8 to 4.82
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 2: Order Not Delivered</strong><br>
+            • Order status: IN_KITCHEN<br>
+            • Attempt to rate<br>
+            • Expected: Error "Cannot rate undelivered order"<br>
+            • No ratings saved, no reputation changes
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 3: Duplicate Rating</strong><br>
+            • User already rated order #1234<br>
+            • Attempts to rate again<br>
+            • Expected: Error "You have already rated this order"<br>
+            • Original rating unchanged
+        </div>
+
+        <div class="normal-flow">
+            <strong>Test 4: Low Rating Triggers Warning</strong><br>
+            • Chef receives 1-star rating<br>
+            • Average drops below 2.5<br>
+            • Expected: Warning issued, manager notified<br>
+            • After 3 warnings: Account suspended
+        </div>
+    </div>
+</body>
+</html>

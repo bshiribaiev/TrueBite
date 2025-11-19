@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-04 Place Order (Petri Net)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "🛒";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1350px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .customer { background: #3498db; color: white; }
+        .vip { background: #f39c12; color: white; }
+        .petri-legend {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 15px;
+        }
+        .legend-item svg {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+        .step-list li {
+            counter-increment: step-counter;
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 35px;
+        }
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-04: Place Order (Petri Net)</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-04 - Place Order with Payment Processing<br>
+            <strong>Actors:</strong> 
+            <span class="user-badge customer">Customer</span>
+            <span class="user-badge vip">VIP Customer</span><br>
+            <strong>Goal:</strong> Complete order placement with validation, payment, and kitchen assignment<br>
+            <strong>Preconditions:</strong> User logged in, cart has items, dishes available<br>
+            <strong>Postconditions:</strong> Order created, payment processed, kitchen notified
+        </div>
+
+        <h2>🔄 Petri Net Legend</h2>
+        <div class="petri-legend">
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="15" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+                </svg>
+                <span><strong>Place:</strong> State/Condition</span>
+            </div>
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <rect x="15" y="5" width="10" height="30" fill="#333" stroke="#000" stroke-width="1"/>
+                </svg>
+                <span><strong>Transition:</strong> Action/Event</span>
+            </div>
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="5" fill="#f39c12"/>
+                </svg>
+                <span><strong>Token:</strong> Order/Resource</span>
+            </div>
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <line x1="5" y1="20" x2="35" y2="20" stroke="#666" stroke-width="2" marker-end="url(#arrowhead-small)"/>
+                </svg>
+                <span><strong>Arc:</strong> Flow Direction</span>
+            </div>
+        </div>
+
+        <h2>📊 Petri Net Diagram - Order Processing Flow</h2>
+        <svg viewBox="0 0 1350 800" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1350" height="800" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="675" y="30" text-anchor="middle" font-size="22" font-weight="bold" fill="#2c3e50">
+                UC-04: Place Order - Petri Net Model
+            </text>
+            
+            <!-- Define gradients for visual depth -->
+            <defs>
+                <linearGradient id="placeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#e3f2fd;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#bbdefb;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="errorGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ffebee;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#ffcdd2;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="successGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#e8f5e9;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#c8e6c9;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            
+            <!-- Places -->
+            
+            <!-- P_NewCart -->
+            <g transform="translate(150, 150)">
+                <circle r="50" fill="url(#placeGradient)" stroke="#1976d2" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_NewCart</text>
+                <text y="20" text-anchor="middle" font-size="10">(Built Cart)</text>
+                <!-- Token in cart -->
+                <circle cx="0" cy="-20" r="8" fill="#f39c12"/>
+            </g>
+            
+            <!-- T_SubmitOrder (Main Decision Transition) -->
+            <g transform="translate(350, 150)">
+                <rect x="-15" y="-40" width="30" height="80" fill="#333" stroke="#000" stroke-width="2"/>
+                <text y="60" text-anchor="middle" font-size="11" font-weight="bold">T_SubmitOrder</text>
+                <text y="75" text-anchor="middle" font-size="9">(Validate & Pay)</text>
+            </g>
+            
+            <!-- P_ValidOrder -->
+            <g transform="translate(550, 150)">
+                <circle r="50" fill="url(#successGradient)" stroke="#4caf50" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_ValidOrder</text>
+                <text y="20" text-anchor="middle" font-size="10">(Paid & Valid)</text>
+            </g>
+            
+            <!-- P_InsufficientFunds -->
+            <g transform="translate(550, 350)">
+                <circle r="50" fill="url(#errorGradient)" stroke="#f44336" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_InsufficientFunds</text>
+                <text y="20" text-anchor="middle" font-size="10">(No Balance)</text>
+            </g>
+            
+            <!-- P_DishUnavailable -->
+            <g transform="translate(350, 450)">
+                <circle r="50" fill="url(#errorGradient)" stroke="#ff9800" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_DishUnavailable</text>
+                <text y="20" text-anchor="middle" font-size="10">(Out of Stock)</text>
+            </g>
+            
+            <!-- P_BlacklistedCustomer -->
+            <g transform="translate(550, 550)">
+                <circle r="50" fill="url(#errorGradient)" stroke="#9c27b0" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_BlacklistedCustomer</text>
+                <text y="20" text-anchor="middle" font-size="10">(Restricted)</text>
+            </g>
+            
+            <!-- T_SendToKitchen -->
+            <g transform="translate(750, 150)">
+                <rect x="-15" y="-40" width="30" height="80" fill="#333" stroke="#000" stroke-width="2"/>
+                <text y="60" text-anchor="middle" font-size="11" font-weight="bold">T_SendToKitchen</text>
+                <text y="75" text-anchor="middle" font-size="9">(Queue Order)</text>
+            </g>
+            
+            <!-- P_OrdersInKitchen -->
+            <g transform="translate(950, 150)">
+                <circle r="50" fill="url(#successGradient)" stroke="#4caf50" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_OrdersInKitchen</text>
+                <text y="20" text-anchor="middle" font-size="10">(Chef Queue)</text>
+            </g>
+            
+            <!-- T_RejectOrder -->
+            <g transform="translate(750, 450)">
+                <rect x="-15" y="-40" width="30" height="80" fill="#333" stroke="#000" stroke-width="2"/>
+                <text y="60" text-anchor="middle" font-size="11" font-weight="bold">T_RejectOrder</text>
+                <text y="75" text-anchor="middle" font-size="9">(Cancel)</text>
+            </g>
+            
+            <!-- P_OrdersRejected -->
+            <g transform="translate(950, 450)">
+                <circle r="50" fill="url(#errorGradient)" stroke="#f44336" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_OrdersRejected</text>
+                <text y="20" text-anchor="middle" font-size="10">(Cancelled)</text>
+            </g>
+            
+            <!-- Additional Places for Complete Flow -->
+            
+            <!-- P_WalletChecked -->
+            <g transform="translate(150, 350)">
+                <circle r="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2"/>
+                <text y="5" text-anchor="middle" font-size="11">P_WalletChecked</text>
+                <text y="18" text-anchor="middle" font-size="9">(Balance OK)</text>
+            </g>
+            
+            <!-- P_ChefAvailable -->
+            <g transform="translate(950, 300)">
+                <circle r="40" fill="#e8f5e9" stroke="#4caf50" stroke-width="2"/>
+                <text y="5" text-anchor="middle" font-size="11">P_ChefAvailable</text>
+                <text y="18" text-anchor="middle" font-size="9">(Ready)</text>
+                <!-- Multiple tokens showing available chefs -->
+                <circle cx="-15" cy="-15" r="6" fill="#4caf50"/>
+                <circle cx="0" cy="-15" r="6" fill="#4caf50"/>
+                <circle cx="15" cy="-15" r="6" fill="#4caf50"/>
+            </g>
+            
+            <!-- P_OrderConfirmed -->
+            <g transform="translate(1150, 150)">
+                <circle r="50" fill="url(#successGradient)" stroke="#4caf50" stroke-width="3"/>
+                <text y="5" text-anchor="middle" font-size="12" font-weight="bold">P_OrderConfirmed</text>
+                <text y="20" text-anchor="middle" font-size="10">(Tracking Page)</text>
+            </g>
+            
+            <!-- Arcs (Flow connections) -->
+            
+            <!-- P_NewCart -> T_SubmitOrder -->
+            <line x1="200" y1="150" x2="335" y2="150" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="267" y="145" text-anchor="middle" font-size="10">submit</text>
+            
+            <!-- T_SubmitOrder -> P_ValidOrder (success path) -->
+            <line x1="365" y1="150" x2="500" y2="150" stroke="#4caf50" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+            <text x="432" y="145" text-anchor="middle" font-size="10" fill="#4caf50">valid & paid</text>
+            
+            <!-- T_SubmitOrder -> P_InsufficientFunds -->
+            <line x1="350" y1="190" x2="350" y2="280" stroke="#f44336" stroke-width="2"/>
+            <line x1="350" y1="280" x2="500" y2="350" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            <text x="425" y="315" text-anchor="middle" font-size="10" fill="#f44336">no funds</text>
+            
+            <!-- T_SubmitOrder -> P_DishUnavailable -->
+            <line x1="350" y1="190" x2="350" y2="400" stroke="#ff9800" stroke-width="2" marker-end="url(#arrowhead-orange)"/>
+            <text x="330" y="295" text-anchor="middle" font-size="10" fill="#ff9800">unavailable</text>
+            
+            <!-- T_SubmitOrder -> P_BlacklistedCustomer -->
+            <line x1="365" y1="190" x2="450" y2="280" stroke="#9c27b0" stroke-width="2"/>
+            <line x1="450" y1="280" x2="500" y2="520" stroke="#9c27b0" stroke-width="2" marker-end="url(#arrowhead-purple)"/>
+            <text x="475" y="400" text-anchor="middle" font-size="10" fill="#9c27b0">blacklisted</text>
+            
+            <!-- P_ValidOrder -> T_SendToKitchen -->
+            <line x1="600" y1="150" x2="735" y2="150" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="667" y="145" text-anchor="middle" font-size="10">process</text>
+            
+            <!-- T_SendToKitchen -> P_OrdersInKitchen -->
+            <line x1="765" y1="150" x2="900" y2="150" stroke="#4caf50" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+            <text x="832" y="145" text-anchor="middle" font-size="10" fill="#4caf50">queued</text>
+            
+            <!-- P_ChefAvailable -> T_SendToKitchen (resource arc) -->
+            <line x1="920" y1="270" x2="760" y2="180" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-green)"/>
+            <text x="840" y="225" text-anchor="middle" font-size="9" fill="#4caf50">chef assigns</text>
+            
+            <!-- Error paths to T_RejectOrder -->
+            <line x1="550" y1="400" x2="550" y2="450" stroke="#f44336" stroke-width="2"/>
+            <line x1="550" y1="450" x2="735" y2="450" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            
+            <line x1="400" y1="450" x2="735" y2="450" stroke="#ff9800" stroke-width="2" marker-end="url(#arrowhead-orange)"/>
+            
+            <line x1="550" y1="500" x2="550" y2="450" stroke="#9c27b0" stroke-width="2"/>
+            <line x1="550" y1="450" x2="735" y2="450" stroke="#9c27b0" stroke-width="2" marker-end="url(#arrowhead-purple)"/>
+            
+            <!-- T_RejectOrder -> P_OrdersRejected -->
+            <line x1="765" y1="450" x2="900" y2="450" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            <text x="832" y="445" text-anchor="middle" font-size="10" fill="#f44336">rejected</text>
+            
+            <!-- P_OrdersInKitchen -> P_OrderConfirmed -->
+            <line x1="1000" y1="150" x2="1100" y2="150" stroke="#4caf50" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+            <text x="1050" y="145" text-anchor="middle" font-size="10" fill="#4caf50">confirmed</text>
+            
+            <!-- Inhibitor arc (NOT gate) for blacklist check -->
+            <g>
+                <line x1="150" y1="200" x2="150" y2="500" stroke="#9c27b0" stroke-width="1" stroke-dasharray="3,3"/>
+                <line x1="150" y1="500" x2="500" y2="550" stroke="#9c27b0" stroke-width="1" stroke-dasharray="3,3"/>
+                <circle cx="325" cy="525" r="5" fill="white" stroke="#9c27b0" stroke-width="2"/>
+                <text x="250" y="540" font-size="9" fill="#9c27b0">blacklist check</text>
+            </g>
+            
+            <!-- Annotations -->
+            <rect x="50" y="650" width="300" height="100" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="60" y="670" font-size="11" font-weight="bold">Token Movement:</text>
+            <text x="60" y="690" font-size="10">• Each token = 1 order in process</text>
+            <text x="60" y="705" font-size="10">• Tokens consumed at transitions</text>
+            <text x="60" y="720" font-size="10">• New tokens created in target places</text>
+            <text x="60" y="735" font-size="10">• Chef tokens = available capacity</text>
+            
+            <rect x="400" y="650" width="350" height="100" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="410" y="670" font-size="11" font-weight="bold">Transition Rules:</text>
+            <text x="410" y="690" font-size="10">• T_SubmitOrder fires when cart submitted</text>
+            <text x="410" y="705" font-size="10">• Checks: balance, availability, user status</text>
+            <text x="410" y="720" font-size="10">• T_SendToKitchen requires available chef</text>
+            <text x="410" y="735" font-size="10">• T_RejectOrder consolidates all failures</text>
+            
+            <rect x="800" y="650" width="300" height="100" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="810" y="670" font-size="11" font-weight="bold">System States:</text>
+            <text x="810" y="690" font-size="10">• Initial: Token in P_NewCart</text>
+            <text x="810" y="705" font-size="10">• Processing: Multiple parallel checks</text>
+            <text x="810" y="720" font-size="10">• Final Success: P_OrderConfirmed</text>
+            <text x="810" y="735" font-size="10">• Final Failure: P_OrdersRejected</text>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#666"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+                <marker id="arrowhead-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#ff9800"/>
+                </marker>
+                <marker id="arrowhead-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#9c27b0"/>
+                </marker>
+                <marker id="arrowhead-small" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#666"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>📝 Normal Flow Description</h2>
+        <div class="normal-flow">
+            <strong>Successful Order Placement:</strong>
+            <ol class="step-list">
+                <li>Customer builds cart with dishes and quantities (token in P_NewCart)</li>
+                <li>Customer clicks "Place Order" (fires T_SubmitOrder transition)</li>
+                <li>System validates cart items exist and are available</li>
+                <li>System checks customer is not blacklisted</li>
+                <li>FinanceService verifies wallet balance ≥ total amount</li>
+                <li>Payment is processed, balance deducted (token moves to P_ValidOrder)</li>
+                <li>Order and OrderItems records created with status = CREATED</li>
+                <li>System checks for available chef (consumes chef token)</li>
+                <li>Order assigned to kitchen queue (token in P_OrdersInKitchen)</li>
+                <li>Customer sees confirmation page with tracking (P_OrderConfirmed)</li>
+            </ol>
+        </div>
+
+        <h2>⚠️ Exceptional Scenarios</h2>
+        <div class="error-flow">
+            <strong>E1 - Insufficient Balance:</strong><br>
+            • Transition fires to P_InsufficientFunds<br>
+            • System displays "Insufficient balance. Please add funds."<br>
+            • Redirects to wallet top-up page<br>
+            • Order cancelled, cart preserved
+        </div>
+
+        <div class="error-flow">
+            <strong>E2 - Dish Unavailable:</strong><br>
+            • Transition fires to P_DishUnavailable<br>
+            • System shows "Some items are no longer available"<br>
+            • Options: Remove unavailable items or cancel entire order<br>
+            • Cart updated or order rejected
+        </div>
+
+        <div class="error-flow">
+            <strong>E3 - Customer Blacklisted:</strong><br>
+            • Inhibitor arc prevents order processing<br>
+            • Transition fires to P_BlacklistedCustomer<br>
+            • System displays "Account restricted. Contact support."<br>
+            • No order created, no payment processed
+        </div>
+
+        <h2>💻 Detailed Pseudocode</h2>
+        <div class="pseudocode">
+<span class="comment">// UC-04: Place Order - Petri Net Implementation</span>
+
+<span class="keyword">CLASS</span> <span class="function">OrderService</span>:
+    <span class="keyword">FUNCTION</span> createOrder(customerId: String, cartItems: List):
+        <span class="comment">// Initial state: Token in P_NewCart</span>
+        
+        <span class="comment">// Fire T_SubmitOrder transition with multiple condition checks</span>
+        
+        <span class="comment">// Check 1: Customer Status (Inhibitor Arc for Blacklist)</span>
+        customer = UserRepository.findById(customerId)
+        <span class="keyword">IF</span> customer.status == <span class="string">"blacklisted"</span>:
+            <span class="comment">// Token moves to P_BlacklistedCustomer</span>
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Account restricted"</span>, 
+                         nextPlace: <span class="string">"P_BlacklistedCustomer"</span>)
+        
+        <span class="comment">// Check 2: Validate Cart Items</span>
+        dishes = DishRepository.findByIds(cartItems.map(item -> item.dishId))
+        unavailable = []
+        <span class="keyword">FOR EACH</span> item <span class="keyword">IN</span> cartItems:
+            dish = dishes.find(d -> d.id == item.dishId)
+            <span class="keyword">IF</span> dish == null OR !dish.isAvailable:
+                unavailable.add(item)
+        
+        <span class="keyword">IF</span> unavailable.length > 0:
+            <span class="comment">// Token moves to P_DishUnavailable</span>
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Items unavailable: "</span> + unavailable,
+                         nextPlace: <span class="string">"P_DishUnavailable"</span>)
+        
+        <span class="comment">// Check 3: Calculate Total with VIP Discount</span>
+        total = 0
+        <span class="keyword">FOR EACH</span> item <span class="keyword">IN</span> cartItems:
+            dish = dishes.find(d -> d.id == item.dishId)
+            total += dish.price * item.quantity
+        
+        <span class="keyword">IF</span> customer.role == <span class="string">"vip"</span>:
+            total = total * 0.9  <span class="comment">// 10% VIP discount</span>
+        
+        <span class="comment">// Check 4: Wallet Balance (Guard Condition)</span>
+        <span class="keyword">IF NOT</span> FinanceService.hasSufficientBalance(customerId, total):
+            <span class="comment">// Token moves to P_InsufficientFunds</span>
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Insufficient balance"</span>,
+                         requiredAmount: total,
+                         currentBalance: wallet.balance,
+                         nextPlace: <span class="string">"P_InsufficientFunds"</span>)
+        
+        <span class="comment">// All checks passed - Token moves to P_ValidOrder</span>
+        
+        <span class="comment">// Process Payment</span>
+        FinanceService.charge(customerId, total, type: <span class="string">"ORDER_PAYMENT"</span>)
+        
+        <span class="comment">// Create Order Record</span>
+        order = Order(
+            customerId: customerId,
+            totalAmount: total,
+            status: <span class="string">"CREATED"</span>,
+            createdAt: now()
+        )
+        OrderRepository.save(order)
+        
+        <span class="comment">// Create OrderItems</span>
+        <span class="keyword">FOR EACH</span> item <span class="keyword">IN</span> cartItems:
+            orderItem = OrderItem(
+                orderId: order.id,
+                dishId: item.dishId,
+                quantity: item.quantity,
+                unitPrice: dishes.find(d -> d.id == item.dishId).price
+            )
+            OrderItemRepository.save(orderItem)
+        
+        <span class="comment">// Fire T_SendToKitchen transition</span>
+        <span class="keyword">RETURN</span> sendToKitchen(order)
+    
+    <span class="keyword">FUNCTION</span> sendToKitchen(order: Order):
+        <span class="comment">// Check for available chef (resource place P_ChefAvailable)</span>
+        availableChef = ChefService.getAvailableChef()
+        
+        <span class="keyword">IF</span> availableChef == null:
+            <span class="comment">// Wait in queue until chef available</span>
+            order.status = <span class="string">"WAITING_FOR_CHEF"</span>
+            QueueService.addToWaitingQueue(order)
+            <span class="keyword">RETURN</span> Result(status: <span class="string">"QUEUED"</span>, 
+                         message: <span class="string">"Order waiting for available chef"</span>)
+        
+        <span class="comment">// Consume chef token and assign order</span>
+        order.assignedChefId = availableChef.id
+        order.status = <span class="string">"IN_KITCHEN"</span>
+        OrderRepository.update(order)
+        
+        <span class="comment">// Notify chef</span>
+        NotificationService.notifyChef(availableChef.id, order.id)
+        
+        <span class="comment">// Token reaches P_OrdersInKitchen</span>
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            orderId: order.id,
+            status: <span class="string">"IN_KITCHEN"</span>,
+            chef: availableChef.name,
+            estimatedTime: calculatePreparationTime(order),
+            nextPlace: <span class="string">"P_OrdersInKitchen"</span>,
+            trackingUrl: <span class="string">"/orders/track/"</span> + order.id
+        )
+    
+    <span class="keyword">FUNCTION</span> rejectOrder(orderId: String, reason: String):
+        <span class="comment">// Fire T_RejectOrder transition</span>
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">IF</span> order.status != <span class="string">"CREATED"</span>:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Cannot reject order in progress"</span>)
+        
+        <span class="comment">// Refund if payment was processed</span>
+        <span class="keyword">IF</span> order.paymentProcessed:
+            FinanceService.refund(order.customerId, order.totalAmount, 
+                                 reason: reason)
+        
+        <span class="comment">// Update order status</span>
+        order.status = <span class="string">"REJECTED"</span>
+        order.rejectionReason = reason
+        order.rejectedAt = now()
+        OrderRepository.update(order)
+        
+        <span class="comment">// Token reaches P_OrdersRejected</span>
+        <span class="keyword">RETURN</span> Result(
+            status: <span class="string">"REJECTED"</span>,
+            reason: reason,
+            refunded: order.paymentProcessed,
+            nextPlace: <span class="string">"P_OrdersRejected"</span>
+        )
+
+<span class="comment">// Petri Net State Management</span>
+<span class="keyword">CLASS</span> <span class="function">PetriNetController</span>:
+    places = {
+        <span class="string">"P_NewCart"</span>: [],
+        <span class="string">"P_ValidOrder"</span>: [],
+        <span class="string">"P_InsufficientFunds"</span>: [],
+        <span class="string">"P_DishUnavailable"</span>: [],
+        <span class="string">"P_BlacklistedCustomer"</span>: [],
+        <span class="string">"P_OrdersInKitchen"</span>: [],
+        <span class="string">"P_OrdersRejected"</span>: [],
+        <span class="string">"P_ChefAvailable"</span>: [chef1, chef2, chef3], <span class="comment">// Initial chef tokens</span>
+        <span class="string">"P_OrderConfirmed"</span>: []
+    }
+    
+    <span class="keyword">FUNCTION</span> fireTransition(transitionName: String, token: Order):
+        <span class="keyword">SWITCH</span> transitionName:
+            <span class="keyword">CASE</span> <span class="string">"T_SubmitOrder"</span>:
+                removeToken(<span class="string">"P_NewCart"</span>, token)
+                result = OrderService.createOrder(token.customerId, token.items)
+                addToken(result.nextPlace, token)
+                
+            <span class="keyword">CASE</span> <span class="string">"T_SendToKitchen"</span>:
+                <span class="keyword">IF</span> hasToken(<span class="string">"P_ChefAvailable"</span>):
+                    removeToken(<span class="string">"P_ValidOrder"</span>, token)
+                    chef = removeToken(<span class="string">"P_ChefAvailable"</span>)
+                    token.assignedChef = chef
+                    addToken(<span class="string">"P_OrdersInKitchen"</span>, token)
+                
+            <span class="keyword">CASE</span> <span class="string">"T_RejectOrder"</span>:
+                <span class="comment">// Consolidate all error paths</span>
+                sourcePlace = findTokenPlace(token)
+                removeToken(sourcePlace, token)
+                addToken(<span class="string">"P_OrdersRejected"</span>, token)
+</div>
+
+        <h2>📊 State Transitions Table</h2>
+        <table>
+            <tr>
+                <th>Current Place</th>
+                <th>Transition</th>
+                <th>Condition</th>
+                <th>Next Place</th>
+                <th>Action</th>
+            </tr>
+            <tr>
+                <td>P_NewCart</td>
+                <td>T_SubmitOrder</td>
+                <td>Valid & Paid</td>
+                <td>P_ValidOrder</td>
+                <td>Create order, charge wallet</td>
+            </tr>
+            <tr>
+                <td>P_NewCart</td>
+                <td>T_SubmitOrder</td>
+                <td>No funds</td>
+                <td>P_InsufficientFunds</td>
+                <td>Show add funds prompt</td>
+            </tr>
+            <tr>
+                <td>P_NewCart</td>
+                <td>T_SubmitOrder</td>
+                <td>Item unavailable</td>
+                <td>P_DishUnavailable</td>
+                <td>Update cart options</td>
+            </tr>
+            <tr>
+                <td>P_NewCart</td>
+                <td>T_SubmitOrder</td>
+                <td>User blacklisted</td>
+                <td>P_BlacklistedCustomer</td>
+                <td>Block order, show message</td>
+            </tr>
+            <tr>
+                <td>P_ValidOrder</td>
+                <td>T_SendToKitchen</td>
+                <td>Chef available</td>
+                <td>P_OrdersInKitchen</td>
+                <td>Assign chef, notify kitchen</td>
+            </tr>
+            <tr>
+                <td>Any Error Place</td>
+                <td>T_RejectOrder</td>
+                <td>Cancel requested</td>
+                <td>P_OrdersRejected</td>
+                <td>Refund if paid, clear cart</td>
+            </tr>
+            <tr>
+                <td>P_OrdersInKitchen</td>
+                <td>(implicit)</td>
+                <td>Processing complete</td>
+                <td>P_OrderConfirmed</td>
+                <td>Show tracking page</td>
+            </tr>
+        </table>
+
+        <h2>🎯 Key Petri Net Properties</h2>
+        <div class="info-box">
+            <strong>1. Reachability:</strong> All places are reachable from P_NewCart<br>
+            <strong>2. Boundedness:</strong> Maximum 1 token per order in any place (except P_ChefAvailable)<br>
+            <strong>3. Liveness:</strong> No deadlocks - all paths lead to terminal places<br>
+            <strong>4. Fairness:</strong> Chef tokens ensure fair order distribution<br>
+            <strong>5. Conservation:</strong> Order tokens are neither created nor destroyed (except at boundaries)
+        </div>
+
+        <h2>🧪 Test Scenarios</h2>
+        <div class="normal-flow">
+            <strong>Test 1: Happy Path</strong><br>
+            • Initial: Token in P_NewCart, 3 chef tokens in P_ChefAvailable<br>
+            • Action: Submit valid order with sufficient balance<br>
+            • Expected: Token moves through P_ValidOrder → P_OrdersInKitchen → P_OrderConfirmed<br>
+            • Verify: Payment processed, chef token consumed, order in kitchen
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 2: Insufficient Funds</strong><br>
+            • Initial: Token in P_NewCart, wallet balance < order total<br>
+            • Action: Submit order<br>
+            • Expected: Token moves to P_InsufficientFunds<br>
+            • Verify: No payment processed, add funds prompt shown
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 3: Concurrent Orders</strong><br>
+            • Initial: 5 tokens in P_NewCart, 3 chef tokens<br>
+            • Action: Submit all 5 orders simultaneously<br>
+            • Expected: 3 orders in P_OrdersInKitchen, 2 waiting<br>
+            • Verify: Chef capacity respected, queue maintained
+        </div>
+    </div>
+</body>
+</html>

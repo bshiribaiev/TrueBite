@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-15 Query AI Chatbot Sequence Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1350px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #0093E9;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "🤖";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #0093E915 0%, #80D0C715 100%);
+            border-left: 4px solid #0093E9;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning-flow {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1300px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #0093E9;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .chat-widget {
+            border: 2px solid #0093E9;
+            border-radius: 10px;
+            padding: 0;
+            margin: 15px 0;
+            background: #f8f9ff;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #0093E9, #80D0C7);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-messages {
+            padding: 20px;
+            min-height: 200px;
+            background: white;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        .user-message {
+            background: #e3f2fd;
+            margin-left: auto;
+            text-align: right;
+        }
+        .bot-message {
+            background: #f0f0f0;
+            margin-right: auto;
+        }
+        .typing-indicator {
+            display: inline-block;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+        .chat-input {
+            padding: 15px;
+            background: #f8f9ff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .chat-input button {
+            padding: 10px 20px;
+            background: #0093E9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .visitor { background: #9e9e9e; color: white; }
+        .customer { background: #2ecc71; color: white; }
+        .vip { background: #ffd700; color: #333; }
+        .staff { background: #3498db; color: white; }
+        .metrics-box {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .knowledge-base {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .kb-entry {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .kb-entry:last-child {
+            border-bottom: none;
+        }
+        .kb-score {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .score-high { background: #4caf50; color: white; }
+        .score-medium { background: #ff9800; color: white; }
+        .score-low { background: #f44336; color: white; }
+        .rag-flow {
+            background: linear-gradient(to right, #e3f2fd, #e8f5e9);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #4caf50;
+        }
+        .llm-flow {
+            background: linear-gradient(to right, #f3e5f5, #e3f2fd);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #9c27b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-15: Query AI Chatbot</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-15 - AI Chatbot Query and Response System<br>
+            <strong>Actors:</strong> 
+            <span class="user-badge visitor">Visitor</span>
+            <span class="user-badge customer">Customer</span>
+            <span class="user-badge vip">VIP</span>
+            <span class="user-badge staff">Staff</span><br>
+            <strong>Goal:</strong> Provide instant, accurate responses to user queries using RAG and LLM<br>
+            <strong>Preconditions:</strong> Chat widget available, AI services operational<br>
+            <strong>Postconditions:</strong> User receives response, session logged, feedback optional
+        </div>
+
+        <h2>💬 Chat Widget Interface</h2>
+        <div class="chat-widget">
+            <div class="chat-header">
+                <span>🤖 TrueBite Assistant</span>
+                <span>Online</span>
+            </div>
+            <div class="chat-messages">
+                <div class="message bot-message">
+                    👋 Hi! I'm TrueBite Assistant. How can I help you today?
+                </div>
+                <div class="message user-message">
+                    What are today's specials?
+                </div>
+                <div class="typing-indicator">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+                <div class="message bot-message">
+                    Today's specials include:<br>
+                    🍕 Truffle Pizza - 20% off<br>
+                    🥗 Caesar Salad - Buy 1 Get 1<br>
+                    🍝 Pasta Primavera - Chef's special<br><br>
+                    Would you like to place an order?
+                </div>
+                <div class="message user-message">
+                    Where's my order #1234?
+                </div>
+                <div class="message bot-message">
+                    Let me check that for you... Your order #1234 is currently OUT_FOR_DELIVERY 🚴<br>
+                    Estimated arrival: 15 minutes<br>
+                    Courier: John (4.8⭐)<br><br>
+                    You can track it in real-time <a href="#">here</a>.
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Type your message...">
+                <button>Send</button>
+            </div>
+        </div>
+
+        <h2>🧠 RAG & LLM Processing Flow</h2>
+        <div class="metrics-box">
+            <div class="metric-card">
+                <div class="metric-value">1.2s</div>
+                <div class="metric-label">Avg Response Time</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">94%</div>
+                <div class="metric-label">KB Hit Rate</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">4.6/5</div>
+                <div class="metric-label">User Satisfaction</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">850</div>
+                <div class="metric-label">Daily Queries</div>
+            </div>
+        </div>
+
+        <div class="rag-flow">
+            <strong>🔍 RAG (Retrieval Augmented Generation) Flow:</strong><br>
+            1. User query vectorized using embedding model<br>
+            2. Vector similarity search in knowledge base<br>
+            3. Top-K relevant documents retrieved (K=5)<br>
+            4. Context augmentation with user data<br>
+            5. Response generation with retrieved context
+        </div>
+
+        <div class="llm-flow">
+            <strong>🤖 LLM Fallback Flow:</strong><br>
+            1. Knowledge base returns low confidence (<0.7)<br>
+            2. Enrich prompt with user context and history<br>
+            3. Send to LLM with system prompt<br>
+            4. Post-process and validate response<br>
+            5. Store successful responses in KB for future
+        </div>
+
+        <h2>📊 Main Sequence Diagram - Chatbot Query Flow</h2>
+        <svg viewBox="0 0 1300 2000" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1300" height="2000" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="650" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">
+                AI Chatbot Query Processing - RAG + LLM Integration
+            </text>
+            
+            <!-- Actors and Objects -->
+            <!-- User/UI -->
+            <rect x="50" y="60" width="80" height="40" fill="#e3f2fd" stroke="#0093E9" stroke-width="2" rx="5"/>
+            <text x="90" y="85" text-anchor="middle" font-weight="bold">User/UI</text>
+            <line x1="90" y1="100" x2="90" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- ChatController -->
+            <rect x="180" y="60" width="120" height="40" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+            <text x="240" y="85" text-anchor="middle" font-weight="bold">ChatController</text>
+            <line x1="240" y1="100" x2="240" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- ChatbotService -->
+            <rect x="350" y="60" width="120" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+            <text x="410" y="85" text-anchor="middle" font-weight="bold">ChatbotService</text>
+            <line x1="410" y1="100" x2="410" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- SessionManager -->
+            <rect x="520" y="60" width="130" height="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+            <text x="585" y="85" text-anchor="middle" font-weight="bold">SessionManager</text>
+            <line x1="585" y1="100" x2="585" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- KnowledgeBase -->
+            <rect x="700" y="60" width="120" height="40" fill="#e0f7fa" stroke="#00bcd4" stroke-width="2" rx="5"/>
+            <text x="760" y="85" text-anchor="middle" font-weight="bold">KnowledgeBase</text>
+            <line x1="760" y1="100" x2="760" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- LLMService -->
+            <rect x="870" y="60" width="100" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+            <text x="920" y="85" text-anchor="middle" font-weight="bold">LLMService</text>
+            <line x1="920" y1="100" x2="920" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Analytics -->
+            <rect x="1020" y="60" width="100" height="40" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+            <text x="1070" y="85" text-anchor="middle" font-weight="bold">Analytics</text>
+            <line x1="1070" y1="100" x2="1070" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Database -->
+            <rect x="1170" y="60" width="80" height="40" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="5"/>
+            <text x="1210" y="85" text-anchor="middle" font-weight="bold">Database</text>
+            <line x1="1210" y1="100" x2="1210" y2="1950" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- PART 1: Session Initialization -->
+            <rect x="30" y="120" width="1240" height="280" fill="none" stroke="#0093E9" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="140" font-size="14" fill="#0093E9" font-weight="bold">STEP 1: Initialize Chat Session</text>
+            
+            <!-- 1. User Opens Chat -->
+            <line x1="90" y1="170" x2="240" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="165" y="165" text-anchor="middle" font-size="12">1: openChatWidget()</text>
+            
+            <!-- 2. Check Session -->
+            <line x1="240" y1="200" x2="410" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="325" y="195" text-anchor="middle" font-size="12">2: initializeChat(userId?)</text>
+            
+            <!-- 3. Get/Create Session -->
+            <line x1="410" y1="230" x2="585" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="497" y="225" text-anchor="middle" font-size="12">3: getOrCreateSession(userId)</text>
+            
+            <!-- 4. Load User Context -->
+            <line x1="585" y1="260" x2="1210" y2="260" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="897" y="255" text-anchor="middle" font-size="11">4: loadUserContext(userId)</text>
+            <text x="897" y="270" text-anchor="middle" font-size="10">(history, preferences, role)</text>
+            
+            <!-- 5. Session Created -->
+            <rect x="590" y="290" width="120" height="40" fill="#e8f5e9" stroke="#333" rx="3"/>
+            <text x="650" y="305" text-anchor="middle" font-size="11">Session ID: abc123</text>
+            <text x="650" y="320" text-anchor="middle" font-size="10">Context loaded</text>
+            
+            <!-- 6. Return Welcome -->
+            <line x1="240" y1="360" x2="90" y2="360" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="165" y="355" text-anchor="middle" font-size="12">6: displayWelcome(sessionId)</text>
+            
+            <!-- PART 2: Process Query with RAG -->
+            <rect x="30" y="420" width="1240" height="520" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="440" font-size="14" fill="#4caf50" font-weight="bold">STEP 2: Process Query with RAG (Knowledge Base)</text>
+            
+            <!-- 7. User Sends Query -->
+            <line x1="90" y1="470" x2="240" y2="470" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="165" y="465" text-anchor="middle" font-size="12">7: sendMessage("What are</text>
+            <text x="165" y="480" text-anchor="middle" font-size="11">today's specials?")</text>
+            
+            <!-- 8. Process Query -->
+            <line x1="240" y1="510" x2="410" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="325" y="505" text-anchor="middle" font-size="12">8: query(message, sessionId)</text>
+            
+            <!-- 9. Check for Abuse -->
+            <rect x="415" y="530" width="130" height="30" fill="#ffebee" stroke="#333" rx="3"/>
+            <text x="480" y="548" text-anchor="middle" font-size="11">checkAbusiveContent()</text>
+            
+            <!-- 10. Vectorize Query -->
+            <line x1="410" y1="580" x2="760" y2="580" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="585" y="575" text-anchor="middle" font-size="12">10: vectorizeQuery(message)</text>
+            
+            <!-- 11. Vector Embedding -->
+            <rect x="765" y="600" width="140" height="40" fill="#e0f7fa" stroke="#333" rx="3"/>
+            <text x="835" y="615" text-anchor="middle" font-size="11">Embedding Model:</text>
+            <text x="835" y="630" text-anchor="middle" font-size="10">text → [0.23, -0.45, ...]</text>
+            
+            <!-- 12. Search Knowledge Base -->
+            <line x1="760" y1="660" x2="1210" y2="660" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="985" y="655" text-anchor="middle" font-size="11">12: similaritySearch(vector, k=5)</text>
+            
+            <!-- 13. Retrieve Top-K Documents -->
+            <line x1="1210" y1="690" x2="760" y2="690" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="985" y="685" text-anchor="middle" font-size="11">13: documents[] (confidence: 0.92)</text>
+            
+            <!-- 14. Check Confidence -->
+            <rect x="415" y="720" width="130" height="40" fill="#e8f5e9" stroke="#4caf50" rx="3"/>
+            <text x="480" y="735" text-anchor="middle" font-size="11">Confidence > 0.7?</text>
+            <text x="480" y="750" text-anchor="middle" font-size="10">Yes → Use KB</text>
+            
+            <!-- 15. Compose Response -->
+            <line x1="410" y1="780" x2="760" y2="780" stroke="#4caf50" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+            <text x="585" y="775" text-anchor="middle" font-size="12" fill="#4caf50">15: composeResponse(docs, context)</text>
+            
+            <!-- 16. Format Answer -->
+            <rect x="765" y="800" width="150" height="60" fill="#e0f7fa" stroke="#00bcd4" rx="3"/>
+            <text x="840" y="820" text-anchor="middle" font-size="11">Today's specials:</text>
+            <text x="840" y="835" text-anchor="middle" font-size="10">- Truffle Pizza 20% off</text>
+            <text x="840" y="850" text-anchor="middle" font-size="10">- Caesar Salad BOGO</text>
+            
+            <!-- 17. Return Response -->
+            <line x1="240" y1="900" x2="90" y2="900" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="165" y="895" text-anchor="middle" font-size="12" fill="#4caf50">17: displayResponse(answer)</text>
+            
+            <!-- PART 3: LLM Fallback -->
+            <rect x="30" y="960" width="1240" height="480" fill="none" stroke="#9c27b0" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="980" font-size="14" fill="#9c27b0" font-weight="bold">STEP 3: LLM Fallback (Low Confidence or Complex Query)</text>
+            
+            <!-- 18. Complex Query -->
+            <line x1="90" y1="1010" x2="240" y2="1010" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="165" y="1005" text-anchor="middle" font-size="12">18: sendMessage("Can you</text>
+            <text x="165" y="1020" text-anchor="middle" font-size="11">recommend wine pairings?")</text>
+            
+            <!-- 19. Process Complex -->
+            <line x1="240" y1="1050" x2="410" y2="1050" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="325" y="1045" text-anchor="middle" font-size="12">19: query(complex_message)</text>
+            
+            <!-- 20. KB Search -->
+            <line x1="410" y1="1080" x2="760" y2="1080" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="585" y="1075" text-anchor="middle" font-size="12">20: searchKnowledgeBase()</text>
+            
+            <!-- 21. Low Confidence -->
+            <line x1="760" y1="1110" x2="410" y2="1110" stroke="#ff9800" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-orange)"/>
+            <text x="585" y="1105" text-anchor="middle" font-size="11" fill="#ff9800">21: confidence: 0.45 (low)</text>
+            
+            <!-- 22. Prepare LLM Prompt -->
+            <rect x="415" y="1130" width="140" height="60" fill="#f3e5f5" stroke="#333" rx="3"/>
+            <text x="485" y="1145" text-anchor="middle" font-size="11">Enrich Prompt:</text>
+            <text x="485" y="1160" text-anchor="middle" font-size="10">+ User context</text>
+            <text x="485" y="1175" text-anchor="middle" font-size="10">+ Restaurant info</text>
+            
+            <!-- 23. Send to LLM -->
+            <line x1="410" y1="1210" x2="920" y2="1210" stroke="#9c27b0" stroke-width="2" marker-end="url(#arrowhead-purple)"/>
+            <text x="665" y="1205" text-anchor="middle" font-size="12" fill="#9c27b0">23: generateResponse(enrichedPrompt)</text>
+            
+            <!-- 24. LLM Processing -->
+            <rect x="925" y="1230" width="140" height="60" fill="#f3e5f5" stroke="#9c27b0" rx="3"/>
+            <text x="995" y="1245" text-anchor="middle" font-size="11">GPT-4/Claude API</text>
+            <text x="995" y="1260" text-anchor="middle" font-size="10">Context window: 8k</text>
+            <text x="995" y="1275" text-anchor="middle" font-size="10">Temperature: 0.7</text>
+            
+            <!-- 25. LLM Response -->
+            <line x1="920" y1="1310" x2="410" y2="1310" stroke="#9c27b0" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-purple)"/>
+            <text x="665" y="1305" text-anchor="middle" font-size="11" fill="#9c27b0">25: "Based on your menu..."</text>
+            
+            <!-- 26. Post-process -->
+            <rect x="415" y="1330" width="130" height="40" fill="#f3e5f5" stroke="#333" rx="3"/>
+            <text x="480" y="1345" text-anchor="middle" font-size="11">Validate &amp; Filter</text>
+            <text x="480" y="1360" text-anchor="middle" font-size="10">Remove hallucinations</text>
+            
+            <!-- 27. Store in KB -->
+            <line x1="410" y1="1390" x2="760" y2="1390" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="585" y="1385" text-anchor="middle" font-size="11">27: storeSuccessfulResponse()</text>
+            
+            <!-- 28. Return LLM Response -->
+            <line x1="240" y1="1420" x2="90" y2="1420" stroke="#9c27b0" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-purple)"/>
+            <text x="165" y="1415" text-anchor="middle" font-size="12" fill="#9c27b0">28: displayResponse(llm_answer)</text>
+            
+            <!-- PART 4: Logging & Feedback -->
+            <rect x="30" y="1460" width="1240" height="280" fill="none" stroke="#009688" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="1480" font-size="14" fill="#009688" font-weight="bold">STEP 4: Analytics &amp; Feedback</text>
+            
+            <!-- 29. Log Interaction -->
+            <line x1="410" y1="1510" x2="1070" y2="1510" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="740" y="1505" text-anchor="middle" font-size="12">29: logInteraction(query, response, source)</text>
+            
+            <!-- 30. Update Metrics -->
+            <rect x="1075" y="1530" width="130" height="40" fill="#e0f2f1" stroke="#333" rx="3"/>
+            <text x="1140" y="1545" text-anchor="middle" font-size="11">Response time: 1.2s</text>
+            <text x="1140" y="1560" text-anchor="middle" font-size="10">Source: KB/LLM</text>
+            
+            <!-- 31. Request Feedback -->
+            <line x1="240" y1="1590" x2="90" y2="1590" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="165" y="1585" text-anchor="middle" font-size="12">31: showFeedbackPrompt()</text>
+            
+            <!-- 32. User Rates -->
+            <line x1="90" y1="1620" x2="240" y2="1620" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="165" y="1615" text-anchor="middle" font-size="12">32: rateSatisfaction(4/5)</text>
+            
+            <!-- 33. Store Feedback -->
+            <line x1="240" y1="1650" x2="1070" y2="1650" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="655" y="1645" text-anchor="middle" font-size="12">33: storeFeedback(sessionId, rating)</text>
+            
+            <!-- 34. Update KB Weights -->
+            <line x1="1070" y1="1680" x2="760" y2="1680" stroke="#009688" stroke-width="2" marker-end="url(#arrowhead-teal)"/>
+            <text x="915" y="1675" text-anchor="middle" font-size="11" fill="#009688">34: updateKBWeights(feedback)</text>
+            
+            <!-- 35. Session Update -->
+            <line x1="410" y1="1710" x2="585" y2="1710" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="497" y="1705" text-anchor="middle" font-size="12">35: updateSessionHistory()</text>
+            
+            <!-- PART 5: Exception Handling -->
+            <rect x="30" y="1760" width="1240" height="180" fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="1780" font-size="14" fill="#f44336" font-weight="bold">EXCEPTIONS</text>
+            
+            <!-- E1. Service Unavailable -->
+            <g transform="translate(50, 1800)">
+                <rect x="0" y="0" width="280" height="60" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="140" y="20" text-anchor="middle" font-size="12" font-weight="bold">E1: Service Unavailable</text>
+                <text x="140" y="35" text-anchor="middle" font-size="10">LLM/KB down → Fallback message:</text>
+                <text x="140" y="50" text-anchor="middle" font-size="10">"Support temporarily unavailable"</text>
+            </g>
+            
+            <!-- E2. Abusive Content -->
+            <g transform="translate(350, 1800)">
+                <rect x="0" y="0" width="280" height="60" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="140" y="20" text-anchor="middle" font-size="12" font-weight="bold">E2: Abusive Message</text>
+                <text x="140" y="35" text-anchor="middle" font-size="10">Detect abuse → Log incident</text>
+                <text x="140" y="50" text-anchor="middle" font-size="10">Update reputation (-10)</text>
+            </g>
+            
+            <!-- E3. Rate Limiting -->
+            <g transform="translate(650, 1800)">
+                <rect x="0" y="0" width="280" height="60" fill="#fff3e0" stroke="#ff9800" rx="3"/>
+                <text x="140" y="20" text-anchor="middle" font-size="12" font-weight="bold">E3: Rate Limit Exceeded</text>
+                <text x="140" y="35" text-anchor="middle" font-size="10">User > 50 queries/hour</text>
+                <text x="140" y="50" text-anchor="middle" font-size="10">Throttle responses</text>
+            </g>
+            
+            <!-- E4. Context Lost -->
+            <g transform="translate(950, 1800)">
+                <rect x="0" y="0" width="280" height="60" fill="#fff3e0" stroke="#ff9800" rx="3"/>
+                <text x="140" y="20" text-anchor="middle" font-size="12" font-weight="bold">E4: Session Expired</text>
+                <text x="140" y="35" text-anchor="middle" font-size="10">Session > 30 min idle</text>
+                <text x="140" y="50" text-anchor="middle" font-size="10">Create new session</text>
+            </g>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#ff9800"/>
+                </marker>
+                <marker id="arrowhead-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#9c27b0"/>
+                </marker>
+                <marker id="arrowhead-teal" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#009688"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>💻 Detailed Pseudocode Implementation</h2>
+        <div class="pseudocode">
+<span class="comment">// TrueBite AI Chatbot System - UC-15</span>
+
+<span class="keyword">CLASS</span> <span class="function">ChatbotService</span>:
+    
+    <span class="keyword">FUNCTION</span> query(message: String, userId: String?, sessionId: String?):
+        <span class="keyword">INPUT</span>: {
+            message: String,
+            userId: String (optional),
+            sessionId: String (optional),
+            metadata: {
+                timestamp: DateTime,
+                channel: String, <span class="comment">// web, mobile, api</span>
+                userType: String <span class="comment">// visitor, customer, vip, staff</span>
+            }
+        }
+        
+        <span class="comment">// Step 1: Session management</span>
+        session = null
+        
+        <span class="keyword">IF</span> sessionId != null:
+            session = SessionManager.getSession(sessionId)
+        
+        <span class="keyword">IF</span> session == null:
+            <span class="comment">// Create new session</span>
+            session = SessionManager.createSession(
+                userId: userId,
+                userType: determineUserType(userId),
+                startTime: now()
+            )
+            
+            <span class="comment">// Load user context if authenticated</span>
+            <span class="keyword">IF</span> userId != null:
+                session.userContext = loadUserContext(userId)
+        
+        <span class="comment">// Step 2: Input validation and abuse detection</span>
+        <span class="keyword">IF</span> isAbusiveContent(message):
+            handleAbusiveMessage(session, message)
+            <span class="keyword">RETURN</span> Result(
+                response: <span class="string">"Please keep the conversation respectful."</span>,
+                action: <span class="string">"WARNING_ISSUED"</span>
+            )
+        
+        <span class="comment">// Step 3: Rate limiting</span>
+        <span class="keyword">IF</span> isRateLimitExceeded(session):
+            <span class="keyword">RETURN</span> Result(
+                response: <span class="string">"You've sent too many messages. Please wait a moment."</span>,
+                action: <span class="string">"RATE_LIMITED"</span>
+            )
+        
+        <span class="comment">// Step 4: Intent classification</span>
+        intent = classifyIntent(message)
+        
+        <span class="comment">// Step 5: Try RAG first</span>
+        ragResult = processWithRAG(message, session, intent)
+        
+        <span class="keyword">IF</span> ragResult.confidence >= CONFIDENCE_THRESHOLD:
+            <span class="comment">// Use knowledge base response</span>
+            response = ragResult.response
+            responseSource = <span class="string">"KNOWLEDGE_BASE"</span>
+        <span class="keyword">ELSE</span>:
+            <span class="comment">// Fallback to LLM</span>
+            llmResult = processWithLLM(message, session, intent, ragResult.context)
+            
+            <span class="keyword">IF</span> llmResult.success:
+                response = llmResult.response
+                responseSource = <span class="string">"LLM"</span>
+                
+                <span class="comment">// Store successful LLM response for future</span>
+                <span class="keyword">IF</span> llmResult.confidence > 0.8:
+                    storeInKnowledgeBase(message, llmResult.response, intent)
+            <span class="keyword">ELSE</span>:
+                <span class="comment">// Both failed - use fallback</span>
+                response = getFallbackResponse(intent)
+                responseSource = <span class="string">"FALLBACK"</span>
+        
+        <span class="comment">// Step 6: Post-process response</span>
+        response = postProcessResponse(response, session)
+        
+        <span class="comment">// Step 7: Update session</span>
+        session.addInteraction(
+            query: message,
+            response: response,
+            intent: intent,
+            source: responseSource,
+            timestamp: now()
+        )
+        
+        <span class="comment">// Step 8: Log analytics</span>
+        logChatInteraction(
+            sessionId: session.id,
+            userId: session.userId,
+            message: message,
+            response: response,
+            intent: intent,
+            source: responseSource,
+            responseTime: calculateResponseTime(),
+            confidence: ragResult.confidence ?? llmResult.confidence
+        )
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            response: response,
+            sessionId: session.id,
+            source: responseSource,
+            suggestedActions: getSuggestedActions(intent, session)
+        )
+
+<span class="keyword">FUNCTION</span> processWithRAG(message: String, session: ChatSession, intent: Intent):
+    <span class="comment">// Step 1: Generate embedding</span>
+    embedding = EmbeddingService.generateEmbedding(message)
+    
+    <span class="keyword">IF</span> embedding == null:
+        <span class="keyword">RETURN</span> RAGResult(confidence: 0, response: null)
+    
+    <span class="comment">// Step 2: Search knowledge base</span>
+    searchResults = KnowledgeBase.vectorSearch(
+        embedding: embedding,
+        k: 5, <span class="comment">// Top 5 results</span>
+        filters: {
+            category: intent.category,
+            userType: session.userType,
+            language: session.language
+        }
+    )
+    
+    <span class="keyword">IF</span> searchResults.isEmpty():
+        <span class="keyword">RETURN</span> RAGResult(confidence: 0, response: null)
+    
+    <span class="comment">// Step 3: Calculate relevance score</span>
+    topResult = searchResults[0]
+    confidence = topResult.similarity
+    
+    <span class="comment">// Step 4: Context augmentation</span>
+    context = buildContext(
+        documents: searchResults,
+        userContext: session.userContext,
+        recentHistory: session.getRecentHistory(5)
+    )
+    
+    <span class="comment">// Step 5: Compose response</span>
+    <span class="keyword">IF</span> confidence >= CONFIDENCE_THRESHOLD:
+        response = composeResponse(
+            template: topResult.responseTemplate,
+            context: context,
+            personalization: session.userContext
+        )
+        
+        <span class="comment">// Add dynamic data if needed</span>
+        <span class="keyword">IF</span> intent.requiresDynamicData:
+            response = enrichWithDynamicData(response, intent)
+        
+        <span class="keyword">RETURN</span> RAGResult(
+            confidence: confidence,
+            response: response,
+            context: context,
+            sources: searchResults.map(r -> r.source)
+        )
+    
+    <span class="keyword">RETURN</span> RAGResult(
+        confidence: confidence,
+        response: null,
+        context: context
+    )
+
+<span class="keyword">FUNCTION</span> processWithLLM(message: String, session: ChatSession, intent: Intent, ragContext: Context):
+    <span class="keyword">TRY</span>:
+        <span class="comment">// Step 1: Build enriched prompt</span>
+        prompt = buildLLMPrompt(
+            message: message,
+            intent: intent,
+            ragContext: ragContext,
+            userContext: session.userContext,
+            systemPrompt: getSystemPrompt(session.userType),
+            conversationHistory: session.getRecentHistory(10)
+        )
+        
+        <span class="comment">// Step 2: Call LLM service</span>
+        llmResponse = LLMService.generateCompletion(
+            prompt: prompt,
+            model: selectModel(intent, session),
+            temperature: 0.7,
+            maxTokens: 500,
+            stopSequences: [<span class="string">"\n\n"</span>, <span class="string">"Human:"</span>, <span class="string">"User:"</span>]
+        )
+        
+        <span class="keyword">IF</span> llmResponse == null OR llmResponse.timeout:
+            <span class="keyword">RETURN</span> LLMResult(success: false)
+        
+        <span class="comment">// Step 3: Validate response</span>
+        validation = validateLLMResponse(llmResponse.text, intent)
+        
+        <span class="keyword">IF NOT</span> validation.isValid:
+            log.warn(<span class="string">"Invalid LLM response: "</span> + validation.reason)
+            <span class="keyword">RETURN</span> LLMResult(success: false, reason: validation.reason)
+        
+        <span class="comment">// Step 4: Filter hallucinations</span>
+        filteredResponse = filterHallucinations(
+            response: llmResponse.text,
+            knownFacts: ragContext.facts,
+            menuItems: getMenuItems(),
+            policies: getPolicies()
+        )
+        
+        <span class="comment">// Step 5: Safety check</span>
+        <span class="keyword">IF</span> containsUnsafeContent(filteredResponse):
+            <span class="keyword">RETURN</span> LLMResult(success: false, reason: <span class="string">"Safety filter triggered"</span>)
+        
+        <span class="keyword">RETURN</span> LLMResult(
+            success: true,
+            response: filteredResponse,
+            confidence: llmResponse.confidence,
+            model: llmResponse.model,
+            tokenCount: llmResponse.tokenCount
+        )
+        
+    <span class="keyword">CATCH</span> Exception e:
+        log.error(<span class="string">"LLM processing failed: "</span> + e.getMessage())
+        <span class="keyword">RETURN</span> LLMResult(success: false, reason: e.getMessage())
+
+<span class="keyword">FUNCTION</span> buildLLMPrompt(message: String, intent: Intent, ragContext: Context, 
+                         userContext: UserContext, systemPrompt: String, 
+                         conversationHistory: List&lt;Interaction&gt;):
+    
+    prompt = systemPrompt + <span class="string">"\n\n"</span>
+    
+    <span class="comment">// Add context</span>
+    prompt += <span class="string">"Context:\n"</span>
+    prompt += <span class="string">"- Restaurant: TrueBite\n"</span>
+    prompt += <span class="string">"- Current time: "</span> + now() + <span class="string">"\n"</span>
+    prompt += <span class="string">"- User type: "</span> + userContext.userType + <span class="string">"\n"</span>
+    
+    <span class="keyword">IF</span> userContext.isVIP:
+        prompt += <span class="string">"- VIP customer with preferences: "</span> + userContext.preferences + <span class="string">"\n"</span>
+    
+    <span class="comment">// Add relevant KB context</span>
+    <span class="keyword">IF</span> ragContext != null AND ragContext.relevantInfo.isNotEmpty():
+        prompt += <span class="string">"\nRelevant information:\n"</span>
+        <span class="keyword">FOR EACH</span> info <span class="keyword">IN</span> ragContext.relevantInfo:
+            prompt += <span class="string">"- "</span> + info + <span class="string">"\n"</span>
+    
+    <span class="comment">// Add conversation history</span>
+    <span class="keyword">IF</span> conversationHistory.isNotEmpty():
+        prompt += <span class="string">"\nConversation history:\n"</span>
+        <span class="keyword">FOR EACH</span> interaction <span class="keyword">IN</span> conversationHistory.takeLast(5):
+            prompt += <span class="string">"User: "</span> + interaction.query + <span class="string">"\n"</span>
+            prompt += <span class="string">"Assistant: "</span> + interaction.response + <span class="string">"\n"</span>
+    
+    <span class="comment">// Add current query</span>
+    prompt += <span class="string">"\nCurrent query:\n"</span>
+    prompt += <span class="string">"User: "</span> + message + <span class="string">"\n"</span>
+    prompt += <span class="string">"Assistant: "</span>
+    
+    <span class="keyword">RETURN</span> prompt
+
+<span class="keyword">FUNCTION</span> classifyIntent(message: String):
+    <span class="comment">// Use simple keyword matching or ML classifier</span>
+    
+    message_lower = message.toLowerCase()
+    
+    <span class="keyword">IF</span> containsAny(message_lower, [<span class="string">"menu"</span>, <span class="string">"special"</span>, <span class="string">"food"</span>, <span class="string">"dish"</span>]):
+        <span class="keyword">RETURN</span> Intent(category: <span class="string">"MENU_INQUIRY"</span>, priority: <span class="string">"NORMAL"</span>)
+    
+    <span class="keyword">IF</span> containsAny(message_lower, [<span class="string">"order"</span>, <span class="string">"delivery"</span>, <span class="string">"status"</span>, <span class="string">"where"</span>]):
+        <span class="keyword">RETURN</span> Intent(category: <span class="string">"ORDER_STATUS"</span>, priority: <span class="string">"HIGH"</span>)
+    
+    <span class="keyword">IF</span> containsAny(message_lower, [<span class="string">"complaint"</span>, <span class="string">"problem"</span>, <span class="string">"issue"</span>, <span class="string">"wrong"</span>]):
+        <span class="keyword">RETURN</span> Intent(category: <span class="string">"COMPLAINT"</span>, priority: <span class="string">"URGENT"</span>)
+    
+    <span class="keyword">IF</span> containsAny(message_lower, [<span class="string">"hours"</span>, <span class="string">"open"</span>, <span class="string">"close"</span>, <span class="string">"location"</span>]):
+        <span class="keyword">RETURN</span> Intent(category: <span class="string">"GENERAL_INFO"</span>, priority: <span class="string">"NORMAL"</span>)
+    
+    <span class="keyword">IF</span> containsAny(message_lower, [<span class="string">"recommend"</span>, <span class="string">"suggest"</span>, <span class="string">"best"</span>]):
+        <span class="keyword">RETURN</span> Intent(category: <span class="string">"RECOMMENDATION"</span>, priority: <span class="string">"NORMAL"</span>)
+    
+    <span class="keyword">RETURN</span> Intent(category: <span class="string">"GENERAL"</span>, priority: <span class="string">"NORMAL"</span>)
+
+<span class="keyword">FUNCTION</span> handleAbusiveMessage(session: ChatSession, message: String):
+    <span class="comment">// Log the incident</span>
+    IncidentLog.record(
+        sessionId: session.id,
+        userId: session.userId,
+        type: <span class="string">"ABUSIVE_CONTENT"</span>,
+        message: message,
+        timestamp: now()
+    )
+    
+    <span class="comment">// Update reputation if user is authenticated</span>
+    <span class="keyword">IF</span> session.userId != null:
+        ReputationService.updateReputation(
+            userId: session.userId,
+            change: -10,
+            reason: <span class="string">"Abusive chat message"</span>
+        )
+        
+        <span class="comment">// Check for repeated abuse</span>
+        abuseCount = IncidentLog.countByUser(session.userId, <span class="string">"ABUSIVE_CONTENT"</span>, 
+                                            now() - 24.hours)
+        
+        <span class="keyword">IF</span> abuseCount >= 3:
+            <span class="comment">// Consider temporary chat ban</span>
+            ChatBanService.temporaryBan(session.userId, 24.hours)
+    
+    <span class="comment">// Warn the user</span>
+    session.warningCount++
+
+<span class="keyword">CLASS</span> <span class="function">KnowledgeBase</span>:
+    
+    <span class="keyword">FUNCTION</span> vectorSearch(embedding: Vector, k: Integer, filters: Map):
+        <span class="comment">// Step 1: Apply filters to narrow search space</span>
+        candidateEntries = KnowledgeBaseEntry.filter(
+            category: filters.category,
+            userType: filters.userType,
+            isActive: true
+        )
+        
+        <span class="comment">// Step 2: Calculate cosine similarity</span>
+        results = []
+        
+        <span class="keyword">FOR EACH</span> entry <span class="keyword">IN</span> candidateEntries:
+            similarity = cosineSimilarity(embedding, entry.embedding)
+            
+            <span class="comment">// Apply boost for exact matches</span>
+            <span class="keyword">IF</span> entry.hasExactMatch(filters):
+                similarity *= 1.2
+            
+            results.add(SearchResult(
+                entry: entry,
+                similarity: similarity,
+                source: entry.source
+            ))
+        
+        <span class="comment">// Step 3: Sort by similarity and return top-k</span>
+        results.sort((a, b) -> b.similarity.compareTo(a.similarity))
+        
+        <span class="keyword">RETURN</span> results.take(k)
+    
+    <span class="keyword">FUNCTION</span> storeEntry(query: String, response: String, intent: Intent):
+        <span class="comment">// Generate embedding for the query</span>
+        embedding = EmbeddingService.generateEmbedding(query)
+        
+        <span class="comment">// Create new KB entry</span>
+        entry = new KnowledgeBaseEntry()
+        entry.id = generateUUID()
+        entry.query = query
+        entry.response = response
+        entry.responseTemplate = extractTemplate(response)
+        entry.embedding = embedding
+        entry.category = intent.category
+        entry.source = <span class="string">"LLM_GENERATED"</span>
+        entry.confidence = 0.8 <span class="comment">// Initial confidence</span>
+        entry.createdAt = now()
+        entry.usageCount = 0
+        entry.lastUsed = null
+        entry.feedbackScore = 0.0
+        
+        KnowledgeBaseRepository.save(entry)
+        
+        <span class="comment">// Schedule review for quality assurance</span>
+        SchedulerService.schedule(
+            taskId: <span class="string">"REVIEW_KB_"</span> + entry.id,
+            runAt: now() + 24.hours,
+            action: () -> reviewGeneratedEntry(entry.id)
+        )
+
+<span class="keyword">CLASS</span> <span class="function">SessionManager</span>:
+    
+    sessions = new ConcurrentHashMap()
+    
+    <span class="keyword">FUNCTION</span> createSession(userId: String?, userType: String):
+        session = new ChatSession()
+        session.id = generateSessionId()
+        session.userId = userId
+        session.userType = userType
+        session.startTime = now()
+        session.lastActivity = now()
+        session.interactions = []
+        session.warningCount = 0
+        
+        <span class="keyword">IF</span> userId != null:
+            <span class="comment">// Load user context</span>
+            user = UserRepository.findById(userId)
+            session.userContext = new UserContext(
+                userId: userId,
+                name: user.firstName,
+                isVIP: user.isVIP,
+                preferences: user.preferences,
+                orderHistory: getRecentOrders(userId, 10),
+                language: user.preferredLanguage
+            )
+        
+        sessions.put(session.id, session)
+        
+        <span class="comment">// Set session timeout</span>
+        SchedulerService.schedule(
+            taskId: <span class="string">"SESSION_TIMEOUT_"</span> + session.id,
+            runAt: now() + SESSION_TIMEOUT_MINUTES.minutes,
+            action: () -> expireSession(session.id)
+        )
+        
+        <span class="keyword">RETURN</span> session
+    
+    <span class="keyword">FUNCTION</span> getSession(sessionId: String):
+        session = sessions.get(sessionId)
+        
+        <span class="keyword">IF</span> session != null:
+            <span class="comment">// Check if expired</span>
+            <span class="keyword">IF</span> now() - session.lastActivity > SESSION_TIMEOUT_MINUTES.minutes:
+                expireSession(sessionId)
+                <span class="keyword">RETURN</span> null
+            
+            <span class="comment">// Update activity</span>
+            session.lastActivity = now()
+        
+        <span class="keyword">RETURN</span> session
+    
+    <span class="keyword">FUNCTION</span> expireSession(sessionId: String):
+        session = sessions.remove(sessionId)
+        
+        <span class="keyword">IF</span> session != null:
+            <span class="comment">// Save session history</span>
+            SessionHistory.save(session)
+            
+            <span class="comment">// Log session metrics</span>
+            Analytics.logSessionEnd(
+                sessionId: session.id,
+                duration: now() - session.startTime,
+                interactionCount: session.interactions.size(),
+                userSatisfaction: calculateSatisfaction(session)
+            )
+
+<span class="comment">// Constants and Configuration</span>
+CONFIDENCE_THRESHOLD = 0.7
+SESSION_TIMEOUT_MINUTES = 30
+MAX_QUERIES_PER_HOUR = 50
+MAX_MESSAGE_LENGTH = 1000
+ABUSIVE_CONTENT_PATTERNS = loadAbusePatterns()
+
+<span class="comment">// System Prompts</span>
+<span class="keyword">FUNCTION</span> getSystemPrompt(userType: String):
+    basePrompt = <span class="string">"You are TrueBite Assistant, a helpful AI chatbot for a restaurant. "</span> +
+                 <span class="string">"Be friendly, concise, and accurate. Never make up menu items or prices."</span>
+    
+    <span class="keyword">SWITCH</span> userType:
+        <span class="keyword">CASE</span> <span class="string">"VIP"</span>:
+            <span class="keyword">RETURN</span> basePrompt + <span class="string">" This is a VIP customer - provide exceptional service."</span>
+        <span class="keyword">CASE</span> <span class="string">"STAFF"</span>:
+            <span class="keyword">RETURN</span> basePrompt + <span class="string">" This is a staff member - provide technical details if asked."</span>
+        <span class="keyword">DEFAULT</span>:
+            <span class="keyword">RETURN</span> basePrompt
+</div>
+
+        <h2>📋 Data Structures</h2>
+        <table>
+            <tr>
+                <th>Entity</th>
+                <th>Fields</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><strong>ChatSession</strong></td>
+                <td>id, userId, userType, startTime, lastActivity, interactions[], userContext</td>
+                <td>Maintains conversation state</td>
+            </tr>
+            <tr>
+                <td><strong>KnowledgeBaseEntry</strong></td>
+                <td>id, query, response, embedding, category, confidence, usageCount</td>
+                <td>Stores Q&A pairs for RAG</td>
+            </tr>
+            <tr>
+                <td><strong>Intent</strong></td>
+                <td>category, priority, requiresDynamicData, confidence</td>
+                <td>Classified user intent</td>
+            </tr>
+            <tr>
+                <td><strong>UserContext</strong></td>
+                <td>userId, name, isVIP, preferences, orderHistory, language</td>
+                <td>User personalization data</td>
+            </tr>
+            <tr>
+                <td><strong>ChatInteraction</strong></td>
+                <td>query, response, intent, source, timestamp, responseTime, satisfaction</td>
+                <td>Individual Q&A log</td>
+            </tr>
+        </table>
+
+        <h2>🎯 RAG vs LLM Decision Tree</h2>
+        <div class="info-box">
+            <strong>Knowledge Base (RAG) Used When:</strong><br>
+            • Confidence score ≥ 0.7<br>
+            • Common questions (FAQ)<br>
+            • Factual queries (menu, hours, prices)<br>
+            • Order status lookups<br>
+            • Response time: ~200ms<br><br>
+            
+            <strong>LLM Fallback When:</strong><br>
+            • KB confidence < 0.7<br>
+            • Complex reasoning required<br>
+            • Personalized recommendations<br>
+            • Creative responses<br>
+            • Response time: ~1-2s<br><br>
+            
+            <strong>Hybrid Approach:</strong><br>
+            • Use KB context + LLM generation<br>
+            • Store successful LLM responses<br>
+            • Continuous learning system
+        </div>
+
+        <h2>🧪 Test Scenarios</h2>
+        <div class="success-flow">
+            <strong>Test 1: Simple FAQ - KB Hit</strong><br>
+            • User: "What are your hours?"<br>
+            • Intent: GENERAL_INFO<br>
+            • KB search returns confidence: 0.95<br>
+            • Response: "We're open Mon-Sat 11am-10pm..."<br>
+            • Source: KNOWLEDGE_BASE<br>
+            • Response time: 180ms
+        </div>
+
+        <div class="warning-flow">
+            <strong>Test 2: Complex Query - LLM Fallback</strong><br>
+            • User: "I have a gluten allergy, what can I eat?"<br>
+            • Intent: RECOMMENDATION<br>
+            • KB confidence: 0.45 (low)<br>
+            • LLM generates personalized response<br>
+            • Source: LLM<br>
+            • Response stored in KB for future
+        </div>
+
+        <div class="normal-flow">
+            <strong>Test 3: Order Status - Dynamic Data</strong><br>
+            • VIP User: "Where's my order #1234?"<br>
+            • Intent: ORDER_STATUS (HIGH priority)<br>
+            • KB template + real-time data<br>
+            • Response: "Your order is 5 min away..."<br>
+            • Personalized for VIP status
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 4: Abusive Content</strong><br>
+            • User sends inappropriate message<br>
+            • Abuse filter triggered<br>
+            • Warning issued<br>
+            • User reputation -10<br>
+            • 3rd offense → 24h chat ban
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 5: Service Unavailable</strong><br>
+            • Both KB and LLM services down<br>
+            • Fallback message shown<br>
+            • "Support temporarily unavailable"<br>
+            • Incident logged<br>
+            • Alert sent to tech team
+        </div>
+    </div>
+</body>
+</html>

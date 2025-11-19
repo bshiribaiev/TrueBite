@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-11 Submit Delivery Bid (Petri Net)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "🚴";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning-flow {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1350px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .delivery { background: #3498db; color: white; }
+        .manager { background: #2ecc71; color: white; }
+        .petri-legend {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 15px;
+        }
+        .legend-item svg {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+        .bid-form {
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #f8f5ff;
+        }
+        .bid-form h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .bid-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        .bid-status {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .status-pending { background: #2196f3; color: white; }
+        .status-accepted { background: #4caf50; color: white; }
+        .status-rejected { background: #f44336; color: white; }
+        .status-expired { background: #9e9e9e; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-11: Submit Delivery Bid (Petri Net)</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-11 - Delivery Bid Submission with Petri Net Model<br>
+            <strong>Actors:</strong> 
+            <span class="user-badge delivery">Delivery Person</span>
+            <span class="user-badge manager">Manager</span><br>
+            <strong>Goal:</strong> Submit competitive bids for available delivery orders<br>
+            <strong>Preconditions:</strong> Orders in READY_FOR_DELIVERY status, delivery person authenticated<br>
+            <strong>Postconditions:</strong> Valid bids queued for manager assignment, invalid bids rejected
+        </div>
+
+        <h2>📝 Delivery Bid Interface</h2>
+        <div class="bid-form">
+            <h3>Submit Bid - Order #1234</h3>
+            <p><strong>Pickup:</strong> TrueBite Kitchen - 123 Main St<br>
+            <strong>Delivery:</strong> 456 Oak Ave (2.5 miles)<br>
+            <strong>Items:</strong> 2 dishes | <strong>Order Value:</strong> $45.00</p>
+            
+            <div class="form-group">
+                <label>Estimated Time to Delivery (ETA):</label>
+                <input type="number" value="25" min="10" max="60"> minutes
+            </div>
+            <div class="form-group">
+                <label>Delivery Fee (Optional):</label>
+                <input type="number" step="0.50" value="5.00" min="3.00" max="15.00"> $
+            </div>
+            <div class="form-group">
+                <label>Current Deliveries:</label>
+                <select disabled>
+                    <option>2 active deliveries</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Willingness Score:</label>
+                <input type="range" min="1" max="10" value="8">
+                <span>8/10 - High Priority</span>
+            </div>
+        </div>
+
+        <h2>🔄 Petri Net Legend</h2>
+        <div class="petri-legend">
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="15" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+                </svg>
+                <span><strong>Place:</strong> State/Resource</span>
+            </div>
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <rect x="15" y="5" width="10" height="30" fill="#333" stroke="#000" stroke-width="1"/>
+                </svg>
+                <span><strong>Transition:</strong> Action/Event</span>
+            </div>
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="5" fill="#667eea"/>
+                </svg>
+                <span><strong>Token:</strong> Order/Bid/Resource</span>
+            </div>
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <line x1="5" y1="20" x2="35" y2="20" stroke="#666" stroke-width="2" marker-end="url(#arrowhead-small)"/>
+                </svg>
+                <span><strong>Arc:</strong> Flow Direction</span>
+            </div>
+            <div class="legend-item">
+                <svg viewBox="0 0 40 40">
+                    <line x1="5" y1="20" x2="30" y2="20" stroke="#666" stroke-width="2"/>
+                    <circle cx="30" cy="20" r="4" fill="white" stroke="#666" stroke-width="2"/>
+                </svg>
+                <span><strong>Inhibitor:</strong> Blocking Condition</span>
+            </div>
+        </div>
+
+        <h2>📊 Petri Net Diagram - Delivery Bid Submission Flow</h2>
+        <svg viewBox="0 0 1350 1000" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1350" height="1000" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="675" y="30" text-anchor="middle" font-size="22" font-weight="bold" fill="#2c3e50">
+                UC-11: Submit Delivery Bid - Petri Net Model with Validation
+            </text>
+            
+            <!-- Define gradients -->
+            <defs>
+                <linearGradient id="orderGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#e3f2fd;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#bbdefb;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="deliveryGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#e8f5e9;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#c8e6c9;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="bidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f3e5f5;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#e1bee7;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="rejectGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ffebee;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#ffcdd2;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            
+            <!-- Places -->
+            
+            <!-- P_OrderReadyForBid -->
+            <g transform="translate(150, 200)">
+                <circle r="65" fill="url(#orderGradient)" stroke="#1976d2" stroke-width="3"/>
+                <text y="0" text-anchor="middle" font-size="12" font-weight="bold">P_OrderReadyForBid</text>
+                <text y="15" text-anchor="middle" font-size="10">(READY_FOR_DELIVERY)</text>
+                <!-- Multiple order tokens -->
+                <circle cx="-20" cy="-30" r="7" fill="#1976d2"/>
+                <circle cx="0" cy="-30" r="7" fill="#1976d2"/>
+                <circle cx="20" cy="-30" r="7" fill="#1976d2"/>
+            </g>
+            
+            <!-- P_EligibleDeliveryPerson -->
+            <g transform="translate(150, 400)">
+                <circle r="65" fill="url(#deliveryGradient)" stroke="#4caf50" stroke-width="3"/>
+                <text y="0" text-anchor="middle" font-size="12" font-weight="bold">P_EligibleDeliveryPerson</text>
+                <text y="15" text-anchor="middle" font-size="10">(Available Courier)</text>
+                <!-- Delivery person token -->
+                <circle cx="0" cy="-30" r="8" fill="#4caf50"/>
+                <text y="-20" text-anchor="middle" font-size="8" fill="white">DP</text>
+            </g>
+            
+            <!-- P_DeliveryCapacity -->
+            <g transform="translate(150, 580)">
+                <circle r="50" fill="#fff3e0" stroke="#ff9800" stroke-width="2"/>
+                <text y="0" text-anchor="middle" font-size="11">P_DeliveryCapacity</text>
+                <text y="15" text-anchor="middle" font-size="9">(Max 3 concurrent)</text>
+                <!-- Capacity tokens (3 max, 1 used) -->
+                <circle cx="-15" cy="-20" r="5" fill="#ff9800"/>
+                <circle cx="0" cy="-20" r="5" fill="#ff9800"/>
+                <circle cx="15" cy="-20" r="5" fill="#ccc" stroke-dasharray="2,2"/>
+            </g>
+            
+            <!-- T_SubmitBid -->
+            <g transform="translate(400, 300)">
+                <rect x="-25" y="-60" width="50" height="120" fill="#333" stroke="#000" stroke-width="2"/>
+                <text y="80" text-anchor="middle" font-size="12" font-weight="bold">T_SubmitBid</text>
+                <text y="95" text-anchor="middle" font-size="9">(Create Bid)</text>
+            </g>
+            
+            <!-- P_BidSubmitted -->
+            <g transform="translate(600, 300)">
+                <circle r="60" fill="url(#bidGradient)" stroke="#9c27b0" stroke-width="3"/>
+                <text y="0" text-anchor="middle" font-size="12" font-weight="bold">P_BidSubmitted</text>
+                <text y="15" text-anchor="middle" font-size="10">(Bid Created)</text>
+            </g>
+            
+            <!-- T_ValidateBid -->
+            <g transform="translate(800, 300)">
+                <rect x="-25" y="-60" width="50" height="120" fill="#333" stroke="#000" stroke-width="2"/>
+                <text y="80" text-anchor="middle" font-size="12" font-weight="bold">T_ValidateBid</text>
+                <text y="95" text-anchor="middle" font-size="9">(Check Rules)</text>
+            </g>
+            
+            <!-- P_BidQueue -->
+            <g transform="translate(1050, 200)">
+                <circle r="65" fill="url(#bidGradient)" stroke="#9c27b0" stroke-width="3"/>
+                <text y="0" text-anchor="middle" font-size="12" font-weight="bold">P_BidQueue</text>
+                <text y="15" text-anchor="middle" font-size="10">(Pending Bids)</text>
+                <!-- Multiple bid tokens in queue -->
+                <circle cx="-25" cy="-30" r="6" fill="#9c27b0"/>
+                <circle cx="-10" cy="-30" r="6" fill="#9c27b0"/>
+                <circle cx="5" cy="-30" r="6" fill="#9c27b0"/>
+                <circle cx="20" cy="-30" r="6" fill="#667eea"/>
+            </g>
+            
+            <!-- P_BidRejected -->
+            <g transform="translate(1050, 400)">
+                <circle r="65" fill="url(#rejectGradient)" stroke="#f44336" stroke-width="3"/>
+                <text y="0" text-anchor="middle" font-size="12" font-weight="bold">P_BidRejected</text>
+                <text y="15" text-anchor="middle" font-size="10">(Invalid/Expired)</text>
+            </g>
+            
+            <!-- P_BiddingWindow -->
+            <g transform="translate(800, 500)">
+                <circle r="50" fill="#e8eaf6" stroke="#5e35b1" stroke-width="2"/>
+                <text y="0" text-anchor="middle" font-size="11">P_BiddingWindow</text>
+                <text y="15" text-anchor="middle" font-size="9">(Time Constraint)</text>
+                <!-- Timer token -->
+                <circle cx="0" cy="-20" r="6" fill="#5e35b1"/>
+                <text y="-15" text-anchor="middle" font-size="8" fill="white">⏱️</text>
+            </g>
+            
+            <!-- P_ManagerAssignment -->
+            <g transform="translate(1050, 580)">
+                <circle r="55" fill="#e8f5e9" stroke="#2ecc71" stroke-width="2"/>
+                <text y="0" text-anchor="middle" font-size="11">P_ManagerAssignment</text>
+                <text y="15" text-anchor="middle" font-size="9">(For Selection)</text>
+                <!-- Manager token -->
+                <circle cx="0" cy="-20" r="7" fill="#2ecc71"/>
+                <text y="-15" text-anchor="middle" font-size="8" fill="white">M</text>
+            </g>
+            
+            <!-- Additional Places for Complete Flow -->
+            
+            <!-- P_DeliveryOverload -->
+            <g transform="translate(400, 500)">
+                <circle r="50" fill="#ffebee" stroke="#f44336" stroke-width="2"/>
+                <text y="0" text-anchor="middle" font-size="11">P_DeliveryOverload</text>
+                <text y="15" text-anchor="middle" font-size="9">(Too Many Active)</text>
+            </g>
+            
+            <!-- P_BidAccepted -->
+            <g transform="translate(1250, 200)">
+                <circle r="50" fill="#e8f5e9" stroke="#4caf50" stroke-width="2"/>
+                <text y="0" text-anchor="middle" font-size="11">P_BidAccepted</text>
+                <text y="15" text-anchor="middle" font-size="9">(Assigned)</text>
+            </g>
+            
+            <!-- Arcs (Connections) -->
+            
+            <!-- P_OrderReadyForBid -> T_SubmitBid -->
+            <line x1="215" y1="200" x2="375" y2="300" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="295" y="240" text-anchor="middle" font-size="10">order</text>
+            
+            <!-- P_EligibleDeliveryPerson -> T_SubmitBid -->
+            <line x1="215" y1="400" x2="375" y2="300" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="295" y="360" text-anchor="middle" font-size="10">courier</text>
+            
+            <!-- P_DeliveryCapacity -> T_SubmitBid (resource arc) -->
+            <line x1="200" y1="560" x2="380" y2="360" stroke="#ff9800" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-orange)"/>
+            <text x="290" y="460" text-anchor="middle" font-size="9" fill="#ff9800">capacity check</text>
+            
+            <!-- T_SubmitBid -> P_BidSubmitted -->
+            <line x1="425" y1="300" x2="540" y2="300" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="482" y="295" text-anchor="middle" font-size="10">bid created</text>
+            
+            <!-- P_BidSubmitted -> T_ValidateBid -->
+            <line x1="660" y1="300" x2="775" y2="300" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="717" y="295" text-anchor="middle" font-size="10">validate</text>
+            
+            <!-- T_ValidateBid -> P_BidQueue (valid path) -->
+            <line x1="825" y1="260" x2="985" y2="200" stroke="#4caf50" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+            <text x="905" y="225" text-anchor="middle" font-size="10" fill="#4caf50">valid</text>
+            
+            <!-- T_ValidateBid -> P_BidRejected (invalid path) -->
+            <line x1="825" y1="340" x2="985" y2="400" stroke="#f44336" stroke-width="2" marker-end="url(#arrowhead-red)"/>
+            <text x="905" y="375" text-anchor="middle" font-size="10" fill="#f44336">invalid</text>
+            
+            <!-- P_BiddingWindow -> T_ValidateBid (input arc for time check) -->
+            <line x1="800" y1="450" x2="800" y2="360" stroke="#5e35b1" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-purple)"/>
+            <text x="820" y="405" font-size="9" fill="#5e35b1">time check</text>
+            
+            <!-- Overload check inhibitor arc -->
+            <g>
+                <line x1="400" y1="450" x2="400" y2="360" stroke="#f44336" stroke-width="2" stroke-dasharray="3,3"/>
+                <circle cx="400" cy="365" r="5" fill="white" stroke="#f44336" stroke-width="2"/>
+                <text x="420" y="405" font-size="9" fill="#f44336">block if overloaded</text>
+            </g>
+            
+            <!-- P_BidQueue -> P_ManagerAssignment (manager reviews) -->
+            <line x1="1050" y1="265" x2="1050" y2="525" stroke="#2ecc71" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-green)"/>
+            <text x="1070" y="395" font-size="9" fill="#2ecc71">for review</text>
+            
+            <!-- P_BidQueue -> P_BidAccepted (manager selects) -->
+            <line x1="1115" y1="200" x2="1200" y2="200" stroke="#4caf50" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+            <text x="1157" y="195" text-anchor="middle" font-size="10" fill="#4caf50">selected</text>
+            
+            <!-- Return path for rejected delivery person -->
+            <line x1="1050" y1="465" x2="150" y2="465" stroke="#f44336" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrowhead-red)"/>
+            <text x="600" y="480" text-anchor="middle" font-size="9" fill="#f44336">delivery person returns to pool</text>
+            
+            <!-- Annotations -->
+            <rect x="50" y="700" width="380" height="120" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="60" y="720" font-size="11" font-weight="bold">Bid Validation Rules:</text>
+            <text x="60" y="740" font-size="10">• Bidding window must be open (5 min)</text>
+            <text x="60" y="755" font-size="10">• Delivery person must be active</text>
+            <text x="60" y="770" font-size="10">• Cannot exceed 3 concurrent deliveries</text>
+            <text x="60" y="785" font-size="10">• ETA must be reasonable (10-60 min)</text>
+            <text x="60" y="800" font-size="10">• Fee within allowed range ($3-15)</text>
+            
+            <rect x="480" y="700" width="380" height="120" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="490" y="720" font-size="11" font-weight="bold">Token Flow:</text>
+            <text x="490" y="740" font-size="10">• Order token consumed when bid created</text>
+            <text x="490" y="755" font-size="10">• Delivery person token not consumed (reusable)</text>
+            <text x="490" y="770" font-size="10">• Capacity token blocks if all used</text>
+            <text x="490" y="785" font-size="10">• Bid tokens accumulate in queue</text>
+            <text x="490" y="800" font-size="10">• Manager processes queue periodically</text>
+            
+            <rect x="910" y="700" width="380" height="120" fill="none" stroke="#666" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="920" y="720" font-size="11" font-weight="bold">Assignment Strategy:</text>
+            <text x="920" y="740" font-size="10">• Manager reviews all bids in queue</text>
+            <text x="920" y="755" font-size="10">• Considers: ETA, fee, courier rating</text>
+            <text x="920" y="770" font-size="10">• VIP orders get priority assignment</text>
+            <text x="920" y="785" font-size="10">• Automatic assignment if only 1 bid</text>
+            <text x="920" y="800" font-size="10">• Rejected bids return courier to pool</text>
+            
+            <!-- Legend for bid scoring -->
+            <g transform="translate(100, 860)">
+                <rect x="0" y="0" width="1150" height="60" fill="#f5f5f5" stroke="#999" rx="5"/>
+                <text x="20" y="30" font-size="12" font-weight="bold">Bid Scoring Formula:</text>
+                <text x="200" y="30" font-size="11">Score = (0.4 × ETA_score) + (0.3 × Fee_score) + (0.2 × Rating_score) + (0.1 × Willingness)</text>
+                <text x="20" y="50" font-size="10">• Lower ETA = Higher score | Lower fee = Higher score | Higher rating = Higher score | Higher willingness = Higher score</text>
+            </g>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#666"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+                <marker id="arrowhead-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#ff9800"/>
+                </marker>
+                <marker id="arrowhead-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#5e35b1"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>💻 Detailed Pseudocode Implementation</h2>
+        <div class="pseudocode">
+<span class="comment">// UC-11: Submit Delivery Bid - Petri Net Implementation</span>
+
+<span class="keyword">CLASS</span> <span class="function">DeliveryService</span>:
+    
+    <span class="keyword">FUNCTION</span> submitBid(deliveryPersonId: String, orderId: String, bidData: BidInput):
+        <span class="keyword">INPUT</span>: {
+            deliveryPersonId: String,
+            orderId: String,
+            bidData: {
+                estimatedETA: Integer, <span class="comment">// minutes</span>
+                proposedFee: Decimal (optional),
+                willingnessScore: Integer (1-10),
+                currentLocation: GeoPoint
+            }
+        }
+        
+        <span class="comment">// Petri Net: Check P_OrderReadyForBid place</span>
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">IF</span> order == null:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Order not found"</span>,
+                petriPlace: <span class="string">"NO_TOKEN"</span>
+            )
+        
+        <span class="keyword">IF</span> order.status != <span class="string">"READY_FOR_DELIVERY"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Order not available for bidding"</span>,
+                currentStatus: order.status,
+                petriPlace: <span class="string">"P_OrderNotReady"</span>
+            )
+        
+        <span class="keyword">IF</span> order.assignedDeliveryId != null:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Order already assigned"</span>,
+                assignedTo: order.assignedDeliveryId,
+                petriPlace: <span class="string">"P_OrderAssigned"</span>
+            )
+        
+        <span class="comment">// Petri Net: Check P_EligibleDeliveryPerson place</span>
+        deliveryPerson = UserRepository.findById(deliveryPersonId)
+        
+        <span class="keyword">IF</span> deliveryPerson == null OR deliveryPerson.role != <span class="string">"DELIVERY"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Invalid delivery person"</span>,
+                petriPlace: <span class="string">"P_InvalidDeliveryPerson"</span>
+            )
+        
+        <span class="keyword">IF</span> deliveryPerson.status != <span class="string">"ACTIVE"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Delivery person not active"</span>,
+                currentStatus: deliveryPerson.status,
+                petriPlace: <span class="string">"P_DeliveryPersonInactive"</span>
+            )
+        
+        <span class="comment">// Petri Net: Check P_DeliveryCapacity (inhibitor arc)</span>
+        activeDeliveries = DeliveryRepository.countActiveByDeliveryPerson(deliveryPersonId)
+        
+        <span class="keyword">IF</span> activeDeliveries >= MAX_CONCURRENT_DELIVERIES:
+            <span class="comment">// Token blocked by inhibitor arc</span>
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Too many active deliveries"</span>,
+                currentActive: activeDeliveries,
+                maxAllowed: MAX_CONCURRENT_DELIVERIES,
+                petriPlace: <span class="string">"P_DeliveryOverload"</span>
+            )
+        
+        <span class="comment">// Petri Net: Check P_BiddingWindow place</span>
+        biddingWindowOpen = checkBiddingWindow(order)
+        
+        <span class="keyword">IF NOT</span> biddingWindowOpen.isOpen:
+            <span class="comment">// Move token to P_BidRejected</span>
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Bidding window closed"</span>,
+                windowClosedAt: biddingWindowOpen.closedAt,
+                petriPlace: <span class="string">"P_BidRejected"</span>
+            )
+        
+        <span class="comment">// Petri Net: Fire T_SubmitBid transition</span>
+        <span class="comment">// Consumes tokens from P_OrderReadyForBid and P_EligibleDeliveryPerson</span>
+        <span class="comment">// Creates token in P_BidSubmitted</span>
+        
+        bid = new DeliveryBid()
+        bid.bidId = generateUUID()
+        bid.orderId = orderId
+        bid.deliveryPersonId = deliveryPersonId
+        bid.estimatedETA = bidData.estimatedETA
+        bid.proposedFee = bidData.proposedFee ?? calculateDefaultFee(order)
+        bid.willingnessScore = bidData.willingnessScore
+        bid.currentLocation = bidData.currentLocation
+        bid.distanceToPickup = calculateDistance(bidData.currentLocation, order.pickupLocation)
+        bid.status = <span class="string">"PENDING"</span>
+        bid.submittedAt = now()
+        bid.expiresAt = now() + BIDDING_WINDOW_DURATION
+        
+        <span class="comment">// Calculate bid score</span>
+        bid.bidScore = calculateBidScore(bid, deliveryPerson)
+        
+        <span class="comment">// Petri Net: Fire T_ValidateBid transition</span>
+        validationResult = validateBid(bid)
+        
+        <span class="keyword">IF NOT</span> validationResult.isValid:
+            <span class="comment">// Move token to P_BidRejected</span>
+            <span class="keyword">RETURN</span> Result(
+                error: validationResult.errors,
+                petriPlace: <span class="string">"P_BidRejected"</span>
+            )
+        
+        <span class="comment">// Move token to P_BidQueue</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            DeliveryBidRepository.save(bid)
+            
+            <span class="comment">// Log bid submission</span>
+            bidLog = new BidLog()
+            bidLog.bidId = bid.bidId
+            bidLog.action = <span class="string">"SUBMITTED"</span>
+            bidLog.deliveryPersonId = deliveryPersonId
+            bidLog.timestamp = now()
+            BidLogRepository.save(bidLog)
+            
+            <span class="comment">// Update order bidding status</span>
+            order.hasBids = true
+            order.bidCount = order.bidCount + 1
+            order.lowestBidFee = min(order.lowestBidFee, bid.proposedFee)
+            OrderRepository.update(order)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Notify manager if first bid or competitive bid</span>
+        <span class="keyword">IF</span> order.bidCount == 1 OR bid.proposedFee < order.averageBidFee * 0.8:
+            NotificationService.notifyManager(
+                <span class="string">"New competitive bid received"</span>,
+                bid
+            )
+        
+        <span class="comment">// Schedule automatic assignment if single bid after window</span>
+        <span class="keyword">IF</span> order.bidCount == 1:
+            SchedulerService.schedule(
+                taskId: <span class="string">"AUTO_ASSIGN_"</span> + orderId,
+                runAt: bid.expiresAt,
+                action: () -> autoAssignIfSingleBid(orderId)
+            )
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            bidId: bid.bidId,
+            message: <span class="string">"Bid submitted successfully"</span>,
+            status: <span class="string">"PENDING"</span>,
+            bidScore: bid.bidScore,
+            petriPlace: <span class="string">"P_BidQueue"</span>,
+            competingBids: order.bidCount
+        )
+    
+    <span class="keyword">FUNCTION</span> validateBid(bid: DeliveryBid):
+        errors = []
+        
+        <span class="comment">// Validate ETA</span>
+        <span class="keyword">IF</span> bid.estimatedETA < MIN_ETA_MINUTES:
+            errors.add(<span class="string">"ETA too short (min "</span> + MIN_ETA_MINUTES + <span class="string">" minutes)"</span>)
+        <span class="keyword">ELSE IF</span> bid.estimatedETA > MAX_ETA_MINUTES:
+            errors.add(<span class="string">"ETA too long (max "</span> + MAX_ETA_MINUTES + <span class="string">" minutes)"</span>)
+        
+        <span class="comment">// Validate fee</span>
+        <span class="keyword">IF</span> bid.proposedFee < MIN_DELIVERY_FEE:
+            errors.add(<span class="string">"Fee below minimum ($"</span> + MIN_DELIVERY_FEE + <span class="string">")"</span>)
+        <span class="keyword">ELSE IF</span> bid.proposedFee > MAX_DELIVERY_FEE:
+            errors.add(<span class="string">"Fee exceeds maximum ($"</span> + MAX_DELIVERY_FEE + <span class="string">")"</span>)
+        
+        <span class="comment">// Validate willingness</span>
+        <span class="keyword">IF</span> bid.willingnessScore < 1 OR bid.willingnessScore > 10:
+            errors.add(<span class="string">"Willingness score must be 1-10"</span>)
+        
+        <span class="comment">// Validate distance (courier shouldn't be too far)</span>
+        <span class="keyword">IF</span> bid.distanceToPickup > MAX_PICKUP_DISTANCE:
+            errors.add(<span class="string">"Too far from pickup location"</span>)
+        
+        <span class="keyword">RETURN</span> ValidationResult(
+            isValid: errors.isEmpty(),
+            errors: errors
+        )
+    
+    <span class="keyword">FUNCTION</span> calculateBidScore(bid: DeliveryBid, deliveryPerson: User):
+        <span class="comment">// Weighted scoring formula</span>
+        
+        <span class="comment">// ETA Score (lower is better, 0-10 scale)</span>
+        etaScore = 10 - ((bid.estimatedETA - MIN_ETA_MINUTES) / 
+                        (MAX_ETA_MINUTES - MIN_ETA_MINUTES) * 10)
+        
+        <span class="comment">// Fee Score (lower is better, 0-10 scale)</span>
+        feeScore = 10 - ((bid.proposedFee - MIN_DELIVERY_FEE) / 
+                        (MAX_DELIVERY_FEE - MIN_DELIVERY_FEE) * 10)
+        
+        <span class="comment">// Rating Score (from delivery person's reputation)</span>
+        reputation = ReputationRepository.findByUserId(deliveryPerson.userId)
+        ratingScore = (reputation?.averageScore ?? 3.0) * 2  <span class="comment">// Convert 5-star to 10-scale</span>
+        
+        <span class="comment">// Willingness Score (already 1-10)</span>
+        willingnessScore = bid.willingnessScore
+        
+        <span class="comment">// Distance penalty</span>
+        distancePenalty = bid.distanceToPickup / MAX_PICKUP_DISTANCE * 2
+        
+        <span class="comment">// Weighted calculation</span>
+        totalScore = (etaScore * 0.4) + 
+                    (feeScore * 0.3) + 
+                    (ratingScore * 0.2) + 
+                    (willingnessScore * 0.1) - 
+                    distancePenalty
+        
+        <span class="keyword">RETURN</span> max(0, min(10, totalScore))  <span class="comment">// Clamp between 0-10</span>
+    
+    <span class="keyword">FUNCTION</span> checkBiddingWindow(order: Order):
+        <span class="comment">// Bidding window opens when order becomes READY_FOR_DELIVERY</span>
+        windowStart = order.readyTime ?? order.kitchenEndTime
+        windowEnd = windowStart + BIDDING_WINDOW_DURATION  <span class="comment">// 5 minutes</span>
+        
+        currentTime = now()
+        
+        <span class="keyword">RETURN</span> BiddingWindow(
+            isOpen: currentTime >= windowStart AND currentTime <= windowEnd,
+            openedAt: windowStart,
+            closesAt: windowEnd,
+            remainingTime: max(0, windowEnd - currentTime)
+        )
+
+<span class="comment">// Petri Net State Management</span>
+<span class="keyword">CLASS</span> <span class="function">DeliveryBidPetriNet</span>:
+    places = {
+        <span class="string">"P_OrderReadyForBid"</span>: [],        <span class="comment">// Orders ready for delivery</span>
+        <span class="string">"P_EligibleDeliveryPerson"</span>: [],  <span class="comment">// Available couriers</span>
+        <span class="string">"P_DeliveryCapacity"</span>: [],        <span class="comment">// Capacity tokens (max 3)</span>
+        <span class="string">"P_BidSubmitted"</span>: [],             <span class="comment">// Created bids</span>
+        <span class="string">"P_BidQueue"</span>: [],                 <span class="comment">// Valid pending bids</span>
+        <span class="string">"P_BidRejected"</span>: [],              <span class="comment">// Invalid/expired bids</span>
+        <span class="string">"P_BiddingWindow"</span>: [],            <span class="comment">// Time constraint tokens</span>
+        <span class="string">"P_DeliveryOverload"</span>: [],         <span class="comment">// Overloaded couriers</span>
+        <span class="string">"P_ManagerAssignment"</span>: [],        <span class="comment">// Manager review tokens</span>
+        <span class="string">"P_BidAccepted"</span>: []               <span class="comment">// Accepted bids</span>
+    }
+    
+    <span class="keyword">FUNCTION</span> fireTransition(transitionName: String, inputs: Map):
+        <span class="keyword">SWITCH</span> transitionName:
+            <span class="keyword">CASE</span> <span class="string">"T_SubmitBid"</span>:
+                <span class="comment">// Check preconditions</span>
+                order = removeToken(<span class="string">"P_OrderReadyForBid"</span>, inputs.orderId)
+                courier = getToken(<span class="string">"P_EligibleDeliveryPerson"</span>, inputs.courierId)
+                capacity = getAvailableCapacity(<span class="string">"P_DeliveryCapacity"</span>, inputs.courierId)
+                
+                <span class="keyword">IF</span> order == null OR courier == null:
+                    <span class="keyword">RETURN</span> false  <span class="comment">// Cannot fire</span>
+                
+                <span class="keyword">IF</span> capacity == 0:
+                    <span class="comment">// Inhibitor arc blocks transition</span>
+                    addToken(<span class="string">"P_DeliveryOverload"</span>, courier)
+                    <span class="keyword">RETURN</span> false
+                
+                <span class="comment">// Fire transition</span>
+                bid = createBid(order, courier, inputs.bidData)
+                addToken(<span class="string">"P_BidSubmitted"</span>, bid)
+                
+                <span class="comment">// Courier token not consumed (reusable)</span>
+                <span class="comment">// Reduce capacity by 1</span>
+                reduceCapacity(<span class="string">"P_DeliveryCapacity"</span>, inputs.courierId)
+                
+                <span class="keyword">RETURN</span> true
+            
+            <span class="keyword">CASE</span> <span class="string">"T_ValidateBid"</span>:
+                bid = removeToken(<span class="string">"P_BidSubmitted"</span>, inputs.bidId)
+                window = getToken(<span class="string">"P_BiddingWindow"</span>, inputs.orderId)
+                
+                <span class="keyword">IF</span> bid == null:
+                    <span class="keyword">RETURN</span> false
+                
+                <span class="comment">// Check validation rules</span>
+                <span class="keyword">IF</span> window == null OR window.isExpired():
+                    addToken(<span class="string">"P_BidRejected"</span>, bid)
+                <span class="keyword">ELSE IF</span> validateBidRules(bid):
+                    addToken(<span class="string">"P_BidQueue"</span>, bid)
+                <span class="keyword">ELSE</span>:
+                    addToken(<span class="string">"P_BidRejected"</span>, bid)
+                
+                <span class="keyword">RETURN</span> true
+    
+    <span class="keyword">FUNCTION</span> getPlaceTokenCount(placeName: String):
+        <span class="keyword">RETURN</span> places[placeName].size()
+    
+    <span class="keyword">FUNCTION</span> isTransitionEnabled(transitionName: String, inputs: Map):
+        <span class="keyword">SWITCH</span> transitionName:
+            <span class="keyword">CASE</span> <span class="string">"T_SubmitBid"</span>:
+                hasOrder = hasToken(<span class="string">"P_OrderReadyForBid"</span>, inputs.orderId)
+                hasCourier = hasToken(<span class="string">"P_EligibleDeliveryPerson"</span>, inputs.courierId)
+                hasCapacity = getAvailableCapacity(<span class="string">"P_DeliveryCapacity"</span>, inputs.courierId) > 0
+                
+                <span class="keyword">RETURN</span> hasOrder AND hasCourier AND hasCapacity
+            
+            <span class="keyword">CASE</span> <span class="string">"T_ValidateBid"</span>:
+                <span class="keyword">RETURN</span> hasToken(<span class="string">"P_BidSubmitted"</span>, inputs.bidId)
+
+<span class="comment">// Manager Assignment Process</span>
+<span class="keyword">CLASS</span> <span class="function">ManagerAssignmentService</span>:
+    
+    <span class="keyword">FUNCTION</span> reviewBidsAndAssign(orderId: String):
+        <span class="comment">// Get all bids from P_BidQueue for this order</span>
+        bids = DeliveryBidRepository.findByOrderAndStatus(orderId, <span class="string">"PENDING"</span>)
+        
+        <span class="keyword">IF</span> bids.isEmpty():
+            <span class="keyword">RETURN</span> Result(
+                warning: <span class="string">"No bids available for order"</span>,
+                action: <span class="string">"WAIT_OR_REASSIGN"</span>
+            )
+        
+        <span class="comment">// Sort bids by score (highest first)</span>
+        bids.sort((a, b) -> b.bidScore.compareTo(a.bidScore))
+        
+        <span class="comment">// Select best bid</span>
+        selectedBid = bids[0]
+        
+        <span class="comment">// Move token from P_BidQueue to P_BidAccepted</span>
+        selectedBid.status = <span class="string">"ACCEPTED"</span>
+        DeliveryBidRepository.update(selectedBid)
+        
+        <span class="comment">// Reject other bids</span>
+        <span class="keyword">FOR EACH</span> bid <span class="keyword">IN</span> bids.subList(1, bids.size()):
+            bid.status = <span class="string">"REJECTED"</span>
+            bid.rejectionReason = <span class="string">"Another bid selected"</span>
+            DeliveryBidRepository.update(bid)
+            
+            <span class="comment">// Return delivery person to available pool</span>
+            returnCourierToPool(bid.deliveryPersonId)
+        
+        <span class="comment">// Assign order to selected courier</span>
+        order = OrderRepository.findById(orderId)
+        order.assignedDeliveryId = selectedBid.deliveryPersonId
+        order.deliveryFee = selectedBid.proposedFee
+        order.estimatedDeliveryTime = now() + selectedBid.estimatedETA.minutes
+        order.status = <span class="string">"OUT_FOR_DELIVERY"</span>
+        OrderRepository.update(order)
+        
+        <span class="comment">// Notify selected courier</span>
+        NotificationService.notifyDeliveryPerson(
+            selectedBid.deliveryPersonId,
+            <span class="string">"Your bid was accepted! Please pick up order #"</span> + orderId
+        )
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            selectedBidId: selectedBid.bidId,
+            assignedTo: selectedBid.deliveryPersonId
+        )
+</div>
+
+        <h2>📊 Bid Evaluation Metrics</h2>
+        <table>
+            <tr>
+                <th>Factor</th>
+                <th>Weight</th>
+                <th>Score Range</th>
+                <th>Impact</th>
+            </tr>
+            <tr>
+                <td>ETA (Delivery Time)</td>
+                <td>40%</td>
+                <td>0-10</td>
+                <td>Lower time = Higher score</td>
+            </tr>
+            <tr>
+                <td>Delivery Fee</td>
+                <td>30%</td>
+                <td>0-10</td>
+                <td>Lower fee = Higher score</td>
+            </tr>
+            <tr>
+                <td>Courier Rating</td>
+                <td>20%</td>
+                <td>0-10</td>
+                <td>Higher rating = Higher score</td>
+            </tr>
+            <tr>
+                <td>Willingness</td>
+                <td>10%</td>
+                <td>1-10</td>
+                <td>Direct score from courier</td>
+            </tr>
+        </table>
+
+        <h2>🔄 Petri Net Properties</h2>
+        <div class="info-box">
+            <strong>1. Reachability:</strong> All valid bids can reach P_BidQueue from P_OrderReadyForBid<br>
+            <strong>2. Boundedness:</strong> P_DeliveryCapacity limited to 3 tokens per courier<br>
+            <strong>3. Liveness:</strong> No deadlocks - all paths lead to acceptance or rejection<br>
+            <strong>4. Fairness:</strong> First-come-first-served within bidding window<br>
+            <strong>5. Conservation:</strong> Order tokens consumed only once per bid<br>
+            <strong>6. Inhibitor Arc:</strong> Prevents overloaded couriers from bidding
+        </div>
+
+        <h2>🧪 Test Scenarios</h2>
+        <div class="success-flow">
+            <strong>Test 1: Successful Bid Submission</strong><br>
+            • Order status: READY_FOR_DELIVERY<br>
+            • Courier has 1 active delivery (under limit)<br>
+            • Bidding window: Open (3 min remaining)<br>
+            • ETA: 25 min, Fee: $5.00<br>
+            • Expected: Bid created → P_BidQueue<br>
+            • Manager notified for review
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 2: Bidding Window Expired</strong><br>
+            • Order ready 10 minutes ago<br>
+            • Bidding window: 5 minutes<br>
+            • Courier attempts to bid<br>
+            • Expected: Bid rejected → P_BidRejected<br>
+            • Error: "Bidding window closed"
+        </div>
+
+        <div class="warning-flow">
+            <strong>Test 3: Courier Overloaded</strong><br>
+            • Courier has 3 active deliveries<br>
+            • Attempts to bid on new order<br>
+            • Inhibitor arc blocks transition<br>
+            • Expected: Token → P_DeliveryOverload<br>
+            • Error: "Too many active deliveries"
+        </div>
+
+        <div class="normal-flow">
+            <strong>Test 4: Competitive Bidding</strong><br>
+            • 3 couriers submit bids<br>
+            • Bid 1: ETA 20min, $6<br>
+            • Bid 2: ETA 25min, $4<br>
+            • Bid 3: ETA 30min, $5<br>
+            • Expected: All in P_BidQueue<br>
+            • Manager selects best score<br>
+            • Winner → P_BidAccepted<br>
+            • Others → P_BidRejected
+        </div>
+    </div>
+</body>
+</html>

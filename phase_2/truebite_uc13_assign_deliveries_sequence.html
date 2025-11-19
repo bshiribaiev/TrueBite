@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-13 Assign Deliveries (Manager) Sequence Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #f5af19;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        h1::before {
+            content: "👔";
+            margin-right: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #f5af1915 0%, #f1271115 100%);
+            border-left: 4px solid #f5af19;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .normal-flow {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .warning-flow {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1250px;
+            height: auto;
+            margin: 20px 0;
+        }
+        .pseudocode {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .pseudocode .comment {
+            color: #95a5a6;
+        }
+        .pseudocode .keyword {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .pseudocode .function {
+            color: #3498db;
+        }
+        .pseudocode .string {
+            color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #f5af19;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .manager { background: #e74c3c; color: white; }
+        .delivery { background: #3498db; color: white; }
+        .dashboard-card {
+            border: 2px solid #f5af19;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #fff8f0;
+        }
+        .bid-comparison {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .bid-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .bid-row:last-child {
+            border-bottom: none;
+        }
+        .bid-score {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .score-high { background: #4caf50; color: white; }
+        .score-medium { background: #ff9800; color: white; }
+        .score-low { background: #f44336; color: white; }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-assign { background: #4caf50; color: white; }
+        .btn-decline { background: #f44336; color: white; }
+        .btn-manual { background: #9c27b0; color: white; }
+        .btn-auto { background: #2196f3; color: white; }
+        .metrics-box {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrueBite - UC-13: Assign Deliveries (Manager)</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-13 - Manager Delivery Assignment Process<br>
+            <strong>Actor:</strong> 
+            <span class="user-badge manager">Manager</span><br>
+            <strong>Goal:</strong> Review delivery bids and assign orders to optimal couriers<br>
+            <strong>Preconditions:</strong> Orders have bids submitted, manager authenticated with assignment privileges<br>
+            <strong>Postconditions:</strong> Orders assigned to delivery persons, rejected bids declined, notifications sent
+        </div>
+
+        <h2>📊 Manager Dashboard - Pending Bids</h2>
+        <div class="dashboard-card">
+            <h3>Pending Delivery Assignments</h3>
+            
+            <div class="metrics-box">
+                <div class="metric-card">
+                    <div class="metric-value">12</div>
+                    <div class="metric-label">Orders Pending</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">28</div>
+                    <div class="metric-label">Total Bids</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">8</div>
+                    <div class="metric-label">Available Couriers</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">5 min</div>
+                    <div class="metric-label">Avg Wait Time</div>
+                </div>
+            </div>
+            
+            <div class="bid-comparison">
+                <h4>Order #1234 - John Doe (VIP) 🌟</h4>
+                <p><strong>Distance:</strong> 2.3 miles | <strong>Order Value:</strong> $45.00 | <strong>Time in Queue:</strong> 3 min</p>
+                
+                <div class="bid-row">
+                    <div>
+                        <strong>Courier A</strong> ⭐ 4.8<br>
+                        <small>2 active deliveries</small>
+                    </div>
+                    <div>
+                        ETA: 20 min<br>
+                        Fee: $5.00
+                    </div>
+                    <div>
+                        <span class="bid-score score-high">Score: 8.5</span>
+                    </div>
+                </div>
+                
+                <div class="bid-row">
+                    <div>
+                        <strong>Courier B</strong> ⭐ 4.2<br>
+                        <small>0 active deliveries</small>
+                    </div>
+                    <div>
+                        ETA: 25 min<br>
+                        Fee: $4.00
+                    </div>
+                    <div>
+                        <span class="bid-score score-medium">Score: 7.2</span>
+                    </div>
+                </div>
+                
+                <div class="bid-row">
+                    <div>
+                        <strong>Courier C</strong> ⭐ 4.5<br>
+                        <small>1 active delivery</small>
+                    </div>
+                    <div>
+                        ETA: 30 min<br>
+                        Fee: $4.50
+                    </div>
+                    <div>
+                        <span class="bid-score score-low">Score: 6.8</span>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-assign">✓ Assign to Courier A</button>
+                    <button class="btn btn-auto">🤖 Auto-Assign Best</button>
+                    <button class="btn btn-manual">👤 Manual Assign</button>
+                </div>
+            </div>
+        </div>
+
+        <h2>📊 Main Sequence Diagram - Assignment Flow</h2>
+        <svg viewBox="0 0 1250 1700" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1250" height="1700" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="625" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">
+                Manager Delivery Assignment Process - Bid Selection &amp; Assignment
+            </text>
+            
+            <!-- Actors and Objects -->
+            <!-- Manager/UI -->
+            <rect x="50" y="60" width="100" height="40" fill="#ffebee" stroke="#e74c3c" stroke-width="2" rx="5"/>
+            <text x="100" y="85" text-anchor="middle" font-weight="bold">Manager/UI</text>
+            <line x1="100" y1="100" x2="100" y2="1650" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- AssignmentController -->
+            <rect x="200" y="60" width="150" height="40" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+            <text x="275" y="85" text-anchor="middle" font-weight="bold">AssignmentController</text>
+            <line x1="275" y1="100" x2="275" y2="1650" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- DeliveryService -->
+            <rect x="400" y="60" width="130" height="40" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="5"/>
+            <text x="465" y="85" text-anchor="middle" font-weight="bold">DeliveryService</text>
+            <line x1="465" y1="100" x2="465" y2="1650" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- BidRepository -->
+            <rect x="580" y="60" width="120" height="40" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="5"/>
+            <text x="640" y="85" text-anchor="middle" font-weight="bold">BidRepository</text>
+            <line x1="640" y1="100" x2="640" y2="1650" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- OrderRepository -->
+            <rect x="750" y="60" width="130" height="40" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+            <text x="815" y="85" text-anchor="middle" font-weight="bold">OrderRepository</text>
+            <line x1="815" y1="100" x2="815" y2="1650" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- NotificationService -->
+            <rect x="930" y="60" width="150" height="40" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="5"/>
+            <text x="1005" y="85" text-anchor="middle" font-weight="bold">NotificationService</text>
+            <line x1="1005" y1="100" x2="1005" y2="1650" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Database -->
+            <rect x="1130" y="60" width="80" height="40" fill="#fce4ec" stroke="#e91e63" stroke-width="2" rx="5"/>
+            <text x="1170" y="85" text-anchor="middle" font-weight="bold">Database</text>
+            <line x1="1170" y1="100" x2="1170" y2="1650" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- PART 1: View Pending Bids Dashboard -->
+            <rect x="30" y="120" width="1190" height="280" fill="none" stroke="#1976d2" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="140" font-size="14" fill="#1976d2" font-weight="bold">STEP 1: View Pending Bids Dashboard</text>
+            
+            <!-- 1. Open Dashboard -->
+            <line x1="100" y1="170" x2="275" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="187" y="165" text-anchor="middle" font-size="12">1: openPendingBids(managerId)</text>
+            
+            <!-- 2. Get Orders with Bids -->
+            <line x1="275" y1="200" x2="465" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="370" y="195" text-anchor="middle" font-size="12">2: getOrdersWithPendingBids()</text>
+            
+            <!-- 3. Query Pending Orders -->
+            <line x1="465" y1="230" x2="815" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="640" y="225" text-anchor="middle" font-size="11">3: findOrdersWithStatus(</text>
+            <text x="640" y="240" text-anchor="middle" font-size="11">READY_FOR_DELIVERY)</text>
+            
+            <!-- 4. Get Bids for Each Order -->
+            <line x1="465" y1="270" x2="640" y2="270" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="552" y="265" text-anchor="middle" font-size="12">4: getBidsForOrders(orderIds)</text>
+            
+            <!-- 5. Query Database -->
+            <line x1="640" y1="300" x2="1170" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="905" y="295" text-anchor="middle" font-size="11">5: SELECT * FROM delivery_bids</text>
+            <text x="905" y="310" text-anchor="middle" font-size="11">WHERE order_id IN (?) AND status = 'PENDING'</text>
+            
+            <!-- 6. Calculate Bid Scores -->
+            <rect x="470" y="330" width="120" height="30" fill="#e8f5e9" stroke="#333" rx="3"/>
+            <text x="530" y="348" text-anchor="middle" font-size="11">calculateScores()</text>
+            
+            <!-- 7. Display Dashboard -->
+            <line x1="275" y1="380" x2="100" y2="380" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="187" y="375" text-anchor="middle" font-size="12">7: displayBidsDashboard(orders, bids)</text>
+            
+            <!-- PART 2: Select and Assign Bid -->
+            <rect x="30" y="420" width="1190" height="480" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="440" font-size="14" fill="#4caf50" font-weight="bold">STEP 2: Select and Assign Delivery</text>
+            
+            <!-- 8. Manager Selects Bid -->
+            <line x1="100" y1="470" x2="275" y2="470" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="187" y="465" text-anchor="middle" font-size="12">8: selectBid(orderId=1234,</text>
+            <text x="187" y="480" text-anchor="middle" font-size="11">bidId=567, courierId=89)</text>
+            
+            <!-- 9. Assign Delivery -->
+            <line x1="275" y1="510" x2="465" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="370" y="505" text-anchor="middle" font-size="12">9: assignDelivery(orderId, bidId)</text>
+            
+            <!-- 10. Verify Bid Status -->
+            <line x1="465" y1="540" x2="640" y2="540" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="552" y="535" text-anchor="middle" font-size="12">10: getBid(bidId)</text>
+            
+            <!-- 11. Check Bid Valid -->
+            <rect x="645" y="550" width="130" height="40" fill="#f3e5f5" stroke="#333" rx="3"/>
+            <text x="710" y="565" text-anchor="middle" font-size="10">Verify bid.status</text>
+            <text x="710" y="580" text-anchor="middle" font-size="10">== PENDING</text>
+            
+            <!-- 12. Lock Other Bids -->
+            <line x1="465" y1="610" x2="640" y2="610" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="552" y="605" text-anchor="middle" font-size="12">12: declineOtherBids(orderId, bidId)</text>
+            
+            <!-- 13. Update Bids to DECLINED -->
+            <line x1="640" y1="640" x2="1170" y2="640" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="905" y="635" text-anchor="middle" font-size="11">13: UPDATE delivery_bids SET status = 'DECLINED'</text>
+            <text x="905" y="650" text-anchor="middle" font-size="11">WHERE order_id = ? AND bid_id != ?</text>
+            
+            <!-- 14. Accept Selected Bid -->
+            <line x1="465" y1="680" x2="640" y2="680" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="552" y="675" text-anchor="middle" font-size="12">14: acceptBid(bidId)</text>
+            
+            <!-- 15. Update to ACCEPTED -->
+            <line x1="640" y1="710" x2="1170" y2="710" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="905" y="705" text-anchor="middle" font-size="11">15: UPDATE delivery_bids SET status = 'ACCEPTED'</text>
+            <text x="905" y="720" text-anchor="middle" font-size="11">WHERE bid_id = ?</text>
+            
+            <!-- 16. Update Order Status -->
+            <line x1="465" y1="750" x2="815" y2="750" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="640" y="745" text-anchor="middle" font-size="12">16: assignDeliveryPerson(orderId,</text>
+            <text x="640" y="760" text-anchor="middle" font-size="11">courierId, deliveryFee)</text>
+            
+            <!-- 17. Update Order -->
+            <line x1="815" y1="790" x2="1170" y2="790" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="992" y="785" text-anchor="middle" font-size="11">17: UPDATE orders SET status = 'ASSIGNED',</text>
+            <text x="992" y="800" text-anchor="middle" font-size="11">assigned_delivery_id = ?, delivery_fee = ?</text>
+            
+            <!-- 18. Create Assignment Log -->
+            <rect x="280" y="820" width="140" height="30" fill="#e3f2fd" stroke="#333" rx="3"/>
+            <text x="350" y="838" text-anchor="middle" font-size="11">logAssignment()</text>
+            
+            <!-- 19. Notify Selected Courier -->
+            <line x1="465" y1="870" x2="1005" y2="870" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="735" y="865" text-anchor="middle" font-size="12">19: notifyAcceptedCourier(courierId)</text>
+            
+            <!-- PART 3: Notify All Parties -->
+            <rect x="30" y="920" width="1190" height="250" fill="none" stroke="#009688" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="940" font-size="14" fill="#009688" font-weight="bold">STEP 3: Send Notifications</text>
+            
+            <!-- 20. Notify Declined Couriers -->
+            <line x1="465" y1="970" x2="1005" y2="970" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="735" y="965" text-anchor="middle" font-size="12">20: notifyDeclinedCouriers(declinedBids)</text>
+            
+            <!-- 21. Notify Customer -->
+            <line x1="465" y1="1010" x2="1005" y2="1010" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="735" y="1005" text-anchor="middle" font-size="12">21: notifyCustomer(orderId,</text>
+            <text x="735" y="1020" text-anchor="middle" font-size="11">"Courier assigned, ETA: 25 min")</text>
+            
+            <!-- 22. Update Dashboard Stats -->
+            <rect x="470" y="1050" width="150" height="30" fill="#e8f5e9" stroke="#333" rx="3"/>
+            <text x="545" y="1068" text-anchor="middle" font-size="11">updateDashboardStats()</text>
+            
+            <!-- 23. Schedule Tracking -->
+            <rect x="820" y="1100" width="140" height="30" fill="#fff3e0" stroke="#333" rx="3"/>
+            <text x="890" y="1118" text-anchor="middle" font-size="11">scheduleTracking()</text>
+            
+            <!-- 24. Success Response -->
+            <line x1="275" y1="1150" x2="100" y2="1150" stroke="#4caf50" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-green)"/>
+            <text x="187" y="1145" text-anchor="middle" font-size="12" fill="#4caf50">24: "Assignment successful"</text>
+            
+            <!-- PART 4: Exception - No Bids Received -->
+            <rect x="30" y="1190" width="1190" height="420" fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="10,5" rx="5"/>
+            <text x="40" y="1210" font-size="14" fill="#f44336" font-weight="bold">EXCEPTION: No Bids or Manual Assignment</text>
+            
+            <!-- E1. No Bids Scenario -->
+            <rect x="105" y="1230" width="150" height="30" fill="#ffebee" stroke="#f44336" rx="3"/>
+            <text x="180" y="1248" text-anchor="middle" font-size="11">No bids received</text>
+            
+            <!-- E2. Manager Chooses Manual -->
+            <line x1="100" y1="1280" x2="275" y2="1280" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="187" y="1275" text-anchor="middle" font-size="12">E2: manualAssignment(orderId)</text>
+            
+            <!-- E3. Get Available Couriers -->
+            <line x1="275" y1="1310" x2="465" y2="1310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="370" y="1305" text-anchor="middle" font-size="12">E3: getAvailableCouriers()</text>
+            
+            <!-- E4. Query Active Couriers -->
+            <line x1="465" y1="1340" x2="1170" y2="1340" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="817" y="1335" text-anchor="middle" font-size="11">E4: SELECT * FROM users WHERE role = 'DELIVERY'</text>
+            <text x="817" y="1350" text-anchor="middle" font-size="11">AND status = 'ACTIVE' AND current_deliveries < 3</text>
+            
+            <!-- E5. Display Available -->
+            <line x1="275" y1="1380" x2="100" y2="1380" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="187" y="1375" text-anchor="middle" font-size="12">E5: showAvailableCouriers(list)</text>
+            
+            <!-- E6. Manager Selects -->
+            <line x1="100" y1="1410" x2="275" y2="1410" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="187" y="1405" text-anchor="middle" font-size="12">E6: selectCourier(courierId)</text>
+            
+            <!-- E7. Force Assignment -->
+            <line x1="275" y1="1440" x2="465" y2="1440" stroke="#ff9800" stroke-width="2" marker-end="url(#arrowhead-orange)"/>
+            <text x="370" y="1435" text-anchor="middle" font-size="12" fill="#ff9800">E7: forceAssignment(orderId, courierId)</text>
+            
+            <!-- E8. Create Manual Assignment -->
+            <rect x="470" y="1460" width="160" height="40" fill="#fff3e0" stroke="#ff9800" rx="3"/>
+            <text x="550" y="1475" text-anchor="middle" font-size="11">Create manual assignment</text>
+            <text x="550" y="1490" text-anchor="middle" font-size="11">Default fee applied</text>
+            
+            <!-- Alternative: Cancel Order -->
+            <g transform="translate(700, 1230)">
+                <rect x="0" y="0" width="400" height="100" fill="#ffebee" stroke="#f44336" rx="3"/>
+                <text x="200" y="20" text-anchor="middle" font-size="12" font-weight="bold">Alternative: Cancel Order</text>
+                <text x="200" y="40" text-anchor="middle" font-size="10">• No couriers available</text>
+                <text x="200" y="55" text-anchor="middle" font-size="10">• Customer location too far</text>
+                <text x="200" y="70" text-anchor="middle" font-size="10">• Mark as CANCELLED</text>
+                <text x="200" y="85" text-anchor="middle" font-size="10">• Process refund</text>
+            </g>
+            
+            <!-- E9. Update Order Status -->
+            <line x1="465" y1="1520" x2="815" y2="1520" stroke="#ff9800" stroke-width="2" marker-end="url(#arrowhead-orange)"/>
+            <text x="640" y="1515" text-anchor="middle" font-size="12" fill="#ff9800">E9: updateStatus(ASSIGNED)</text>
+            
+            <!-- E10. Notify Courier -->
+            <line x1="465" y1="1550" x2="1005" y2="1550" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="735" y="1545" text-anchor="middle" font-size="12">E10: notifyManualAssignment(courierId)</text>
+            
+            <!-- E11. Log Manual Override -->
+            <rect x="280" y="1570" width="150" height="30" fill="#ffebee" stroke="#f44336" rx="3"/>
+            <text x="355" y="1588" text-anchor="middle" font-size="11">logManualOverride()</text>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#4caf50"/>
+                </marker>
+                <marker id="arrowhead-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#ff9800"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#f44336"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>💻 Detailed Pseudocode</h2>
+        <div class="pseudocode">
+<span class="comment">// TrueBite Manager Assignment System - UC-13</span>
+
+<span class="keyword">CLASS</span> <span class="function">AssignmentController</span>:
+    
+    <span class="keyword">FUNCTION</span> viewPendingBids(managerId: String):
+        <span class="comment">// Verify manager authorization</span>
+        manager = UserRepository.findById(managerId)
+        
+        <span class="keyword">IF</span> manager == null OR manager.role != <span class="string">"MANAGER"</span>:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Unauthorized access"</span>)
+        
+        <span class="comment">// Get all orders needing assignment</span>
+        pendingOrders = OrderRepository.findByStatus([<span class="string">"READY_FOR_DELIVERY"</span>])
+        
+        <span class="comment">// For each order, get associated bids</span>
+        orderBidMap = new Map()
+        
+        <span class="keyword">FOR EACH</span> order <span class="keyword">IN</span> pendingOrders:
+            bids = BidRepository.findByOrderAndStatus(order.orderId, <span class="string">"PENDING"</span>)
+            
+            <span class="comment">// Calculate scores for each bid</span>
+            <span class="keyword">FOR EACH</span> bid <span class="keyword">IN</span> bids:
+                bid.calculatedScore = calculateBidScore(bid, order)
+                bid.courierInfo = getUserInfo(bid.deliveryPersonId)
+                bid.currentLoad = getActiveDeliveryCount(bid.deliveryPersonId)
+            
+            <span class="comment">// Sort bids by score (highest first)</span>
+            bids.sort((a, b) -> b.calculatedScore.compareTo(a.calculatedScore))
+            
+            orderBidMap.put(order, bids)
+        
+        <span class="comment">// Calculate dashboard metrics</span>
+        metrics = new DashboardMetrics()
+        metrics.totalPendingOrders = pendingOrders.size()
+        metrics.totalBids = orderBidMap.values().stream().mapToInt(List::size).sum()
+        metrics.availableCouriers = getAvailableCourierCount()
+        metrics.averageWaitTime = calculateAverageWaitTime(pendingOrders)
+        metrics.vipOrderCount = pendingOrders.filter(o -> o.isVIP).count()
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            orders: orderBidMap,
+            metrics: metrics,
+            recommendations: generateRecommendations(orderBidMap)
+        )
+
+<span class="keyword">CLASS</span> <span class="function">DeliveryService</span>:
+    
+    <span class="keyword">FUNCTION</span> assignDelivery(orderId: String, bidId: String, managerId: String):
+        <span class="keyword">INPUT</span>: {
+            orderId: String,
+            bidId: String,
+            managerId: String
+        }
+        
+        <span class="comment">// Step 1: Validate order and bid</span>
+        order = OrderRepository.findById(orderId)
+        
+        <span class="keyword">IF</span> order == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Order not found"</span>)
+        
+        <span class="keyword">IF</span> order.status != <span class="string">"READY_FOR_DELIVERY"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Order not ready for assignment"</span>,
+                currentStatus: order.status
+            )
+        
+        bid = BidRepository.findById(bidId)
+        
+        <span class="keyword">IF</span> bid == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Bid not found"</span>)
+        
+        <span class="keyword">IF</span> bid.orderId != orderId:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Bid does not match order"</span>)
+        
+        <span class="keyword">IF</span> bid.status != <span class="string">"PENDING"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Bid not pending"</span>,
+                currentStatus: bid.status
+            )
+        
+        <span class="comment">// Step 2: Check courier availability</span>
+        courier = UserRepository.findById(bid.deliveryPersonId)
+        
+        <span class="keyword">IF</span> courier.status != <span class="string">"ACTIVE"</span>:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Courier not available"</span>,
+                courierStatus: courier.status
+            )
+        
+        activeDeliveries = DeliveryRepository.countActiveByDeliveryPerson(courier.userId)
+        
+        <span class="keyword">IF</span> activeDeliveries >= MAX_CONCURRENT_DELIVERIES:
+            <span class="keyword">RETURN</span> Result(
+                error: <span class="string">"Courier at maximum capacity"</span>,
+                currentLoad: activeDeliveries
+            )
+        
+        <span class="comment">// Step 3: Perform assignment in transaction</span>
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Accept the selected bid</span>
+            bid.status = <span class="string">"ACCEPTED"</span>
+            bid.acceptedBy = managerId
+            bid.acceptedAt = now()
+            BidRepository.update(bid)
+            
+            <span class="comment">// Decline all other bids for this order</span>
+            otherBids = BidRepository.findByOrderAndStatus(orderId, <span class="string">"PENDING"</span>)
+            
+            <span class="keyword">FOR EACH</span> otherBid <span class="keyword">IN</span> otherBids:
+                <span class="keyword">IF</span> otherBid.bidId != bidId:
+                    otherBid.status = <span class="string">"DECLINED"</span>
+                    otherBid.declinedReason = <span class="string">"Another bid selected"</span>
+                    otherBid.declinedAt = now()
+                    BidRepository.update(otherBid)
+            
+            <span class="comment">// Update order with assignment</span>
+            order.status = <span class="string">"ASSIGNED"</span>
+            order.assignedDeliveryId = bid.deliveryPersonId
+            order.deliveryFee = bid.proposedFee
+            order.estimatedDeliveryTime = now() + bid.estimatedETA.minutes
+            order.assignedAt = now()
+            order.assignedBy = managerId
+            OrderRepository.update(order)
+            
+            <span class="comment">// Create assignment log</span>
+            assignmentLog = new AssignmentLog()
+            assignmentLog.orderId = orderId
+            assignmentLog.bidId = bidId
+            assignmentLog.managerId = managerId
+            assignmentLog.courierId = bid.deliveryPersonId
+            assignmentLog.assignmentType = <span class="string">"BID_BASED"</span>
+            assignmentLog.bidScore = bid.calculatedScore
+            assignmentLog.timestamp = now()
+            AssignmentLogRepository.save(assignmentLog)
+            
+            <span class="comment">// Update courier status</span>
+            courier.currentDeliveries++
+            courier.lastAssignedOrder = orderId
+            UserRepository.update(courier)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Step 4: Send notifications</span>
+        <span class="comment">// Notify accepted courier</span>
+        NotificationService.notifyCourier(
+            courierId: bid.deliveryPersonId,
+            message: <span class="string">"New delivery assigned! Order #"</span> + orderId,
+            type: <span class="string">"ASSIGNMENT_ACCEPTED"</span>,
+            orderId: orderId,
+            pickupLocation: order.restaurantAddress,
+            deliveryLocation: order.deliveryAddress,
+            estimatedEarnings: bid.proposedFee
+        )
+        
+        <span class="comment">// Notify declined couriers</span>
+        <span class="keyword">FOR EACH</span> declinedBid <span class="keyword">IN</span> otherBids:
+            NotificationService.notifyCourier(
+                courierId: declinedBid.deliveryPersonId,
+                message: <span class="string">"Your bid for order #"</span> + orderId + <span class="string">" was not selected"</span>,
+                type: <span class="string">"BID_DECLINED"</span>
+            )
+        
+        <span class="comment">// Notify customer</span>
+        NotificationService.notifyCustomer(
+            userId: order.customerId,
+            message: <span class="string">"Your order has been assigned to a courier!"</span>,
+            orderId: orderId,
+            estimatedTime: bid.estimatedETA,
+            courierName: courier.firstName
+        )
+        
+        <span class="comment">// Schedule tracking</span>
+        SchedulerService.schedule(
+            taskId: <span class="string">"TRACK_"</span> + orderId,
+            runAt: now() + 1.minute,
+            action: () -> initializeTracking(orderId)
+        )
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            message: <span class="string">"Delivery assigned successfully"</span>,
+            orderId: orderId,
+            courierId: bid.deliveryPersonId,
+            estimatedDeliveryTime: order.estimatedDeliveryTime
+        )
+    
+    <span class="keyword">FUNCTION</span> manualAssignment(orderId: String, courierId: String, managerId: String):
+        <span class="comment">// Used when no bids received or manager override</span>
+        
+        order = OrderRepository.findById(orderId)
+        courier = UserRepository.findById(courierId)
+        
+        <span class="keyword">IF</span> order == null OR courier == null:
+            <span class="keyword">RETURN</span> Result(error: <span class="string">"Invalid order or courier"</span>)
+        
+        <span class="comment">// Check if courier available</span>
+        activeDeliveries = DeliveryRepository.countActiveByDeliveryPerson(courierId)
+        
+        <span class="keyword">IF</span> activeDeliveries >= MAX_CONCURRENT_DELIVERIES:
+            <span class="comment">// Manager can override capacity</span>
+            <span class="keyword">IF NOT</span> confirmOverride():
+                <span class="keyword">RETURN</span> Result(error: <span class="string">"Courier at capacity"</span>)
+        
+        <span class="comment">// Calculate default fee</span>
+        distance = LocationService.calculateDistance(
+            order.restaurantAddress,
+            order.deliveryAddress
+        )
+        defaultFee = calculateDefaultDeliveryFee(distance)
+        
+        <span class="keyword">BEGIN TRANSACTION</span>:
+            <span class="comment">// Create manual assignment record</span>
+            manualBid = new DeliveryBid()
+            manualBid.bidId = generateUUID()
+            manualBid.orderId = orderId
+            manualBid.deliveryPersonId = courierId
+            manualBid.proposedFee = defaultFee
+            manualBid.estimatedETA = calculateEstimatedTime(distance)
+            manualBid.status = <span class="string">"ACCEPTED"</span>
+            manualBid.isManual = true
+            manualBid.createdBy = managerId
+            BidRepository.save(manualBid)
+            
+            <span class="comment">// Assign order</span>
+            order.status = <span class="string">"ASSIGNED"</span>
+            order.assignedDeliveryId = courierId
+            order.deliveryFee = defaultFee
+            order.estimatedDeliveryTime = now() + manualBid.estimatedETA
+            order.assignedAt = now()
+            order.assignedBy = managerId
+            order.assignmentType = <span class="string">"MANUAL"</span>
+            OrderRepository.update(order)
+            
+            <span class="comment">// Log manual assignment</span>
+            assignmentLog = new AssignmentLog()
+            assignmentLog.orderId = orderId
+            assignmentLog.managerId = managerId
+            assignmentLog.courierId = courierId
+            assignmentLog.assignmentType = <span class="string">"MANUAL"</span>
+            assignmentLog.reason = <span class="string">"No bids received"</span>
+            assignmentLog.timestamp = now()
+            AssignmentLogRepository.save(assignmentLog)
+            
+        <span class="keyword">COMMIT TRANSACTION</span>
+        
+        <span class="comment">// Notify courier</span>
+        NotificationService.notifyCourier(
+            courierId: courierId,
+            message: <span class="string">"Manager has assigned you order #"</span> + orderId,
+            type: <span class="string">"MANUAL_ASSIGNMENT"</span>,
+            orderId: orderId,
+            fee: defaultFee,
+            priority: <span class="string">"HIGH"</span>  <span class="comment">// Manual assignments are priority</span>
+        )
+        
+        <span class="keyword">RETURN</span> Result(
+            success: true,
+            message: <span class="string">"Manual assignment completed"</span>,
+            orderId: orderId,
+            courierId: courierId
+        )
+
+<span class="comment">// Helper Functions</span>
+<span class="keyword">FUNCTION</span> calculateBidScore(bid: DeliveryBid, order: Order):
+    <span class="comment">// Base scoring components</span>
+    etaScore = (MAX_ETA - bid.estimatedETA) / MAX_ETA * 10
+    feeScore = (MAX_FEE - bid.proposedFee) / MAX_FEE * 10
+    
+    <span class="comment">// Get courier rating</span>
+    courierRep = ReputationRepository.findByUserId(bid.deliveryPersonId)
+    ratingScore = (courierRep?.averageScore ?? 3.0) * 2
+    
+    <span class="comment">// Distance factor</span>
+    distanceScore = (MAX_DISTANCE - bid.distanceToPickup) / MAX_DISTANCE * 10
+    
+    <span class="comment">// Willingness factor</span>
+    willingnessScore = bid.willingnessScore ?? 5
+    
+    <span class="comment">// VIP priority boost</span>
+    vipBoost = order.isVIP ? 2.0 : 0.0
+    
+    <span class="comment">// Apply weights</span>
+    totalScore = (etaScore * 0.35) +
+                (feeScore * 0.25) +
+                (ratingScore * 0.25) +
+                (distanceScore * 0.10) +
+                (willingnessScore * 0.05) +
+                vipBoost
+    
+    <span class="keyword">RETURN</span> min(10, totalScore)
+
+<span class="keyword">FUNCTION</span> generateRecommendations(orderBidMap: Map):
+    recommendations = []
+    
+    <span class="keyword">FOR EACH</span> (order, bids) <span class="keyword">IN</span> orderBidMap:
+        <span class="keyword">IF</span> bids.isEmpty():
+            recommendations.add(new Recommendation(
+                orderId: order.orderId,
+                type: <span class="string">"NO_BIDS"</span>,
+                action: <span class="string">"Consider manual assignment or cancellation"</span>,
+                priority: <span class="string">"HIGH"</span>
+            ))
+        <span class="keyword">ELSE IF</span> bids.size() == 1:
+            recommendations.add(new Recommendation(
+                orderId: order.orderId,
+                type: <span class="string">"SINGLE_BID"</span>,
+                action: <span class="string">"Auto-assign to single bidder"</span>,
+                priority: <span class="string">"MEDIUM"</span>
+            ))
+        <span class="keyword">ELSE IF</span> order.isVIP AND order.waitTime > VIP_THRESHOLD:
+            recommendations.add(new Recommendation(
+                orderId: order.orderId,
+                type: <span class="string">"VIP_DELAYED"</span>,
+                action: <span class="string">"Prioritize VIP order assignment"</span>,
+                priority: <span class="string">"HIGH"</span>
+            ))
+        
+        <span class="comment">// Check for tie-breaking scenarios</span>
+        <span class="keyword">IF</span> bids.size() >= 2:
+            scoreDiff = abs(bids[0].calculatedScore - bids[1].calculatedScore)
+            <span class="keyword">IF</span> scoreDiff < 0.5:
+                recommendations.add(new Recommendation(
+                    orderId: order.orderId,
+                    type: <span class="string">"CLOSE_SCORES"</span>,
+                    action: <span class="string">"Apply tie-break rules: Lower distance wins"</span>,
+                    priority: <span class="string">"LOW"</span>
+                ))
+    
+    <span class="keyword">RETURN</span> recommendations
+
+<span class="keyword">FUNCTION</span> applyTieBreakRules(bid1: DeliveryBid, bid2: DeliveryBid):
+    <span class="comment">// Tie-breaking priority order:</span>
+    <span class="comment">// 1. Lower distance to pickup</span>
+    <span class="keyword">IF</span> bid1.distanceToPickup != bid2.distanceToPickup:
+        <span class="keyword">RETURN</span> bid1.distanceToPickup < bid2.distanceToPickup ? bid1 : bid2
+    
+    <span class="comment">// 2. Higher courier rating</span>
+    rating1 = getCourierRating(bid1.deliveryPersonId)
+    rating2 = getCourierRating(bid2.deliveryPersonId)
+    <span class="keyword">IF</span> rating1 != rating2:
+        <span class="keyword">RETURN</span> rating1 > rating2 ? bid1 : bid2
+    
+    <span class="comment">// 3. Lower current delivery count</span>
+    load1 = getActiveDeliveryCount(bid1.deliveryPersonId)
+    load2 = getActiveDeliveryCount(bid2.deliveryPersonId)
+    <span class="keyword">IF</span> load1 != load2:
+        <span class="keyword">RETURN</span> load1 < load2 ? bid1 : bid2
+    
+    <span class="comment">// 4. Earlier bid submission (FIFO)</span>
+    <span class="keyword">RETURN</span> bid1.submittedAt < bid2.submittedAt ? bid1 : bid2
+
+<span class="keyword">CLASS</span> <span class="function">AutoAssignmentService</span>:
+    
+    <span class="keyword">FUNCTION</span> autoAssignBestBids():
+        <span class="comment">// Runs periodically to auto-assign obvious choices</span>
+        
+        pendingOrders = OrderRepository.findByStatus([<span class="string">"READY_FOR_DELIVERY"</span>])
+        
+        <span class="keyword">FOR EACH</span> order <span class="keyword">IN</span> pendingOrders:
+            bids = BidRepository.findByOrderAndStatus(order.orderId, <span class="string">"PENDING"</span>)
+            
+            <span class="keyword">IF</span> shouldAutoAssign(order, bids):
+                <span class="comment">// Calculate scores</span>
+                <span class="keyword">FOR EACH</span> bid <span class="keyword">IN</span> bids:
+                    bid.calculatedScore = calculateBidScore(bid, order)
+                
+                <span class="comment">// Sort and select best</span>
+                bids.sort((a, b) -> b.calculatedScore.compareTo(a.calculatedScore))
+                bestBid = bids[0]
+                
+                <span class="comment">// Auto-assign if score difference is significant</span>
+                <span class="keyword">IF</span> bids.size() == 1 OR 
+                   (bestBid.calculatedScore - bids[1].calculatedScore) > AUTO_ASSIGN_THRESHOLD:
+                    
+                    DeliveryService.assignDelivery(
+                        order.orderId, 
+                        bestBid.bidId, 
+                        <span class="string">"SYSTEM_AUTO"</span>
+                    )
+                    
+                    log.info(<span class="string">"Auto-assigned order "</span> + order.orderId + 
+                            <span class="string">" to courier "</span> + bestBid.deliveryPersonId)
+    
+    <span class="keyword">FUNCTION</span> shouldAutoAssign(order: Order, bids: List&lt;DeliveryBid&gt;):
+        <span class="comment">// Auto-assign criteria</span>
+        <span class="keyword">IF</span> bids.size() == 1:
+            <span class="keyword">RETURN</span> true  <span class="comment">// Single bid</span>
+        
+        <span class="keyword">IF</span> order.isVIP AND order.waitTime > VIP_AUTO_THRESHOLD:
+            <span class="keyword">RETURN</span> true  <span class="comment">// VIP order waiting too long</span>
+        
+        <span class="keyword">IF</span> order.waitTime > GENERAL_AUTO_THRESHOLD:
+            <span class="keyword">RETURN</span> true  <span class="comment">// Regular order waiting too long</span>
+        
+        <span class="keyword">RETURN</span> false
+</div>
+
+        <h2>📋 Data Structures</h2>
+        <table>
+            <tr>
+                <th>Entity</th>
+                <th>Fields</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><strong>DeliveryBid</strong></td>
+                <td>bidId, orderId, deliveryPersonId, estimatedETA, proposedFee, status, calculatedScore</td>
+                <td>Courier bid for delivery</td>
+            </tr>
+            <tr>
+                <td><strong>AssignmentLog</strong></td>
+                <td>orderId, bidId, managerId, courierId, assignmentType, reason, timestamp</td>
+                <td>Assignment audit trail</td>
+            </tr>
+            <tr>
+                <td><strong>DashboardMetrics</strong></td>
+                <td>totalPendingOrders, totalBids, availableCouriers, averageWaitTime, vipOrderCount</td>
+                <td>Manager dashboard stats</td>
+            </tr>
+            <tr>
+                <td><strong>Recommendation</strong></td>
+                <td>orderId, type, action, priority</td>
+                <td>System recommendations for manager</td>
+            </tr>
+        </table>
+
+        <h2>🎯 Assignment Decision Rules</h2>
+        <div class="info-box">
+            <strong>Bid Scoring Weights:</strong><br>
+            • ETA: 35% (lower is better)<br>
+            • Delivery Fee: 25% (lower is better)<br>
+            • Courier Rating: 25% (higher is better)<br>
+            • Distance to Pickup: 10% (closer is better)<br>
+            • Willingness Score: 5%<br>
+            • VIP Boost: +2.0 points for VIP orders<br><br>
+            
+            <strong>Tie-Breaking Rules (in order):</strong><br>
+            1. Courier closer to pickup location<br>
+            2. Higher courier rating<br>
+            3. Lower current delivery count<br>
+            4. Earlier bid submission (FIFO)<br><br>
+            
+            <strong>Auto-Assignment Triggers:</strong><br>
+            • Single bid after window closes<br>
+            • VIP order waiting > 3 minutes<br>
+            • Regular order waiting > 5 minutes<br>
+            • Score difference > 2.0 points
+        </div>
+
+        <h2>🧪 Test Scenarios</h2>
+        <div class="success-flow">
+            <strong>Test 1: Multiple Bids Assignment</strong><br>
+            • Order has 3 bids with scores: 8.5, 7.2, 6.8<br>
+            • Manager selects highest score (8.5)<br>
+            • Selected bid → ACCEPTED<br>
+            • Other bids → DECLINED<br>
+            • Order status → ASSIGNED<br>
+            • All parties notified
+        </div>
+
+        <div class="warning-flow">
+            <strong>Test 2: No Bids - Manual Assignment</strong><br>
+            • Order has no bids after 5 minutes<br>
+            • Manager views available couriers<br>
+            • Manually selects courier<br>
+            • Default fee calculated<br>
+            • Force assignment created<br>
+            • Courier notified of priority order
+        </div>
+
+        <div class="normal-flow">
+            <strong>Test 3: Auto-Assignment Single Bid</strong><br>
+            • Order receives only 1 bid<br>
+            • System auto-assigns after window<br>
+            • No manager intervention needed<br>
+            • Assignment logged as AUTO
+        </div>
+
+        <div class="error-flow">
+            <strong>Test 4: No Couriers Available</strong><br>
+            • No bids received<br>
+            • No available couriers for manual assignment<br>
+            • Manager cancels order<br>
+            • Customer notified and refunded<br>
+            • Order marked as CANCELLED
+        </div>
+    </div>
+</body>
+</html>

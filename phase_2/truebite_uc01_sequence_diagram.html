@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBite - UC-01 Register Account Sequence Diagram</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            border-bottom: 3px solid #ff5722;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #1976d2;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .error-flow {
+            background: #ffebee;
+            border-left: 4px solid #d32f2f;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success-flow {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        svg {
+            width: 100%;
+            max-width: 1100px;
+            height: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #1976d2;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .pseudocode {
+            background: #263238;
+            color: #aed581;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍔 TrueBite - UC-01: Register Account</h1>
+        
+        <div class="info-box">
+            <strong>Use Case:</strong> UC-01 - Register Account<br>
+            <strong>Primary Actor:</strong> Visitor<br>
+            <strong>Goal:</strong> Become a registered customer with wallet and reputation system<br>
+            <strong>Preconditions:</strong> Visitor has valid email and personal information<br>
+            <strong>Postconditions:</strong> Visitor becomes Customer with initialized Wallet (balance: $0) and ReputationRecord
+        </div>
+
+        <h2>📊 Sequence Diagram</h2>
+        <svg viewBox="0 0 1100 900" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="1100" height="900" fill="#fafafa"/>
+            
+            <!-- Title -->
+            <text x="550" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#d32f2f">
+                TrueBite Registration Flow - Sequence Diagram
+            </text>
+            
+            <!-- Actors and Objects -->
+            <!-- Visitor/UI -->
+            <rect x="50" y="60" width="100" height="40" fill="#ffccbc" stroke="#d32f2f" stroke-width="2" rx="5"/>
+            <text x="100" y="85" text-anchor="middle" font-weight="bold">Visitor/UI</text>
+            <line x1="100" y1="100" x2="100" y2="850" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- AuthService -->
+            <rect x="220" y="60" width="120" height="40" fill="#c5e1a5" stroke="#689f38" stroke-width="2" rx="5"/>
+            <text x="280" y="85" text-anchor="middle" font-weight="bold">AuthService</text>
+            <line x1="280" y1="100" x2="280" y2="850" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- UserRepository -->
+            <rect x="410" y="60" width="140" height="40" fill="#b3e5fc" stroke="#0288d1" stroke-width="2" rx="5"/>
+            <text x="480" y="85" text-anchor="middle" font-weight="bold">UserRepository</text>
+            <line x1="480" y1="100" x2="480" y2="850" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Customer -->
+            <rect x="620" y="60" width="100" height="40" fill="#ffe0b2" stroke="#f57c00" stroke-width="2" rx="5"/>
+            <text x="670" y="85" text-anchor="middle" font-weight="bold">Customer</text>
+            <line x1="670" y1="100" x2="670" y2="850" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- FinanceService -->
+            <rect x="790" y="60" width="130" height="40" fill="#f8bbd0" stroke="#c2185b" stroke-width="2" rx="5"/>
+            <text x="855" y="85" text-anchor="middle" font-weight="bold">FinanceService</text>
+            <line x1="855" y1="100" x2="855" y2="850" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Wallet -->
+            <rect x="970" y="60" width="80" height="40" fill="#e1bee7" stroke="#7b1fa2" stroke-width="2" rx="5"/>
+            <text x="1010" y="85" text-anchor="middle" font-weight="bold">Wallet</text>
+            <line x1="1010" y1="100" x2="1010" y2="850" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Sequence Messages -->
+            
+            <!-- 1. Open Registration Page -->
+            <line x1="100" y1="130" x2="100" y2="150" stroke="#333" stroke-width="2"/>
+            <rect x="105" y="140" width="130" height="20" fill="#fff9c4" stroke="#333" rx="3"/>
+            <text x="170" y="153" text-anchor="middle" font-size="12">openRegistrationPage()</text>
+            
+            <!-- 2. Display Form -->
+            <line x1="100" y1="180" x2="100" y2="200" stroke="#333" stroke-width="2"/>
+            <rect x="105" y="190" width="100" height="20" fill="#fff9c4" stroke="#333" rx="3"/>
+            <text x="155" y="203" text-anchor="middle" font-size="12">showForm()</text>
+            
+            <!-- 3. Submit Registration -->
+            <line x1="100" y1="230" x2="280" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="190" y="225" text-anchor="middle" font-size="12">3: register(name, email,</text>
+            <text x="190" y="240" text-anchor="middle" font-size="12">password, phone?)</text>
+            
+            <!-- 4. Validate Fields -->
+            <rect x="285" y="260" width="100" height="25" fill="#c5e1a5" stroke="#333" rx="3"/>
+            <text x="335" y="277" text-anchor="middle" font-size="11">validateFields()</text>
+            
+            <!-- 5. Check Email Exists -->
+            <line x1="280" y1="310" x2="480" y2="310" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="380" y="305" text-anchor="middle" font-size="12">5: emailExists(email)</text>
+            
+            <!-- 6. Query Database -->
+            <rect x="485" y="320" width="90" height="25" fill="#b3e5fc" stroke="#333" rx="3"/>
+            <text x="530" y="337" text-anchor="middle" font-size="11">queryDB()</text>
+            
+            <!-- 7. Return Result (false - email not exists) -->
+            <line x1="480" y1="360" x2="280" y2="360" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="380" y="355" text-anchor="middle" font-size="12">7: false (email available)</text>
+            
+            <!-- Alternative Flow Box - Email Exists -->
+            <rect x="50" y="380" width="700" height="80" fill="none" stroke="#d32f2f" stroke-width="1" stroke-dasharray="5,5" rx="5"/>
+            <text x="60" y="395" font-size="11" fill="#d32f2f" font-weight="bold">alt [email already exists]</text>
+            <line x1="480" y1="410" x2="280" y2="410" stroke="#d32f2f" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-red)"/>
+            <text x="380" y="405" text-anchor="middle" font-size="12" fill="#d32f2f">7a: true (exists)</text>
+            <line x1="280" y1="430" x2="100" y2="430" stroke="#d32f2f" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead-red)"/>
+            <text x="190" y="425" text-anchor="middle" font-size="12" fill="#d32f2f">7b: error("Account already exists")</text>
+            
+            <!-- 8. Create Customer -->
+            <line x1="280" y1="480" x2="670" y2="480" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="475" y="475" text-anchor="middle" font-size="12">8: new Customer(data)</text>
+            
+            <!-- 9. Initialize Customer -->
+            <rect x="675" y="490" width="120" height="25" fill="#ffe0b2" stroke="#333" rx="3"/>
+            <text x="735" y="507" text-anchor="middle" font-size="11">initialize()</text>
+            
+            <!-- 10. Save Customer -->
+            <line x1="280" y1="540" x2="480" y2="540" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="380" y="535" text-anchor="middle" font-size="12">10: save(customer)</text>
+            
+            <!-- 11. Store in DB -->
+            <rect x="485" y="550" width="100" height="25" fill="#b3e5fc" stroke="#333" rx="3"/>
+            <text x="535" y="567" text-anchor="middle" font-size="11">persist()</text>
+            
+            <!-- 12. Return Customer ID -->
+            <line x1="480" y1="590" x2="280" y2="590" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="380" y="585" text-anchor="middle" font-size="12">12: customerId</text>
+            
+            <!-- 13. Create Wallet -->
+            <line x1="280" y1="620" x2="855" y2="620" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="567" y="615" text-anchor="middle" font-size="12">13: createDefaultWallet(customerId)</text>
+            
+            <!-- 14. New Wallet -->
+            <line x1="855" y1="640" x2="1010" y2="640" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="932" y="635" text-anchor="middle" font-size="12">14: new Wallet(balance=0)</text>
+            
+            <!-- 15. Initialize Reputation -->
+            <rect x="860" y="660" width="140" height="25" fill="#f8bbd0" stroke="#333" rx="3"/>
+            <text x="930" y="677" text-anchor="middle" font-size="11">initReputationRecord()</text>
+            
+            <!-- 16. Confirmation -->
+            <line x1="855" y1="710" x2="280" y2="710" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="567" y="705" text-anchor="middle" font-size="12">16: walletCreated</text>
+            
+            <!-- 17. Log Registration -->
+            <rect x="285" y="730" width="100" height="25" fill="#c5e1a5" stroke="#333" rx="3"/>
+            <text x="335" y="747" text-anchor="middle" font-size="11">logRegistration()</text>
+            
+            <!-- 18. Success Response -->
+            <line x1="280" y1="780" x2="100" y2="780" stroke="#333" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+            <text x="190" y="775" text-anchor="middle" font-size="12">18: success(redirectTo="/login")</text>
+            
+            <!-- Final State -->
+            <rect x="30" y="800" width="140" height="30" fill="#4caf50" stroke="#333" rx="5"/>
+            <text x="100" y="820" text-anchor="middle" font-size="12" fill="white" font-weight="bold">Registered Customer</text>
+            
+            <!-- Arrow definitions -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#333"/>
+                </marker>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#d32f2f"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <h2>💻 Detailed Pseudocode</h2>
+        <div class="pseudocode">
+// TrueBite Registration System - UC-01
+FUNCTION register(formData):
+    INPUT: {
+        name: string (required)
+        email: string (required)
+        password: string (required)
+        phone: string (optional)
+    }
+    
+    // Step 1: Field Validation
+    validation = validateFields(formData)
+    IF validation.hasErrors:
+        RETURN {
+            success: false,
+            errors: validation.errors,
+            message: "Please correct the highlighted fields"
+        }
+    
+    // Step 2: Check Email Uniqueness
+    emailInUse = UserRepository.emailExists(formData.email)
+    
+    IF emailInUse:
+        RETURN {
+            success: false,
+            error: "EMAIL_EXISTS",
+            message: "Account already exists. Please log in instead.",
+            redirectTo: "/login"
+        }
+    
+    // Step 3: Create Customer Entity
+    customer = new Customer({
+        id: generateUUID(),
+        name: formData.name,
+        email: formData.email,
+        passwordHash: bcrypt.hash(formData.password),
+        phone: formData.phone || null,
+        type: "REGISTERED_CUSTOMER",
+        registrationDate: getCurrentTimestamp(),
+        lastLogin: null,
+        isActive: true
+    })
+    
+    // Step 4: Persist Customer
+    customerId = UserRepository.save(customer)
+    
+    // Step 5: Initialize Wallet with $0 Balance
+    wallet = FinanceService.createDefaultWallet(customerId)
+    wallet.properties = {
+        customerId: customerId,
+        balance: 0.00,
+        currency: "USD",
+        deposits: [],
+        withdrawals: [],
+        holds: [],
+        createdAt: getCurrentTimestamp()
+    }
+    
+    // Step 6: Initialize Reputation System
+    reputation = ReputationService.createDefaultRecord(customerId)
+    reputation.properties = {
+        customerId: customerId,
+        rating: 5.0,  // Start with perfect rating
+        totalOrders: 0,
+        successfulOrders: 0,
+        complaints: 0,
+        compliments: 0,
+        warnings: 0,
+        vipStatus: false,
+        vipEligibilityProgress: {
+            totalSpent: 0.00,
+            ordersCompleted: 0,
+            requiresForVIP: {
+                spending: 100.00,
+                orders: 3
+            }
+        }
+    }
+    
+    // Step 7: Initialize AI Chatbot Profile
+    AIService.initializeChatbotProfile({
+        customerId: customerId,
+        preferences: [],
+        dietaryRestrictions: [],
+        orderHistory: [],
+        favoriteItems: [],
+        knowledgeBaseAccess: true
+    })
+    
+    // Step 8: Log Registration Event
+    Logger.log({
+        event: "CUSTOMER_REGISTERED",
+        customerId: customerId,
+        timestamp: getCurrentTimestamp(),
+        ipAddress: getClientIP(),
+        userAgent: getUserAgent()
+    })
+    
+    // Step 9: Send Welcome Email (Async)
+    EmailService.sendWelcomeEmail({
+        to: formData.email,
+        name: formData.name,
+        template: "WELCOME_CUSTOMER"
+    })
+    
+    // Step 10: Return Success Response
+    RETURN {
+        success: true,
+        customerId: customerId,
+        message: "Registration successful! Please log in.",
+        redirectTo: "/login"
+    }
+    
+END FUNCTION
+
+// Validation Function
+FUNCTION validateFields(formData):
+    errors = []
+    
+    // Name validation
+    IF formData.name IS NULL OR length(formData.name) < 2:
+        errors.add("Name must be at least 2 characters")
+    
+    // Email validation
+    emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    IF NOT emailPattern.test(formData.email):
+        errors.add("Please enter a valid email address")
+    
+    // Password validation
+    IF length(formData.password) < 8:
+        errors.add("Password must be at least 8 characters")
+    
+    IF NOT /[A-Z]/.test(formData.password):
+        errors.add("Password must contain at least one uppercase letter")
+    
+    IF NOT /[0-9]/.test(formData.password):
+        errors.add("Password must contain at least one number")
+    
+    // Optional phone validation
+    IF formData.phone IS NOT NULL:
+        phoneDigits = formData.phone.replace(/\D/g, '')
+        IF length(phoneDigits) != 10:
+            errors.add("Phone number must be 10 digits")
+    
+    RETURN {
+        hasErrors: length(errors) > 0,
+        errors: errors
+    }
+END FUNCTION
+        </div>
+
+        <h2>🔴 Exception Scenarios</h2>
+        <div class="error-flow">
+            <h3>E1: Missing/Invalid Fields</h3>
+            <p><strong>Trigger:</strong> Required fields are empty or invalid format</p>
+            <p><strong>Response:</strong> Form validation errors displayed inline</p>
+            <ul>
+                <li>Empty name → "Name is required"</li>
+                <li>Invalid email → "Please enter a valid email"</li>
+                <li>Weak password → "Password must be 8+ chars with uppercase and number"</li>
+            </ul>
+        </div>
+
+        <div class="error-flow">
+            <h3>E2: Email Already in Use</h3>
+            <p><strong>Trigger:</strong> Email exists in database</p>
+            <p><strong>Response:</strong> Error message with redirect option</p>
+            <ul>
+                <li>Display: "Account already exists with this email"</li>
+                <li>Show "Log in instead" button</li>
+                <li>Optional: "Forgot password?" link</li>
+            </ul>
+        </div>
+
+        <h2>📋 Message Specifications</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Message</th>
+                    <th>Parameters</th>
+                    <th>Response</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>3</td>
+                    <td>UI</td>
+                    <td>AuthService</td>
+                    <td>register()</td>
+                    <td>name, email, password, phone?</td>
+                    <td>Result object</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>AuthService</td>
+                    <td>UserRepository</td>
+                    <td>emailExists()</td>
+                    <td>email: string</td>
+                    <td>boolean</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td>AuthService</td>
+                    <td>UserRepository</td>
+                    <td>save()</td>
+                    <td>Customer object</td>
+                    <td>customerId: UUID</td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td>AuthService</td>
+                    <td>FinanceService</td>
+                    <td>createDefaultWallet()</td>
+                    <td>customerId: UUID</td>
+                    <td>Wallet object</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>✅ Success Flow Summary</h2>
+        <div class="success-flow">
+            <h3>Post-Registration State</h3>
+            <ul>
+                <li>✅ Customer account created with secure password hash</li>
+                <li>✅ Wallet initialized with $0.00 balance</li>
+                <li>✅ Reputation record created (5.0 rating, 0 orders)</li>
+                <li>✅ VIP eligibility tracking initialized</li>
+                <li>✅ AI chatbot profile ready for personalization</li>
+                <li>✅ Welcome email sent</li>
+                <li>✅ User redirected to login page</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <strong>Design Notes for TrueBite System:</strong>
+            <ul>
+                <li>🔐 All passwords hashed using bcrypt before storage</li>
+                <li>💰 New customers must deposit funds before placing first order</li>
+                <li>⭐ VIP status requires $100 spent OR 3 successful orders</li>
+                <li>🤖 AI chatbot immediately available after registration</li>
+                <li>📊 Reputation system tracks all customer interactions</li>
+                <li>📱 Phone number optional but recommended for delivery notifications</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
