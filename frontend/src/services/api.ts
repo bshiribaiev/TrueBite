@@ -343,5 +343,22 @@ export const api = {
   getAllOrders: async (status?: Order["status"]): Promise<Order[]> => {
     await new Promise(r => setTimeout(r, 500));
     return status ? mockOrders.filter(o => o.status === status) : mockOrders;
+  },
+
+  // Chat API
+  sendMessage: async (message: string): Promise<string> => {
+    try {
+      const res = await fetch('http://localhost:5000/api/chat/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      if (!res.ok) throw new Error('Failed to get response');
+      const data = await res.json();
+      return data.response;
+    } catch (err) {
+      console.error(err);
+      return "Sorry, I'm having trouble connecting to the server.";
+    }
   }
 };
