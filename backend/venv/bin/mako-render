@@ -1,4 +1,6 @@
-#!/Users/dianalucero/Developer/School/2025-Fall/csc322/TrueBite/backend/venv/bin/python3.11
+#!/bin/sh
+'''exec' "/Users/shiribaiev/Library/CloudStorage/GoogleDrive-bekbolnyc@gmail.com/My Drive/Coding/true-bite/backend/venv/bin/python3.13" "$0" "$@"
+' '''
 import sys
 from mako.cmd import cmdline
 if __name__ == '__main__':

@@ -15,3 +15,6 @@ class Config:
     # Flask
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-session-key')
     DEBUG = os.getenv('FLASK_ENV') == 'development'
+
+    # AI
+    GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')

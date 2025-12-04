@@ -22,9 +22,12 @@ def create_app(config_class=Config):
     
     # Register blueprints
     from app.routes import finance_bp, orders_bp, menu_bp
+    from app.routes.chat import chat_bp
+    
     app.register_blueprint(finance_bp, url_prefix='/api/finance')
     app.register_blueprint(orders_bp, url_prefix='/api/orders')
     app.register_blueprint(menu_bp, url_prefix='/api/menu')
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
     
     @app.route('/')
     def home():
