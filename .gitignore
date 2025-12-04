@@ -1,0 +1,214 @@
+# ============================================
+# PYTHON / BACKEND
+# ============================================
+
+# Virtual Environment
+backend/venv/
+backend/env/
+backend/.venv/
+venv/
+env/
+ENV/
+
+# Python Cache
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/**/*.pyc
+backend/*.pyo
+backend/**/*.pyo
+backend/*$py.class
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables (CRITICAL - NEVER COMMIT!)
+backend/.env
+.env
+*.env
+
+# Database Files (NEVER COMMIT - contains user data!)
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+backend/instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Flask Instance Folder
+backend/instance/
+
+# Testing
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.tox/
+backend/.nox/
+
+# ============================================
+# JAVASCRIPT / FRONTEND
+# ============================================
+
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Production Build
+frontend/build/
+frontend/dist/
+frontend/.next/
+frontend/out/
+
+# Frontend Environment Variables
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Frontend Cache
+frontend/.cache/
+frontend/.parcel-cache/
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+*.log
+
+# ============================================
+# DATABASE
+# ============================================
+
+# PostgreSQL
+*.sql
+database/backup/
+
+# Keep schema and seed files but ignore backups
+!database/schema.sql
+!database/seed_data.sql
+
+# ============================================
+# IDEs & EDITORS
+# ============================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================
+# OPERATING SYSTEM
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+
+# General temp files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# ============================================
+# SECURITY & SENSITIVE DATA
+# ============================================
+
+# SSH Keys
+*.pem
+*.key
+*.pub
+id_rsa
+id_rsa.pub
+
+# Certificates
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# API Keys & Secrets (just in case)
+secrets/
+credentials/
+*.credentials
+
+# ============================================
+# PROJECT SPECIFIC
+# ============================================
+
+# Phase 2 artifacts (keep in repo, but if they get large PDFs)
+# phase_2/*.pdf  # Uncomment if PDFs are too large
+
+# Test data (if you create test data files)
+test_data/
+sample_data/
+
+# Local development scripts
+scripts/local/
+dev_notes.txt
+TODO.txt
+
+# Coverage reports
+.coverage
+coverage.xml
+*.cover
+
+# MyPy type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ============================================
+# UPLOADS (if you add file upload feature)
+# ============================================
+
+# User uploads (NEVER COMMIT USER DATA!)
+backend/uploads/
+frontend/public/uploads/
+uploads/
