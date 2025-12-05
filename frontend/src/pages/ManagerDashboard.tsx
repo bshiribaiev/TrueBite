@@ -3,62 +3,89 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import type { Complaint, Order, DeliveryBid, ManagerDashboardStats } from "../types";
 import "../styles/manager.css";
+import {
+  getPendingUsers,
+  getEmployees,
+  approveUser,
+  updateUserRole,
+  type UserWithId,
+} from "../services/userService";
+
+import {
+  getAllComplaints,
+  resolveComplaint,
+} from "../services/complaintService";
+import { getAllOrdersForManager } from "../services/orderService";
+
+
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"overview" | "complaints" | "deliveries" | "orders">("overview");
+  const [activeTab, setActiveTab] = useState<
+  "overview" | "complaints" | "deliveries" | "orders" | "employees"
+>("overview");
   const [stats, setStats] = useState<ManagerDashboardStats | null>(null);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [pendingBids, setPendingBids] = useState<DeliveryBid[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pendingUsers, setPendingUsers] = useState<UserWithId[]>([]);
+  const [employees, setEmployees] = useState<UserWithId[]>([]);
 
   useEffect(() => {
     loadData();
   }, [activeTab]);
 
   const loadData = async () => {
-    if (!user) return;
-    setLoading(true);
-    setError("");
+  if (!user) return;
+  setLoading(true);
+  setError("");
 
-    try {
-      if (activeTab === "overview") {
-        const data = await api.getManagerStats();
-        setStats(data);
-      } else if (activeTab === "complaints") {
-        const data = await api.getAllComplaints();
-        setComplaints(data);
-      } else if (activeTab === "deliveries") {
-        const data = await api.getPendingBids();
-        setPendingBids(data);
-      } else {
-        const data = await api.getAllOrders();
-        setOrders(data);
-      }
-    } catch (err) {
-      setError("Failed to load data");
-      console.error(err);
-    } finally {
-      setLoading(false);
+  try {
+    if (activeTab === "overview") {
+      const data = await api.getManagerStats();
+      setStats(data);
+    } else if (activeTab === "complaints") {
+      const data = await getAllComplaints();   // 👈 Firestore now
+      setComplaints(data);
+    } else if (activeTab === "deliveries") {
+      const data = await api.getPendingBids();
+      setPendingBids(data);
+    } else if (activeTab === "orders") {
+      const data = await getAllOrdersForManager();   // 👈 Firestore
+      setOrders(data);
+    } else if (activeTab === "employees") {
+      const [pending, emps] = await Promise.all([
+        getPendingUsers(),
+        getEmployees(),
+      ]);
+      setPendingUsers(pending);
+      setEmployees(emps);
     }
-  };
+  } catch (err) {
+    setError("Failed to load data");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleResolveComplaint = async (
-    complaintId: string, 
-    resolution: Complaint["status"],
-    notes: string
-  ) => {
-    try {
-      await api.resolveComplaint(complaintId, resolution, notes);
-      await loadData();
-      alert("Complaint resolved successfully");
-    } catch (err) {
-      alert("Failed to resolve complaint");
-      console.error(err);
-    }
-  };
+  complaintId: string,
+  resolution: Complaint["status"],
+  notes: string
+) => {
+  try {
+    await resolveComplaint(complaintId, resolution, notes); // 👈 Firestore
+    await loadData(); // reload complaints from DB so UI updates
+    alert("Complaint resolved successfully");
+  } catch (err) {
+    alert("Failed to resolve complaint");
+    console.error(err);
+  }
+};
 
   const handleAssignDelivery = async (orderId: string, bidId: string) => {
     try {
@@ -70,6 +97,29 @@ export default function ManagerDashboard() {
       console.error(err);
     }
   };
+
+const handleApproveUser = async (uid: string) => {
+  try {
+    await approveUser(uid);
+    await loadData();
+    alert("User approved successfully");
+  } catch (err) {
+    alert("Failed to approve user");
+    console.error(err);
+  }
+};
+
+const handleSetEmployeeRole = async (uid: string, role: "chef" | "delivery") => {
+  try {
+    await updateUserRole(uid, role);
+    await loadData();
+    alert(`Role updated to ${role}`);
+  } catch (err) {
+    alert("Failed to update role");
+    console.error(err);
+  }
+};
+
 
   if (!user || user.role !== "manager") {
     return (
@@ -93,6 +143,12 @@ export default function ManagerDashboard() {
           onClick={() => setActiveTab("overview")}
         >
           📊 Overview
+        </button>
+        <button
+          className={`tab ${activeTab === "employees" ? "active" : ""}`}
+          onClick={() => setActiveTab("employees")}
+>
+          👥 Employees
         </button>
         <button 
           className={`tab ${activeTab === "complaints" ? "active" : ""}`}
@@ -140,8 +196,16 @@ export default function ManagerDashboard() {
               />
             )}
             {activeTab === "orders" && (
-              <OrdersTab orders={orders} />
-            )}
+  <OrdersTab orders={orders} />
+)}
+{activeTab === "employees" && (
+  <EmployeesTab
+    pendingUsers={pendingUsers}
+    employees={employees}
+    onApprove={handleApproveUser}
+    onSetRole={handleSetEmployeeRole}
+  />
+)}
           </>
         )}
       </div>
@@ -470,7 +534,7 @@ function OrdersTab({ orders }: { orders: Order[] }) {
               </div>
               <div className="detail-row">
                 <span className="label">Items:</span>
-                <span>{order.items.length}</span>
+                <span>{Array.isArray(order.items) ? order.items.length : 0}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Total:</span>
@@ -489,6 +553,85 @@ function OrdersTab({ orders }: { orders: Order[] }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+function EmployeesTab({
+  pendingUsers,
+  employees,
+  onApprove,
+  onSetRole,
+}: {
+  pendingUsers: UserWithId[];
+  employees: UserWithId[];
+  onApprove: (uid: string) => void;
+  onSetRole: (uid: string, role: "chef" | "delivery") => void;
+}) {
+  return (
+    <div className="employees-tab">
+      <div className="section">
+        <h3>Pending Registrations ({pendingUsers.length})</h3>
+        {pendingUsers.length === 0 ? (
+          <div className="empty-state">No pending registrations</div>
+        ) : (
+          <div className="employees-list">
+            {pendingUsers.map((u) => (
+              <div key={u.id} className="employee-card">
+                <div className="employee-main">
+                  <span className="name">{u.name}</span>
+                  <span className="email">{u.email}</span>
+                </div>
+                <div className="employee-meta">
+                  <span>Requested as: {u.accountType ?? "unknown"}</span>
+                </div>
+                <button
+                  className="btn"
+                  onClick={() => onApprove(u.id)}
+                >
+                  Approve
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <h3>Employees (Chef / Delivery)</h3>
+        {employees.length === 0 ? (
+          <div className="empty-state">No employees found</div>
+        ) : (
+          <div className="employees-list">
+            {employees.map((emp) => (
+              <div key={emp.id} className="employee-card">
+                <div className="employee-main">
+                  <span className="name">{emp.name}</span>
+                  <span className="email">{emp.email}</span>
+                </div>
+                <div className="employee-meta">
+                  <span>Account: {emp.accountType}</span>
+                  <span>Role: {emp.role}</span>
+                  <span>Status: {emp.status}</span>
+                </div>
+                <div className="employee-actions">
+                  <button
+                    className="btn"
+                    onClick={() => onSetRole(emp.id, "chef")}
+                  >
+                    Set Chef
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => onSetRole(emp.id, "delivery")}
+                  >
+                    Set Delivery
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

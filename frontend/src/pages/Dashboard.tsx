@@ -2,7 +2,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
-  const { user, logout, addDeposit, addWarning } = useAuth();
+  const { user, logout, addDeposit} = useAuth();
   const nav = useNavigate();
 
   if (!user) return (
@@ -11,16 +11,6 @@ export default function Dashboard() {
       <button className="btn" onClick={() => nav("/login")}>Go to Login</button>
     </div>
   );
-
-  const checkoutExample = () => {
-    const total = 40; // pretend cart total
-    if (user.deposit < total) {
-      addWarning();
-      alert("Insufficient deposit — warning added (mock).");
-    } else {
-      alert("Order placed (mock). Status: placed → cooking → out-for-delivery → delivered");
-    }
-  };
 
   return (
     <div className="panel">
@@ -33,7 +23,6 @@ export default function Dashboard() {
 
       <div className="actions">
         <button className="btn" onClick={() => addDeposit(25)}>Add $25 Deposit</button>
-        <button className="btn" onClick={checkoutExample}>Mock Checkout ($40)</button>
         <button className="btn ghost" onClick={() => { logout(); nav("/"); }}>Logout</button>
       </div>
     </div>

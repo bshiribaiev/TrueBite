@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { api } from "../services/api";
 import type { Order, Dish, ChefAnalytics } from "../types";
+import {
+  getChefOrders,
+  getChefDishes,
+  updateOrderStatus,
+  updateDish,
+  createDish,
+} from "../services/chefService";
+
 import "../styles/chef.css";
 
 export default function ChefDashboard() {
@@ -18,48 +25,78 @@ export default function ChefDashboard() {
   }, [activeTab]);
 
   const loadData = async () => {
-    if (!user) return;
-    setLoading(true);
-    setError("");
-    
-    try {
-      if (activeTab === "orders") {
-        const data = await api.getChefOrders(user.id);
-        setOrders(data);
-      } else if (activeTab === "menu") {
-        const data = await api.getChefDishes(user.id);
-        setDishes(data);
-      } else {
-        const data = await api.getChefAnalytics(user.id);
-        setAnalytics(data);
-      }
-    } catch (err) {
-      setError("Failed to load data");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!user) return;
+  setLoading(true);
+  setError("");
 
-  const handleStatusChange = async (orderId: string, newStatus: Order["status"]) => {
-    try {
-      await api.updateOrderStatus(orderId, newStatus);
-      await loadData();
-    } catch (err) {
-      alert("Failed to update order status");
-      console.error(err);
+  try {
+    if (activeTab === "orders") {
+      const data = await getChefOrders(user.id);      // 🔥 Firestore
+      setOrders(data);
+    } else if (activeTab === "menu") {
+      const data = await getChefDishes(user.id);      // 🔥 Firestore
+      setDishes(data);
+    } else {
+      // For now, you can either compute analytics from orders or just stub it.
+      // To avoid toFixed issues, we'll just disable analytics if not needed yet.
+      setAnalytics(null);
     }
-  };
+  } catch (err) {
+    setError("Failed to load data");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const toggleDishAvailability = async (dishId: string, available: boolean) => {
-    try {
-      await api.updateDish(dishId, { available });
-      await loadData();
-    } catch (err) {
-      alert("Failed to update dish");
-      console.error(err);
-    }
-  };
+
+ const handleStatusChange = async (
+  orderId: string,
+  newStatus: Order["status"]
+) => {
+  try {
+    await updateOrderStatus(orderId, newStatus);   // 🔥 Firestore
+    await loadData();
+  } catch (err) {
+    alert("Failed to update order status");
+    console.error(err);
+  }
+};
+
+const handleAddDish = async () => {
+  if (!user) return;
+
+  const name = window.prompt("Dish name:");
+  if (!name) return;
+
+  const priceStr = window.prompt("Price (e.g. 12.99):", "10.00");
+  if (!priceStr) return;
+  const price = Number(priceStr) || 0;
+
+  const img = window.prompt("Image URL (optional):", "") || "";
+  const description = window.prompt("Description (optional):", "") || "";
+
+  try {
+    await createDish(user.id, { name, description, price, img });
+    await loadData();
+  } catch (err) {
+    alert("Failed to create dish");
+    console.error(err);
+  }
+};
+
+const toggleDishAvailability = async (
+  dishId: string,
+  available: boolean
+) => {
+  try {
+    await updateDish(dishId, { available });       // 🔥 Firestore
+    await loadData();
+  } catch (err) {
+    alert("Failed to update dish");
+    console.error(err);
+  }
+};
 
   if (!user || user.role !== "chef") {
     return (
@@ -111,7 +148,11 @@ export default function ChefDashboard() {
               <OrdersTab orders={orders} onStatusChange={handleStatusChange} />
             )}
             {activeTab === "menu" && (
-              <MenuTab dishes={dishes} onToggleAvailability={toggleDishAvailability} />
+              <MenuTab
+              dishes={dishes}
+              onToggleAvailability={toggleDishAvailability}
+              onAddDish={handleAddDish}       // 👈 new prop
+              />
             )}
             {activeTab === "analytics" && analytics && (
               <AnalyticsTab analytics={analytics} />
@@ -160,6 +201,8 @@ function OrdersTab({
     </div>
   );
 }
+
+
 
 function OrderQueue({
   title,
@@ -216,18 +259,23 @@ function OrderQueue({
   );
 }
 
-function MenuTab({ 
-  dishes, 
-  onToggleAvailability 
-}: { 
-  dishes: Dish[]; 
+function MenuTab({
+  dishes,
+  onToggleAvailability,
+  onAddDish,
+}: {
+  dishes: Dish[];
   onToggleAvailability: (id: string, available: boolean) => void;
+  onAddDish: () => void;
 }) {
   return (
     <div className="menu-tab">
       <div className="menu-header">
         <h3>My Dishes</h3>
-        <button className="btn">+ Add New Dish</button>
+        <button className="btn" onClick={onAddDish}>
+  + Add New Dish
+</button>
+
       </div>
       <div className="dish-grid">
         {dishes.map(dish => (

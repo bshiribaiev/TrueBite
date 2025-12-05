@@ -1,20 +1,22 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, NavLink } from "react-router-dom";
 import "./styles.css";
 import ErrorBoundary from "./ErrorBoundary";
+import { setUserProfile, getUserProfile } from "./services/userService";
 
 const Home = lazy(() => import("./pages/Home"));
 const Menu = lazy(() => import("./pages/Menu"));
 const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Chat = lazy(() => import("./pages/Chat"));
-
+const Checkout = lazy(() => import("./pages/Checkout"));
 // NEW:
 const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
 const ChefDashboard = lazy(() => import("./pages/ChefDashboard"));
 const DeliveryDashboard = lazy(() => import("./pages/DeliveryDashboard"));
 
 export default function App() {
+
   return (
     <div>
       <header className="topbar">
@@ -47,6 +49,10 @@ export default function App() {
           <NavLink to="/delivery" className="navlink">
             Delivery
           </NavLink>
+          <NavLink to="/checkout" className="navlink">
+            Checkout
+          </NavLink>
+
         </nav>
       </header>
 
@@ -92,6 +98,14 @@ export default function App() {
                   <Chat />
                 </ErrorBoundary>
               }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <ErrorBoundary>
+                  <Checkout />
+                </ErrorBoundary>
+  }
             />
 
             {/* NEW ROLE DASHBOARDS */}
