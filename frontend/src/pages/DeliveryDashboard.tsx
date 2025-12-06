@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { api } from "../services/api";
+import {
+  getAvailableOrdersForBidding,
+  getMyBids,
+  getActiveDeliveries,
+  submitDeliveryBid,
+  updateDeliveryStatus,
+  getDeliveryAnalytics,
+} from "../services/deliveryService";
 import type { Order, DeliveryBid, DeliveryAnalytics } from "../types";
 import "../styles/delivery.css";
 
@@ -29,18 +36,16 @@ export default function DeliveryDashboard() {
 
     try {
       if (activeTab === "available") {
-        const data = await api.getAvailableOrders();
+        const data = await getAvailableOrdersForBidding();
         setAvailableOrders(data);
       } else if (activeTab === "mybids") {
-        const data = await api.getMyBids(user.id);
+        const data = await getMyBids(user.id);
         setMyBids(data);
       } else if (activeTab === "active") {
-        const data = await api.getDeliveryOrders(user.id);
-        setActiveDeliveries(data.filter(o => 
-          o.status === "ASSIGNED" || o.status === "OUT_FOR_DELIVERY"
-        ));
+        const data = await getActiveDeliveries(user.id);
+        setActiveDeliveries(data);
       } else {
-        const data = await api.getDeliveryAnalytics(user.id);
+        const data = await getDeliveryAnalytics(user.id);
         setAnalytics(data);
       }
     } catch (err) {
@@ -55,13 +60,12 @@ export default function DeliveryDashboard() {
     if (!user) return;
     
     try {
-      await api.submitBid({
+      await submitDeliveryBid({
         orderId,
         deliveryPersonId: user.id,
         deliveryPersonName: user.name,
         estimatedTime,
-        status: "PENDING",
-        reputationScore: user.reputationScore
+        reputationScore: user.reputationScore ?? 4.5,
       });
       alert("Bid submitted successfully!");
       await loadData();
@@ -73,7 +77,7 @@ export default function DeliveryDashboard() {
 
   const handleUpdateDeliveryStatus = async (orderId: string, newStatus: Order["status"]) => {
     try {
-      await api.updateOrderStatus(orderId, newStatus);
+      await updateDeliveryStatus(orderId, newStatus);
       await loadData();
     } catch (err) {
       alert("Failed to update delivery status");
@@ -95,7 +99,7 @@ export default function DeliveryDashboard() {
       <div className="dashboard-header">
         <h1 className="h1">Delivery Dashboard</h1>
         <div className="reputation-badge">
-          ⭐ {user.reputationScore.toFixed(1)} Rating
+          ⭐ {(user.reputationScore ?? 4.5).toFixed(1)} Rating
         </div>
       </div>
 
@@ -193,7 +197,7 @@ function AvailableOrdersTab({
             <div key={order.id} className="delivery-order-card">
               <div className="order-info">
                 <div className="order-header">
-                  <span className="order-id">#{order.id}</span>
+                  <span className="order-id">#{order.id.slice(0, 8)}</span>
                   <span className="order-price">${order.totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="order-details">
@@ -203,15 +207,19 @@ function AvailableOrdersTab({
                   </div>
                   <div className="detail-row">
                     <span className="label">Address:</span>
-                    <span>{order.deliveryAddress}</span>
+                    <span>{order.deliveryAddress || "Address not provided"}</span>
                   </div>
                   <div className="detail-row">
                     <span className="label">Items:</span>
-                    <span>{order.items.length} item(s)</span>
+                    <span>{Array.isArray(order.items) ? order.items.length : 0} item(s)</span>
                   </div>
                   <div className="detail-row">
                     <span className="label">Ready:</span>
-                    <span>{Math.round((Date.now() - order.updatedAt.getTime()) / 60000)}m ago</span>
+                    <span>
+                      {order.updatedAt 
+                        ? `${Math.round((Date.now() - new Date(order.updatedAt).getTime()) / 60000)}m ago`
+                        : "Just now"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -285,7 +293,7 @@ function MyBidsTab({ bids }: { bids: DeliveryBid[] }) {
           {bids.map(bid => (
             <div key={bid.id} className="bid-card">
               <div className="bid-header">
-                <span className="order-id">Order #{bid.orderId}</span>
+                <span className="order-id">Order #{bid.orderId.slice(0, 8)}</span>
                 {getStatusBadge(bid.status)}
               </div>
               <div className="bid-details">
@@ -330,7 +338,7 @@ function ActiveDeliveriesTab({
           {deliveries.map(delivery => (
             <div key={delivery.id} className="active-delivery-card">
               <div className="delivery-header">
-                <span className="order-id">#{delivery.id}</span>
+                <span className="order-id">#{delivery.id.slice(0, 8)}</span>
                 <span className={`status-badge ${delivery.status.toLowerCase()}`}>
                   {delivery.status.replace(/_/g, " ")}
                 </span>
@@ -342,7 +350,7 @@ function ActiveDeliveriesTab({
                 </div>
                 <div className="detail-row">
                   <span className="label">Address:</span>
-                  <span>{delivery.deliveryAddress}</span>
+                  <span>{delivery.deliveryAddress || "Address not provided"}</span>
                 </div>
                 <div className="detail-row">
                   <span className="label">Total:</span>
@@ -351,7 +359,7 @@ function ActiveDeliveriesTab({
                 {delivery.estimatedDeliveryTime && (
                   <div className="detail-row">
                     <span className="label">ETA:</span>
-                    <span>{delivery.estimatedDeliveryTime.toLocaleTimeString()}</span>
+                    <span>{new Date(delivery.estimatedDeliveryTime).toLocaleTimeString()}</span>
                   </div>
                 )}
               </div>
@@ -382,7 +390,9 @@ function ActiveDeliveriesTab({
 }
 
 function DeliveryAnalyticsTab({ analytics }: { analytics: DeliveryAnalytics }) {
-  const completionRate = ((analytics.completedDeliveries / analytics.totalDeliveries) * 100).toFixed(1);
+  const completionRate = analytics.totalDeliveries > 0
+    ? ((analytics.completedDeliveries / analytics.totalDeliveries) * 100).toFixed(1)
+    : "0.0";
 
   return (
     <div className="analytics-tab">
@@ -413,22 +423,24 @@ function DeliveryAnalyticsTab({ analytics }: { analytics: DeliveryAnalytics }) {
         </div>
       </div>
 
-      <div className="analytics-section">
-        <h3>Recent Ratings</h3>
-        <div className="ratings-list">
-          {analytics.recentRatings.map(rating => (
-            <div key={rating.id} className="rating-card">
-              <div className="rating-header">
-                <span className="rating-stars">{"⭐".repeat(rating.score)}</span>
-                <span className="rating-time">
-                  {new Date(rating.createdAt).toLocaleDateString()}
-                </span>
+      {analytics.recentRatings.length > 0 && (
+        <div className="analytics-section">
+          <h3>Recent Ratings</h3>
+          <div className="ratings-list">
+            {analytics.recentRatings.map(rating => (
+              <div key={rating.id} className="rating-card">
+                <div className="rating-header">
+                  <span className="rating-stars">{"⭐".repeat(rating.score)}</span>
+                  <span className="rating-time">
+                    {new Date(rating.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                {rating.comment && <p className="rating-comment">{rating.comment}</p>}
               </div>
-              {rating.comment && <p className="rating-comment">{rating.comment}</p>}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

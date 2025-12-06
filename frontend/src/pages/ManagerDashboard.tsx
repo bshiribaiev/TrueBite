@@ -16,6 +16,10 @@ import {
   resolveComplaint,
 } from "../services/complaintService";
 import { getAllOrdersForManager } from "../services/orderService";
+import {
+  getPendingBids,
+  assignDeliveryToBidder,
+} from "../services/deliveryService";
 
 
 
@@ -50,7 +54,7 @@ export default function ManagerDashboard() {
       const data = await getAllComplaints();   // 👈 Firestore now
       setComplaints(data);
     } else if (activeTab === "deliveries") {
-      const data = await api.getPendingBids();
+      const data = await getPendingBids();   // 👈 Firestore now
       setPendingBids(data);
     } else if (activeTab === "orders") {
       const data = await getAllOrdersForManager();   // 👈 Firestore
@@ -89,7 +93,7 @@ export default function ManagerDashboard() {
 
   const handleAssignDelivery = async (orderId: string, bidId: string) => {
     try {
-      await api.assignDelivery(orderId, bidId);
+      await assignDeliveryToBidder(orderId, bidId);   // 👈 Firestore now
       await loadData();
       alert("Delivery assigned successfully");
     } catch (err) {
@@ -449,7 +453,7 @@ function DeliveryBidsTab({
       ) : (
         Object.entries(bidsByOrder).map(([orderId, orderBids]) => (
           <div key={orderId} className="order-bids">
-            <h3>Order #{orderId} - {orderBids.length} Bid(s)</h3>
+            <h3>Order #{orderId.slice(0, 8)} - {orderBids.length} Bid(s)</h3>
             <div className="bids-list">
               {orderBids
                 .sort((a, b) => b.reputationScore - a.reputationScore)
@@ -522,7 +526,7 @@ function OrdersTab({ orders }: { orders: Order[] }) {
         {filteredOrders.map(order => (
           <div key={order.id} className="order-card">
             <div className="order-header">
-              <span className="order-id">#{order.id}</span>
+              <span className="order-id">#{order.id.slice(0, 8)}</span>
               <span className={`status-badge ${order.status.toLowerCase()}`}>
                 {order.status.replace(/_/g, " ")}
               </span>
@@ -547,7 +551,7 @@ function OrdersTab({ orders }: { orders: Order[] }) {
               {order.deliveryPersonId && (
                 <div className="detail-row">
                   <span className="label">Delivery Person:</span>
-                  <span>ID: {order.deliveryPersonId}</span>
+                  <span>ID: {order.deliveryPersonId.slice(0, 8)}</span>
                 </div>
               )}
             </div>
