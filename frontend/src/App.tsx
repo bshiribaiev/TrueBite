@@ -14,6 +14,7 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
 const ChefDashboard = lazy(() => import("./pages/ChefDashboard"));
 const DeliveryDashboard = lazy(() => import("./pages/DeliveryDashboard"));
+const Forum = lazy(() => import("./pages/Forum"));
 
 export default function App() {
 
@@ -38,6 +39,9 @@ export default function App() {
           </NavLink>
           <NavLink to="/chat" className="navlink">
             Chat
+          </NavLink>
+          <NavLink to="/forum" className="navlink">
+            Forum
           </NavLink>
           {/* Optional: quick links for demos in your report */}
           <NavLink to="/manager" className="navlink">
@@ -106,6 +110,14 @@ export default function App() {
                   <Checkout />
                 </ErrorBoundary>
   }
+            />
+            <Route
+              path="/forum"
+              element={
+                <ErrorBoundary>
+                  <Forum />
+                </ErrorBoundary>
+              }
             />
 
             {/* NEW ROLE DASHBOARDS */}
