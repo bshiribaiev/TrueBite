@@ -64,7 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 🔥 pull from Firestore, fall back to 0
             deposit: profile.deposit ?? 0,
             warnings: profile.warnings ?? 0,
-            reputationScore: 0, // keep your mock for now, or profile.reputationScore ?? 0 if you add it
+            reputationScore: profile.reputationScore ?? 0,
+            salary: profile.salary ?? undefined,
+            commendations: profile.commendations ?? undefined,
+            fired: profile.fired ?? false,
           };
           setUser(formatted);
         } else {

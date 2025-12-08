@@ -9,6 +9,8 @@ import {
   approveUser,
   updateUserRole,
   type UserWithId,
+  updateEmployeeStats,
+  incrementUserWarnings,
 } from "../services/userService";
 
 import {
@@ -76,20 +78,32 @@ export default function ManagerDashboard() {
 };
 
 
-  const handleResolveComplaint = async (
-  complaintId: string,
+ const handleResolveComplaint = async (
+  complaint: Complaint,
   resolution: Complaint["status"],
-  notes: string
+  notes: string,
+  warn: "none" | "target" | "sender"
 ) => {
   try {
-    await resolveComplaint(complaintId, resolution, notes); // 👈 Firestore
-    await loadData(); // reload complaints from DB so UI updates
+    // 1) resolve the complaint itself
+    await resolveComplaint(complaint.id, resolution, notes);
+
+    // 2) optionally add warning
+    if (warn === "target" && complaint.targetId) {
+      await incrementUserWarnings(complaint.targetId);
+    } else if (warn === "sender" && complaint.customerId) {
+      await incrementUserWarnings(complaint.customerId);
+    }
+
+    // 3) reload UI
+    await loadData();
     alert("Complaint resolved successfully");
   } catch (err) {
     alert("Failed to resolve complaint");
     console.error(err);
   }
 };
+
 
   const handleAssignDelivery = async (orderId: string, bidId: string) => {
     try {
@@ -123,6 +137,61 @@ const handleSetEmployeeRole = async (uid: string, role: "chef" | "delivery") => 
     console.error(err);
   }
 };
+
+const handleGiveBonus = async (emp: UserWithId) => {
+  try {
+    const currentSalary = emp.salary ?? 50000; // placeholder base
+    const newSalary = currentSalary + 5000;    // bonus bump
+
+    await updateEmployeeStats(emp.id, {
+      salary: newSalary,
+    });
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to give bonus");
+  }
+};
+
+const handleDemoteEmployee = async (emp: UserWithId) => {
+  try {
+    const currentSalary = emp.salary ?? 50000;
+    const newSalary = Math.max(0, currentSalary - 5000); // demotion cut
+
+    await updateEmployeeStats(emp.id, {
+      salary: newSalary,
+    });
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to demote employee");
+  }
+};
+
+const handleFireEmployee = async (emp: UserWithId) => {
+  const warnings = emp.warnings ?? 0;
+  if (warnings < 6) {
+    alert("You can only fire after 6 warnings (complaints / bad ratings).");
+    return;
+  }
+
+  if (!window.confirm(`Are you sure you want to fire ${emp.name}?`)) {
+    return;
+  }
+
+  try {
+    await updateEmployeeStats(emp.id, {
+      fired: true,
+      salary: 0,
+      status: "rejected",
+    });
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to fire employee");
+  }
+};
+
 
 
   if (!user || user.role !== "manager") {
@@ -188,11 +257,11 @@ const handleSetEmployeeRole = async (uid: string, role: "chef" | "delivery") => 
               <OverviewTab stats={stats} />
             )}
             {activeTab === "complaints" && (
-              <ComplaintsTab 
-                complaints={complaints} 
-                onResolve={handleResolveComplaint}
-              />
-            )}
+  <ComplaintsTab 
+    complaints={complaints} 
+    onResolve={handleResolveComplaint}
+  />
+)}
             {activeTab === "deliveries" && (
               <DeliveryBidsTab 
                 bids={pendingBids} 
@@ -208,6 +277,9 @@ const handleSetEmployeeRole = async (uid: string, role: "chef" | "delivery") => 
     employees={employees}
     onApprove={handleApproveUser}
     onSetRole={handleSetEmployeeRole}
+    onBonus={handleGiveBonus}
+    onDemote={handleDemoteEmployee}
+    onFire={handleFireEmployee}
   />
 )}
           </>
@@ -289,25 +361,47 @@ function ComplaintsTab({
   onResolve 
 }: { 
   complaints: Complaint[]; 
-  onResolve: (id: string, resolution: Complaint["status"], notes: string) => void;
+  onResolve: (
+    complaint: Complaint,
+    resolution: Complaint["status"],
+    notes: string,
+    warn: "none" | "target" | "sender"
+  ) => void;
 }) {
   const [selectedComplaint, setSelectedComplaint] = useState<string | null>(null);
-  const [resolution, setResolution] = useState<Complaint["status"]>("RESOLVED_NO_ACTION");
-  const [notes, setNotes] = useState("");
+const [notes, setNotes] = useState("");
 
-  const pendingComplaints = complaints.filter(c => c.status === "PENDING");
-  const resolvedComplaints = complaints.filter(c => c.status !== "PENDING");
+const pendingComplaints = complaints.filter((c) => c.status === "PENDING");
+const resolvedComplaints = complaints.filter((c) => c.status !== "PENDING");
 
-  const handleResolve = (complaintId: string) => {
-    if (!notes.trim()) {
-      alert("Please add resolution notes");
-      return;
-    }
-    onResolve(complaintId, resolution, notes);
-    setSelectedComplaint(null);
-    setNotes("");
-    setResolution("RESOLVED_NO_ACTION");
-  };
+const ensureNotes = () => {
+  if (!notes.trim()) {
+    alert("Please add resolution notes");
+    return false;
+  }
+  return true;
+};
+
+const handleDismiss = (complaint: Complaint) => {
+  if (!ensureNotes()) return;
+  onResolve(complaint, "RESOLVED_NO_ACTION", notes, "none");
+  setSelectedComplaint(null);
+  setNotes("");
+};
+
+const handleWarnTarget = (complaint: Complaint) => {
+  if (!ensureNotes()) return;
+  onResolve(complaint, "RESOLVED_WARNING", notes, "target");
+  setSelectedComplaint(null);
+  setNotes("");
+};
+
+const handleWarnSender = (complaint: Complaint) => {
+  if (!ensureNotes()) return;
+  onResolve(complaint, "RESOLVED_WARNING", notes, "sender");
+  setSelectedComplaint(null);
+  setNotes("");
+};
 
   return (
     <div className="complaints-tab">
@@ -345,54 +439,53 @@ function ComplaintsTab({
                   </div>
                 </div>
                 
-                {selectedComplaint === complaint.id ? (
-                  <div className="resolution-form">
-                    <label>
-                      Resolution Type:
-                      <select 
-                        className="input"
-                        value={resolution}
-                        onChange={e => setResolution(e.target.value as Complaint["status"])}
-                      >
-                        <option value="RESOLVED_NO_ACTION">No Action Needed</option>
-                        <option value="RESOLVED_WARNING">Issue Warning</option>
-                        <option value="RESOLVED_REFUND">Issue Refund</option>
-                        <option value="CANCELLED">Cancel/Invalid</option>
-                      </select>
-                    </label>
-                    <label>
-                      Manager Notes:
-                      <textarea
-                        className="input"
-                        rows={3}
-                        value={notes}
-                        onChange={e => setNotes(e.target.value)}
-                        placeholder="Add resolution notes..."
-                      />
-                    </label>
-                    <div className="resolution-actions">
-                      <button 
-                        className="btn"
-                        onClick={() => handleResolve(complaint.id)}
-                      >
-                        Resolve Complaint
-                      </button>
-                      <button 
-                        className="btn ghost"
-                        onClick={() => setSelectedComplaint(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button 
-                    className="btn"
-                    onClick={() => setSelectedComplaint(complaint.id)}
-                  >
-                    Resolve
-                  </button>
-                )}
+              {selectedComplaint === complaint.id ? (
+  <div className="resolution-form">
+    <label>
+      Manager Notes:
+      <textarea
+        className="input"
+        rows={3}
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Add resolution notes..."
+      />
+    </label>
+    <div className="resolution-actions">
+      <button
+        className="btn"
+        onClick={() => handleDismiss(complaint)}
+      >
+        Dismiss
+      </button>
+      <button
+        className="btn"
+        onClick={() => handleWarnTarget(complaint)}
+      >
+        Warn Target
+      </button>
+      <button
+        className="btn"
+        onClick={() => handleWarnSender(complaint)}
+      >
+        Warn Sender (Bad Complaint)
+      </button>
+      <button
+        className="btn ghost"
+        onClick={() => setSelectedComplaint(null)}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+) : (
+  <button
+    className="btn"
+    onClick={() => setSelectedComplaint(complaint.id)}
+  >
+    Resolve
+  </button>
+)}
               </div>
             ))}
           </div>
@@ -566,12 +659,20 @@ function EmployeesTab({
   employees,
   onApprove,
   onSetRole,
+  onBonus,
+  onDemote,
+  onFire,
 }: {
   pendingUsers: UserWithId[];
   employees: UserWithId[];
   onApprove: (uid: string) => void;
   onSetRole: (uid: string, role: "chef" | "delivery") => void;
+  onBonus: (emp: UserWithId) => void;
+  onDemote: (emp: UserWithId) => void;
+  onFire: (emp: UserWithId) => void;
 }) {
+
+
   return (
     <div className="employees-tab">
       <div className="section">
@@ -601,42 +702,108 @@ function EmployeesTab({
         )}
       </div>
 
-      <div className="section">
-        <h3>Employees (Chef / Delivery)</h3>
-        {employees.length === 0 ? (
-          <div className="empty-state">No employees found</div>
-        ) : (
-          <div className="employees-list">
-            {employees.map((emp) => (
-              <div key={emp.id} className="employee-card">
-                <div className="employee-main">
-                  <span className="name">{emp.name}</span>
-                  <span className="email">{emp.email}</span>
-                </div>
-                <div className="employee-meta">
-                  <span>Account: {emp.accountType}</span>
-                  <span>Role: {emp.role}</span>
-                  <span>Status: {emp.status}</span>
-                </div>
-                <div className="employee-actions">
-                  <button
-                    className="btn"
-                    onClick={() => onSetRole(emp.id, "chef")}
-                  >
-                    Set Chef
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={() => onSetRole(emp.id, "delivery")}
-                  >
-                    Set Delivery
-                  </button>
-                </div>
+  <div className="section">
+  <h3>Employees (Chef / Delivery)</h3>
+  {employees.length === 0 ? (
+    <div className="empty-state">No employees found</div>
+  ) : (
+    <div className="employees-list">
+      {employees.map((emp) => {
+        const salary = emp.salary ?? 50000;
+        const warnings = emp.warnings ?? 0;
+        const commendations = emp.commendations ?? 0;
+
+        const canDemote = warnings >= 3;       // 3 complaints/bad ratings
+        const canBonus = commendations >= 3;   // 3 compliments/good ratings
+        const canFire = warnings >= 6;         // twice-demoted equivalent
+
+        return (
+          <div key={emp.id} className="employee-card">
+            <div className="employee-main">
+              <span className="name">{emp.name}</span>
+              <span className="email">{emp.email}</span>
+            </div>
+
+            <div className="employee-meta">
+              <span>Account: {emp.accountType}</span>
+              <span>Role: {emp.role}</span>
+              <span>Status: {emp.status}</span>
+            </div>
+
+            <div className="employee-meta">
+              <span>Salary: ${salary.toLocaleString()}</span>
+              <span>Warnings: {warnings}</span>
+              <span>Commendations: {commendations}</span>
+              {emp.fired && <span className="badge bad">Fired</span>}
+            </div>
+
+            {/* Role assign (same as before) */}
+            <div className="employee-actions">
+              <button
+                className="btn"
+                onClick={() => onSetRole(emp.id, "chef")}
+              >
+                Set Chef
+              </button>
+              <button
+                className="btn"
+                onClick={() => onSetRole(emp.id, "delivery")}
+              >
+                Set Delivery
+              </button>
+            </div>
+
+            {/* Manager-controlled decisions, gated by criteria */}
+            {!emp.fired && (
+              <div className="employee-actions">
+                <button
+                  className="btn btn-sm"
+                  onClick={() => onDemote(emp)}
+                  disabled={!canDemote}
+                  title={
+                    canDemote
+                      ? "Demote this employee"
+                      : "Needs at least 3 warnings (complaints/bad ratings)"
+                  }
+                >
+                  Demote (lower salary)
+                </button>
+
+                <button
+                  className="btn btn-sm"
+                  onClick={() => onBonus(emp)}
+                  disabled={!canBonus}
+                  title={
+                    canBonus
+                      ? "Give bonus to this employee"
+                      : "Needs at least 3 commendations (compliments/good ratings)"
+                  }
+                >
+                  Give Bonus
+                </button>
+
+                <button
+                  className="btn btn-sm ghost"
+                  onClick={() => onFire(emp)}
+                  disabled={!canFire}
+                  title={
+                    canFire
+                      ? "Fire this employee"
+                      : "Need at least 6 warnings to fire"
+                  }
+                >
+                  Fire
+                </button>
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
+        );
+      })}
+    </div>
+  )}
+</div>
+
+
     </div>
   );
 }

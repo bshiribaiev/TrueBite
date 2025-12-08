@@ -38,16 +38,37 @@ export async function getChefOrders(_chefId: string): Promise<Order[]> {
       totalPrice: data.totalPrice ?? 0,
       status: data.status ?? "CREATED",
       createdAt,
+      chefId: data.chefId ?? null,
+      chefName: data.chefName ?? null,
+      deliveryPersonId: data.assignedDriverId ?? data.deliveryPersonId ?? null,
+      deliveryPersonName:
+      data.assignedDriverName ?? data.deliveryPersonName ?? null,
     } as Order;
   });
 }
 
 export async function updateOrderStatus(
   orderId: string,
-  newStatus: Order["status"]
+  status: Order["status"],
+  extra?: {
+    chefId?: string;
+    chefName?: string;
+    deliveryPersonId?: string;
+    deliveryPersonName?: string;
+  }
 ) {
-  const ref = doc(db, "deliveries", orderId);
-  await updateDoc(ref, { status: newStatus });
+  if (!orderId) {
+    throw new Error("updateOrderStatus called without a valid orderId");
+  }
+
+  // 👇 this was the broken part in your error
+  const ref = doc(db, "deliveries", orderId);  // ✅ 2 segments: collection + doc id
+
+  await updateDoc(ref, {
+    status,
+    ...(extra ?? {}),
+    updatedAt: serverTimestamp(),
+  });
 }
 
 // 🔹 Dishes live in "dishes" collection

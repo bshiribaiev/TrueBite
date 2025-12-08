@@ -10,6 +10,7 @@ import {
   query,
   where,
   updateDoc,
+  increment,
 } from "firebase/firestore";
 
 import type { Role } from "../types"; // you already have Role type
@@ -22,10 +23,57 @@ export type UserProfile = {
   accountType?: "customer" | "employee" | "manager"; // 👈 NEW
   deposit?: number;
   warnings?: number;
+  salary?: number;
+  commendations?: number;
+  reputationScore?: number;
+  fired?: boolean;
 };
 export type UserWithId = UserProfile & {
   id: string;
 };
+
+export async function applyFeedbackToEmployee(params: {
+  targetId: string;
+  deltaWarnings?: number;
+  deltaCommendations?: number;
+}) {
+  const { targetId, deltaWarnings = 0, deltaCommendations = 0 } = params;
+  const ref = doc(db, "users", targetId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const data = snap.data() as UserProfile;
+  const currentWarnings = data.warnings ?? 0;
+  const currentCommendations = data.commendations ?? 0;
+
+  const newWarnings = Math.max(0, currentWarnings + deltaWarnings);
+  const newCommendations = Math.max(0, currentCommendations + deltaCommendations);
+
+  await updateDoc(ref, {
+    warnings: newWarnings,
+    commendations: newCommendations,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// src/services/userService.ts
+export async function updateEmployeeStats(
+  uid: string,
+  data: Partial<{
+    salary: number;
+    warnings: number;
+    commendations: number;
+    fired: boolean;
+    status: "pending" | "approved" | "rejected";
+  }>
+) {
+  const ref = doc(db, "users", uid);
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 // Create or overwrite a user document in /users
 export async function setUserProfile(
   uid: string,
@@ -95,4 +143,12 @@ export async function updateUserRole(uid: string, role: Role) {
   const ref = doc(db, "users", uid);
   await updateDoc(ref, { role });
 }
+// Increment a user's warnings count by 1
+export async function incrementUserWarnings(uid: string) {
+  const ref = doc(db, "users", uid);
+  await updateDoc(ref, {
+    warnings: increment(1),
+  });
+}
+
 

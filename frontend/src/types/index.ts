@@ -9,6 +9,10 @@ export interface User {
   deposit: number;
   warnings: number;
   reputationScore: number;
+  salary?: number;
+  commendations?: number;
+  fired?: boolean;
+
 }
 
 // Order Types
@@ -43,6 +47,8 @@ export interface Order {
   updatedAt: Date;
   deliveryAddress: string;
   estimatedDeliveryTime?: Date;
+  chefName?: string;
+  deliveryPersonName?: string;
 }
 
 // Dish Types

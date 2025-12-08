@@ -54,14 +54,34 @@ export default function ChefDashboard() {
   orderId: string,
   newStatus: Order["status"]
 ) => {
+  if (!user) return;
+
+  // find the full order from local state
+  const order = orders.find((o) => o.id === orderId);
+  if (!order) {
+    console.error("Order not found in state", orderId);
+    return;
+  }
+
   try {
-    await updateOrderStatus(orderId, newStatus);   // 🔥 Firestore
+    if (newStatus === "IN_KITCHEN" && !order.chefId) {
+      // first time a chef starts this order → attach chef id
+      await updateOrderStatus(orderId, newStatus, {
+        chefId: user.id,
+        chefName: user.name,
+      });
+    } else {
+      await updateOrderStatus(orderId, newStatus);
+    }
+
     await loadData();
   } catch (err) {
     alert("Failed to update order status");
     console.error(err);
   }
 };
+
+
 
 const handleAddDish = async () => {
   if (!user) return;
@@ -164,13 +184,14 @@ const toggleDishAvailability = async (
   );
 }
 
-function OrdersTab({ 
-  orders, 
-  onStatusChange 
-}: { 
-  orders: Order[]; 
+function OrdersTab({
+  orders,
+  onStatusChange,
+}: {
+  orders: Order[];
   onStatusChange: (id: string, status: Order["status"]) => void;
 }) {
+
   const newOrders = orders.filter(o => o.status === "CREATED");
   const inKitchen = orders.filter(o => o.status === "IN_KITCHEN");
   const ready = orders.filter(o => o.status === "READY_FOR_DELIVERY");
@@ -185,12 +206,12 @@ function OrdersTab({
         onAction={onStatusChange}
       />
       <OrderQueue
-        title="In Kitchen"
-        orders={inKitchen}
-        actionLabel="Mark Ready"
-        actionStatus="READY_FOR_DELIVERY"
-        onAction={onStatusChange}
-      />
+    title="New Orders"
+    orders={newOrders}
+    actionLabel="Start Cooking"
+    actionStatus="IN_KITCHEN"
+    onAction={onStatusChange}   // <- same signature
+  />
       <OrderQueue
         title="Ready for Delivery"
         orders={ready}
@@ -243,12 +264,12 @@ function OrderQueue({
               <div className="order-footer">
                 <span className="order-total">${order.totalPrice.toFixed(2)}</span>
                 {actionLabel && actionStatus && (
-                  <button 
-                    className="btn btn-sm"
-                    onClick={() => onAction(order.id, actionStatus)}
+                  <button
+                  className="btn btn-sm"
+                  onClick={() => onAction(order.id, actionStatus)}
                   >
-                    {actionLabel}
-                  </button>
+                  {actionLabel}
+                </button>
                 )}
               </div>
             </div>

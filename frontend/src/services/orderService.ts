@@ -53,18 +53,51 @@ export async function createOrder(
   return docRef.id;
 }
 
-export async function getOrdersForUser(userId: string) {
+export async function getOrdersForUser(userId: string): Promise<Order[]> {
   const q = query(
-    collection(db, "orders"),
-    where("customerId", "==", userId),
-    orderBy("createdAt", "desc")
+    collection(db, "deliveries"),
+    where("customerId", "==", userId)
   );
+
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  }));
+
+  const orders: Order[] = snap.docs.map((d) => {
+    const data = d.data() as any;
+
+    const createdAt =
+      data.createdAt?.toDate?.() ?? new Date();
+
+    const rawItems = Array.isArray(data.items) ? data.items : [];
+
+    const items = rawItems.map((it: any, idx: number) => ({
+      id: it.id ?? it.dishId ?? String(idx),
+      dishName: it.dishName ?? it.name ?? "Item",
+      quantity: it.quantity ?? 1,
+    }));
+
+    return {
+      id: d.id,
+      chefId: data.chefId ?? null,
+      chefName: data.chefName ?? null,
+      deliveryPersonId: data.assignedDriverId ?? data.deliveryPersonId ?? null,
+      deliveryPersonName:
+      data.assignedDriverName ?? data.deliveryPersonName ?? null,
+      customerName: data.customerName ?? "Customer",
+      items,
+      totalPrice: data.totalPrice ?? 0,
+      status: data.status ?? "CREATED",
+      createdAt,
+    } as Order;
+  });
+
+  orders.sort(
+    (a, b) =>
+      (b.createdAt as any).getTime() - (a.createdAt as any).getTime()
+  );
+
+  return orders;
 }
+
 export async function getAllOrdersForManager(): Promise<Order[]> {
   const q = query(collection(db, "deliveries"), orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
@@ -85,6 +118,11 @@ export async function getAllOrdersForManager(): Promise<Order[]> {
       ...data,
       items,         // 👈 ensure items is always an array
       createdAt,
+      chefId: data.chefId ?? null,
+  chefName: data.chefName ?? null,
+  deliveryPersonId: data.assignedDriverId ?? data.deliveryPersonId ?? null,
+  deliveryPersonName:
+    data.assignedDriverName ?? data.deliveryPersonName ?? null,
     } as Order;
   });
 }
