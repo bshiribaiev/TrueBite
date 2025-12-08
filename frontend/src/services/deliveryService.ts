@@ -283,7 +283,8 @@ export async function getPendingBids(orderId?: string): Promise<DeliveryBid[]> {
  */
 export async function assignDeliveryToBidder(
   orderId: string,
-  winningBidId: string
+  winningBidId: string,
+  managerNote?: string
 ): Promise<void> {
   // Get the winning bid
   const winningBidRef = doc(db, "bids", winningBidId);

@@ -115,9 +115,9 @@ export default function ManagerDashboard() {
 };
 
 
-  const handleAssignDelivery = async (orderId: string, bidId: string) => {
+  const handleAssignDelivery = async (orderId: string, bidId: string, managerNote?: string) => {
     try {
-      await assignDeliveryToBidder(orderId, bidId);   // 👈 Firestore now
+      await assignDeliveryToBidder(orderId, bidId, managerNote);   // 👈 Firestore now
       await loadData();
       alert("Delivery assigned successfully");
     } catch (err) {
@@ -604,7 +604,7 @@ function DeliveryBidsTab({
   onAssign 
 }: { 
   bids: DeliveryBid[]; 
-  onAssign: (orderId: string, bidId: string) => void;
+  onAssign: (orderId: string, bidId: string, managerNote?: string) => void;
 }) {
   // Group bids by order
   const bidsByOrder = bids.reduce((acc, bid) => {
@@ -615,6 +615,41 @@ function DeliveryBidsTab({
     return acc;
   }, {} as Record<string, DeliveryBid[]>);
 
+  const handleAssignClick = (orderId: string, selectedBid: DeliveryBid, orderBids: DeliveryBid[]) => {
+    // Collect numeric fees
+    const numericFees = orderBids
+      .map(b => b.proposedFee)
+      .filter((fee): fee is number => typeof fee === "number");
+
+    // If no fees recorded, just assign without memo
+    if (numericFees.length === 0 || selectedBid.proposedFee == null) {
+      onAssign(orderId, selectedBid.id);
+      return;
+    }
+
+    const minFee = Math.min(...numericFees);
+    const selectedFee = selectedBid.proposedFee;
+
+    if (selectedFee > minFee) {
+      const reason = window.prompt(
+        `This bid's fee $${selectedFee.toFixed(2)} is higher than the cheapest bid $${minFee.toFixed(
+          2
+        )}.\n\n` +
+        "Please enter a justification memo:"
+      );
+
+      if (!reason || !reason.trim()) {
+        alert("Justification memo is required when choosing a more expensive bid.");
+        return;
+      }
+
+      onAssign(orderId, selectedBid.id, reason.trim());
+    } else {
+      // chosen bid is the cheapest (or tied for cheapest) → no memo needed
+      onAssign(orderId, selectedBid.id);
+    }
+  };
+
   return (
     <div className="delivery-bids-tab">
       {Object.keys(bidsByOrder).length === 0 ? (
@@ -622,7 +657,9 @@ function DeliveryBidsTab({
       ) : (
         Object.entries(bidsByOrder).map(([orderId, orderBids]) => (
           <div key={orderId} className="order-bids">
-            <h3>Order #{orderId.slice(0, 8)} - {orderBids.length} Bid(s)</h3>
+            <h3>
+              Order #{orderId.slice(0, 8)} - {orderBids.length} Bid(s)
+            </h3>
             <div className="bids-list">
               {orderBids
                 .sort((a, b) => b.reputationScore - a.reputationScore)
@@ -630,14 +667,16 @@ function DeliveryBidsTab({
                   <div key={bid.id} className="bid-card">
                     <div className="bid-header">
                       <span className="delivery-person">{bid.deliveryPersonName}</span>
-                      <span className="reputation">⭐ {bid.reputationScore.toFixed(1)}</span>
+                      <span className="reputation">
+                        ⭐ {bid.reputationScore.toFixed(1)}
+                      </span>
                     </div>
                     <div className="bid-details">
                       <div className="detail-row">
                         <span className="label">ETA:</span>
                         <span>{bid.estimatedTime} minutes</span>
                       </div>
-                      {bid.proposedFee && (
+                      {bid.proposedFee != null && (
                         <div className="detail-row">
                           <span className="label">Fee:</span>
                           <span>${bid.proposedFee.toFixed(2)}</span>
@@ -648,9 +687,9 @@ function DeliveryBidsTab({
                         <span>{new Date(bid.createdAt).toLocaleString()}</span>
                       </div>
                     </div>
-                    <button 
+                    <button
                       className="btn"
-                      onClick={() => onAssign(orderId, bid.id)}
+                      onClick={() => handleAssignClick(orderId, bid, orderBids)}
                     >
                       Assign Delivery
                     </button>
