@@ -65,7 +65,7 @@ export async function createComplaint(params: {
   orderId: string;
   customerId: string;
   customerName: string;
-  targetType: "chef" | "delivery";
+  targetType: "chef" | "delivery" | "CUSTOMER";
   targetId: string;         // 👈 NEW
   targetName: string;
   description: string;
@@ -207,6 +207,25 @@ async function updateDishRating(dishId: string, newScore: number) {
   await updateDoc(ref, {
     rating,
     ratingCount,
+  });
+}
+export async function createDriverComplaintAgainstCustomer(args: {
+  driverId: string;
+  driverName: string;
+  orderId: string;
+  customerName: string;
+  description: string;
+}) {
+  return createComplaint({
+    // "customer*" here is actually the reporter (the driver),
+    // matching how your generic complaints are structured
+    customerId: args.driverId,
+    customerName: args.driverName,
+    orderId: args.orderId,
+    targetType: "CUSTOMER",
+    targetId: args.customerName,    // we don't have a separate customerId, so use name
+    targetName: args.customerName,
+    description: args.description,
   });
 }
 

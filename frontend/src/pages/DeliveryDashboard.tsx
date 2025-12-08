@@ -7,11 +7,14 @@ import {
   submitDeliveryBid,
   updateDeliveryStatus,
   getDeliveryAnalytics,
+  getCompletedDeliveriesForDriver,
 } from "../services/deliveryService";
 import type { Order, DeliveryBid, DeliveryAnalytics } from "../types";
 import "../styles/delivery.css";
+import { createDriverComplaintAgainstCustomer } from "../services/complaintService";
 
 export default function DeliveryDashboard() {
+  const [completedDeliveries, setCompletedDeliveries] = useState<Order[]>([]);
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"available" | "mybids" | "active" | "analytics">("available");
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
@@ -20,11 +23,16 @@ export default function DeliveryDashboard() {
   const [analytics, setAnalytics] = useState<DeliveryAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bidFormData, setBidFormData] = useState<{ orderId: string; estimatedTime: number }>({
-    orderId: "",
-    estimatedTime: 15
-  });
-
+ const [bidFormData, setBidFormData] = useState<{
+  
+  orderId: string;
+  estimatedTime: number;
+  proposedFee: number;
+}>({
+  orderId: "",
+  estimatedTime: 15,
+  proposedFee: 5, // default fee, tweak as you like
+});
   useEffect(() => {
     loadData();
   }, [activeTab]);
@@ -44,10 +52,15 @@ export default function DeliveryDashboard() {
       } else if (activeTab === "active") {
         const data = await getActiveDeliveries(user.id);
         setActiveDeliveries(data);
-      } else {
-        const data = await getDeliveryAnalytics(user.id);
-        setAnalytics(data);
-      }
+        } else {
+    const [analyticsData, completed] = await Promise.all([
+      getDeliveryAnalytics(user.id),
+      getCompletedDeliveriesForDriver(user.id),
+    ]);
+    setAnalytics(analyticsData);
+    setCompletedDeliveries(completed);
+  }
+
     } catch (err) {
       setError("Failed to load data");
       console.error(err);
@@ -56,24 +69,31 @@ export default function DeliveryDashboard() {
     }
   };
 
-  const handleSubmitBid = async (orderId: string, estimatedTime: number) => {
-    if (!user) return;
-    
-    try {
-      await submitDeliveryBid({
-        orderId,
-        deliveryPersonId: user.id,
-        deliveryPersonName: user.name,
-        estimatedTime,
-        reputationScore: user.reputationScore ?? 4.5,
-      });
-      alert("Bid submitted successfully!");
-      await loadData();
-    } catch (err) {
-      alert("Failed to submit bid");
-      console.error(err);
-    }
-  };
+ const handleSubmitBid = async (
+  orderId: string,
+  estimatedTime: number,
+  proposedFee: number
+) => {
+  if (!user) return;
+
+  try {
+    await submitDeliveryBid({
+      orderId,
+      deliveryPersonId: user.id,
+      deliveryPersonName: user.name,
+      estimatedTime,
+      reputationScore: user.reputationScore ?? 4.5,
+      proposedFee,  // 👈 now matches the type above
+    });
+    alert("Bid submitted successfully!");
+    await loadData();
+  } catch (err) {
+    alert("Failed to submit bid");
+    console.error(err);
+  }
+};
+
+
 
   const handleUpdateDeliveryStatus = async (orderId: string, newStatus: Order["status"]) => {
     try {
@@ -155,7 +175,10 @@ export default function DeliveryDashboard() {
               />
             )}
             {activeTab === "analytics" && analytics && (
-              <DeliveryAnalyticsTab analytics={analytics} />
+            <DeliveryAnalyticsTab
+            analytics={analytics}
+            completedDeliveries={completedDeliveries}
+            />
             )}
           </>
         )}
@@ -164,24 +187,27 @@ export default function DeliveryDashboard() {
   );
 }
 
-function AvailableOrdersTab({ 
-  orders, 
+function AvailableOrdersTab({
+  orders,
   onSubmitBid,
   bidFormData,
-  setBidFormData
-}: { 
-  orders: Order[]; 
-  onSubmitBid: (orderId: string, estimatedTime: number) => void;
-  bidFormData: { orderId: string; estimatedTime: number };
-  setBidFormData: (data: { orderId: string; estimatedTime: number }) => void;
+  setBidFormData,
+}: {
+  orders: Order[];
+  onSubmitBid: (orderId: string, estimatedTime: number, proposedFee: number) => void;
+  bidFormData: { orderId: string; estimatedTime: number; proposedFee: number };
+  setBidFormData: (data: { orderId: string; estimatedTime: number; proposedFee: number }) => void;
 }) {
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
 
   const handleBidSubmit = (orderId: string) => {
-    const estimatedTime = bidFormData.orderId === orderId ? bidFormData.estimatedTime : 15;
-    onSubmitBid(orderId, estimatedTime);
+    const isThisOrder = bidFormData.orderId === orderId;
+    const estimatedTime = isThisOrder ? bidFormData.estimatedTime : 15;
+    const proposedFee = isThisOrder ? bidFormData.proposedFee : 5;
+
+    onSubmitBid(orderId, estimatedTime, proposedFee);
     setSelectedOrder(null);
-    setBidFormData({ orderId: "", estimatedTime: 15 });
+    setBidFormData({ orderId: "", estimatedTime: 15, proposedFee: 5 });
   };
 
   return (
@@ -193,12 +219,14 @@ function AvailableOrdersTab({
         </div>
       ) : (
         <div className="order-list">
-          {orders.map(order => (
+          {orders.map((order) => (
             <div key={order.id} className="delivery-order-card">
               <div className="order-info">
                 <div className="order-header">
                   <span className="order-id">#{order.id.slice(0, 8)}</span>
-                  <span className="order-price">${order.totalPrice.toFixed(2)}</span>
+                  <span className="order-price">
+                    ${order.totalPrice.toFixed(2)}
+                  </span>
                 </div>
                 <div className="order-details">
                   <div className="detail-row">
@@ -207,23 +235,32 @@ function AvailableOrdersTab({
                   </div>
                   <div className="detail-row">
                     <span className="label">Address:</span>
-                    <span>{order.deliveryAddress || "Address not provided"}</span>
+                    <span>
+                      {order.deliveryAddress || "Address not provided"}
+                    </span>
                   </div>
                   <div className="detail-row">
                     <span className="label">Items:</span>
-                    <span>{Array.isArray(order.items) ? order.items.length : 0} item(s)</span>
+                    <span>
+                      {Array.isArray(order.items) ? order.items.length : 0}{" "}
+                      item(s)
+                    </span>
                   </div>
                   <div className="detail-row">
                     <span className="label">Ready:</span>
                     <span>
-                      {order.updatedAt 
-                        ? `${Math.round((Date.now() - new Date(order.updatedAt).getTime()) / 60000)}m ago`
+                      {order.updatedAt
+                        ? `${Math.round(
+                            (Date.now() -
+                              new Date(order.updatedAt).getTime()) /
+                              60000
+                          )}m ago`
                         : "Just now"}
                     </span>
                   </div>
                 </div>
               </div>
-              
+
               {selectedOrder === order.id ? (
                 <div className="bid-form">
                   <label>
@@ -233,21 +270,57 @@ function AvailableOrdersTab({
                       className="input"
                       min="5"
                       max="60"
-                      value={bidFormData.orderId === order.id ? bidFormData.estimatedTime : 15}
-                      onChange={e => setBidFormData({ 
-                        orderId: order.id, 
-                        estimatedTime: parseInt(e.target.value) || 15 
-                      })}
+                      value={
+                        bidFormData.orderId === order.id
+                          ? bidFormData.estimatedTime
+                          : 15
+                      }
+                      onChange={(e) =>
+                        setBidFormData({
+                          orderId: order.id,
+                          estimatedTime: parseInt(e.target.value) || 15,
+                          proposedFee:
+                            bidFormData.orderId === order.id
+                              ? bidFormData.proposedFee
+                              : 5,
+                        })
+                      }
                     />
                   </label>
+
+                  <label>
+                    Proposed Fee ($):
+                    <input
+                      type="number"
+                      className="input"
+                      min="1"
+                      step="0.5"
+                      value={
+                        bidFormData.orderId === order.id
+                          ? bidFormData.proposedFee
+                          : 5
+                      }
+                      onChange={(e) =>
+                        setBidFormData({
+                          orderId: order.id,
+                          estimatedTime:
+                            bidFormData.orderId === order.id
+                              ? bidFormData.estimatedTime
+                              : 15,
+                          proposedFee: parseFloat(e.target.value) || 5,
+                        })
+                      }
+                    />
+                  </label>
+
                   <div className="bid-actions">
-                    <button 
+                    <button
                       className="btn"
                       onClick={() => handleBidSubmit(order.id)}
                     >
                       Submit Bid
                     </button>
-                    <button 
+                    <button
                       className="btn ghost"
                       onClick={() => setSelectedOrder(null)}
                     >
@@ -256,7 +329,7 @@ function AvailableOrdersTab({
                   </div>
                 </div>
               ) : (
-                <button 
+                <button
                   className="btn"
                   onClick={() => setSelectedOrder(order.id)}
                 >
@@ -270,6 +343,7 @@ function AvailableOrdersTab({
     </div>
   );
 }
+
 
 function MyBidsTab({ bids }: { bids: DeliveryBid[] }) {
   const getStatusBadge = (status: DeliveryBid["status"]) => {
@@ -389,13 +463,49 @@ function ActiveDeliveriesTab({
   );
 }
 
-function DeliveryAnalyticsTab({ analytics }: { analytics: DeliveryAnalytics }) {
-  const completionRate = analytics.totalDeliveries > 0
-    ? ((analytics.completedDeliveries / analytics.totalDeliveries) * 100).toFixed(1)
-    : "0.0";
+function DeliveryAnalyticsTab({
+  analytics,
+  completedDeliveries,
+}: {
+  analytics: DeliveryAnalytics;
+  completedDeliveries: Order[];
+}) {
+  const { user } = useAuth();
+  const [complaintOrderId, setComplaintOrderId] = useState<string | null>(null);
+  const [complaintText, setComplaintText] = useState("");
+
+  const completionRate =
+    analytics.totalDeliveries > 0
+      ? ((analytics.completedDeliveries / analytics.totalDeliveries) * 100).toFixed(1)
+      : "0.0";
+
+  const handleSubmitComplaint = async (order: Order) => {
+    if (!user) return;
+    if (!complaintText.trim()) {
+      alert("Please describe the issue.");
+      return;
+    }
+
+    try {
+      await createDriverComplaintAgainstCustomer({
+        driverId: user.id,
+        driverName: user.name,
+        orderId: order.id,
+        customerName: order.customerName,
+        description: complaintText,
+      });
+      alert("Complaint submitted for manager review.");
+      setComplaintText("");
+      setComplaintOrderId(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit complaint.");
+    }
+  };
 
   return (
     <div className="analytics-tab">
+      {/* --- your existing stats grid --- */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-value">{analytics.totalDeliveries}</div>
@@ -427,7 +537,7 @@ function DeliveryAnalyticsTab({ analytics }: { analytics: DeliveryAnalytics }) {
         <div className="analytics-section">
           <h3>Recent Ratings</h3>
           <div className="ratings-list">
-            {analytics.recentRatings.map(rating => (
+            {analytics.recentRatings.map((rating) => (
               <div key={rating.id} className="rating-card">
                 <div className="rating-header">
                   <span className="rating-stars">{"⭐".repeat(rating.score)}</span>
@@ -435,12 +545,83 @@ function DeliveryAnalyticsTab({ analytics }: { analytics: DeliveryAnalytics }) {
                     {new Date(rating.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                {rating.comment && <p className="rating-comment">{rating.comment}</p>}
+                {rating.comment && (
+                  <p className="rating-comment">{rating.comment}</p>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* --- NEW: past deliveries + complaint form --- */}
+      <div className="analytics-section">
+        <h3>Past Deliveries</h3>
+        {completedDeliveries.length === 0 ? (
+          <div className="empty-state">
+            <p>No completed deliveries yet.</p>
+          </div>
+        ) : (
+          <div className="deliveries-list">
+            {completedDeliveries.map((order) => (
+              <div key={order.id} className="active-delivery-card">
+                <div className="delivery-header">
+                  <span className="order-id">#{order.id.slice(0, 8)}</span>
+                  <span className="label">Customer: {order.customerName}</span>
+                </div>
+                <div className="delivery-details">
+                  <div className="detail-row">
+                    <span className="label">Address:</span>
+                    <span>{order.deliveryAddress || "Address not provided"}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Total:</span>
+                    <span>${order.totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {complaintOrderId === order.id ? (
+                  <div className="complaint-form">
+                    <textarea
+                      className="input"
+                      rows={2}
+                      value={complaintText}
+                      onChange={(e) => setComplaintText(e.target.value)}
+                      placeholder="Describe the issue with this customer..."
+                    />
+                    <div className="delivery-actions">
+                      <button
+                        className="btn"
+                        onClick={() => handleSubmitComplaint(order)}
+                      >
+                        Submit Complaint
+                      </button>
+                      <button
+                        className="btn ghost"
+                        onClick={() => {
+                          setComplaintOrderId(null);
+                          setComplaintText("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="delivery-actions">
+                    <button
+                      className="btn ghost"
+                      onClick={() => setComplaintOrderId(order.id)}
+                    >
+                      File Complaint about Customer
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

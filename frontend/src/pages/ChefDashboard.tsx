@@ -191,10 +191,9 @@ function OrdersTab({
   orders: Order[];
   onStatusChange: (id: string, status: Order["status"]) => void;
 }) {
-
-  const newOrders = orders.filter(o => o.status === "CREATED");
-  const inKitchen = orders.filter(o => o.status === "IN_KITCHEN");
-  const ready = orders.filter(o => o.status === "READY_FOR_DELIVERY");
+  const newOrders = orders.filter((o) => o.status === "CREATED");
+  const inKitchen = orders.filter((o) => o.status === "IN_KITCHEN");
+  const ready = orders.filter((o) => o.status === "READY_FOR_DELIVERY");
 
   return (
     <div className="orders-tab">
@@ -205,13 +204,15 @@ function OrdersTab({
         actionStatus="IN_KITCHEN"
         onAction={onStatusChange}
       />
+
       <OrderQueue
-    title="New Orders"
-    orders={newOrders}
-    actionLabel="Start Cooking"
-    actionStatus="IN_KITCHEN"
-    onAction={onStatusChange}   // <- same signature
-  />
+        title="In Kitchen"
+        orders={inKitchen}
+        actionLabel="Mark Ready"
+        actionStatus="READY_FOR_DELIVERY"
+        onAction={onStatusChange}
+      />
+
       <OrderQueue
         title="Ready for Delivery"
         orders={ready}
@@ -222,6 +223,8 @@ function OrdersTab({
     </div>
   );
 }
+
+
 
 
 

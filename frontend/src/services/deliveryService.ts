@@ -57,25 +57,65 @@ export async function getAvailableOrdersForBidding(): Promise<Order[]> {
 /**
  * Submit a bid for an order
  */
-export async function submitDeliveryBid(bid: {
+type NewDeliveryBidInput = {
   orderId: string;
   deliveryPersonId: string;
   deliveryPersonName: string;
   estimatedTime: number;
   reputationScore: number;
-}): Promise<string> {
+  proposedFee: number;   // 👈 NEW
+};
+
+export async function submitDeliveryBid(bid: NewDeliveryBidInput): Promise<string> {
   const bidRef = await addDoc(collection(db, "bids"), {
     orderId: bid.orderId,
     deliveryPersonId: bid.deliveryPersonId,
     deliveryPersonName: bid.deliveryPersonName,
     estimatedTime: bid.estimatedTime,
     reputationScore: bid.reputationScore,
+    proposedFee: bid.proposedFee,   // 👈 store in Firestore
     status: "PENDING",
     createdAt: serverTimestamp(),
   });
 
   return bidRef.id;
 }
+export async function getCompletedDeliveriesForDriver(
+  driverId: string
+): Promise<Order[]> {
+  const q = query(
+    collection(db, "deliveries"),
+    where("assignedDriverId", "==", driverId),
+    where("status", "==", "DELIVERED")  // you can use deliveryStatus here too, but be consistent
+  );
+
+  const snap = await getDocs(q);
+
+  const deliveries = snap.docs.map((docSnap) => {
+    const data = docSnap.data() as any;
+
+    const mapped: Order = {
+      id: docSnap.id,
+      customerName: data.customerName ?? "Unknown customer",
+      deliveryAddress: data.deliveryAddress ?? "",
+      totalPrice: data.totalPrice ?? 0,
+      status: data.status ?? "DELIVERED",
+      items: data.items ?? [],
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+      deliveryPersonId: data.assignedDriverId,
+    } as Order;
+
+    return mapped;
+  });
+
+  return deliveries.sort((a: any, b: any) => {
+    const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return bTime - aTime;
+  });
+}
+
 
 /**
  * Get all bids submitted by a specific delivery person
@@ -155,6 +195,7 @@ export async function updateDeliveryStatus(
   const ref = doc(db, "deliveries", orderId);
   await updateDoc(ref, {
     status: newStatus,
+    deliveryStatus: newStatus,
     updatedAt: serverTimestamp(),
   });
 }
