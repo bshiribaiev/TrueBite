@@ -12,6 +12,10 @@ export interface User {
   salary?: number;
   commendations?: number;
   fired?: boolean;
+   // NEW:
+  isVip?: boolean; // future use
+  blacklisted?: boolean;
+  accountStatus?: "active" | "blacklisted" | "closed";
 
 }
 

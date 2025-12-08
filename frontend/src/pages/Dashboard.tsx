@@ -12,6 +12,10 @@ import {
   createComplaint,
   submitRating,
 } from "../services/complaintService";
+// at top of Dashboard.tsx
+import { requestAccountClosure } from "../services/userService";
+
+
 
 export default function Dashboard() {
   const { user, logout, addDeposit } = useAuth();
@@ -101,6 +105,25 @@ export default function Dashboard() {
       alert("Failed to submit rating. Please try again.");
     }
   };
+
+  const handleRequestAccountClosure = async () => {
+  if (!user) return;
+
+  const ok = window.confirm(
+    "Are you sure you want to request account closure?\n" +
+    "A manager will review your request. This will eventually disable future logins."
+  );
+  if (!ok) return;
+
+  try {
+    await requestAccountClosure(user.id);
+    alert("Account closure requested. A manager will review it.");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to request account closure");
+  }
+};
+
 
   // 😠 / 😊 Complaint / compliment about people (chef / delivery)
  const handleSubmitFeedback = async (
@@ -199,6 +222,15 @@ export default function Dashboard() {
         >
           Logout
         </button>
+        
+    <button
+      className="btn danger"
+      onClick={() => requestAccountClosure(user.id)}
+    >
+      Request Account Closure
+    </button>
+    <p style={{ color: "red", fontSize: ".9rem" }}>
+    </p>
       </div>
 
       {/* My Orders */}

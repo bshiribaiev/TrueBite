@@ -27,9 +27,23 @@ export type UserProfile = {
   commendations?: number;
   reputationScore?: number;
   fired?: boolean;
+    // 🔥 NEW FIELDS
+  isVip?: boolean; // for later VIP logic
+  blacklisted?: boolean;
+  accountStatus?: "active" | "blacklisted" | "closed" | "close_requested";
 };
 export type UserWithId = UserProfile & {
   id: string;
+};
+export type CustomerSummary = {
+  id: string;
+  name: string;
+  email: string;
+  deposit: number;
+  warnings: number;
+  isVip: boolean;
+  blacklisted: boolean;
+  accountStatus?: "active" | "blacklisted" | "closed" | "close_requested";
 };
 
 export async function applyFeedbackToEmployee(params: {
@@ -132,6 +146,77 @@ export async function getEmployees(): Promise<UserWithId[]> {
   }));
 }
 
+export async function getAllCustomers(): Promise<CustomerSummary[]> {
+  const snap = await getDocs(collection(db, "users"));
+
+  const customers: CustomerSummary[] = [];
+
+  snap.forEach((docSnap) => {
+    const data = docSnap.data() as UserProfile;
+
+    // Only include real customers
+    if (data.accountType !== "customer") {
+      return;
+    }
+
+    customers.push({
+      id: docSnap.id,
+      name: data.name,
+      email: data.email,
+      deposit: data.deposit ?? 0,
+      warnings: data.warnings ?? 0,
+      isVip: data.isVip ?? false,
+      blacklisted: data.blacklisted ?? false,
+      accountStatus: data.accountStatus, // can be undefined, matches optional
+    });
+  });
+
+  return customers;
+}
+
+
+// Manager: clear customer's balance and close/blacklist the account
+export async function clearAndCloseCustomerAccount(uid: string) {
+  const ref = doc(db, "users", uid);
+
+  await updateDoc(ref, {
+    deposit: 0,
+    accountStatus: "closed",
+    blacklisted: false,         // keep them blocked
+    updatedAt: serverTimestamp(),
+  });
+}
+export async function clearDepositOnly(uid: string) {
+  const ref = doc(db, "users", uid);
+  await updateDoc(ref, {
+    deposit: 0,
+    updatedAt: serverTimestamp(),
+  });
+}
+export async function clearAndBlacklistCustomerAccount(uid: string) {
+  const ref = doc(db, "users", uid);
+
+  await updateDoc(ref, {
+    deposit: 0,
+    blacklisted: true,
+    accountStatus: "blacklisted",  // <--- forces rejection on login
+    warnings: 3,                    // always locked due to limit
+    closedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function requestAccountClosure(uid: string) {
+  const ref = doc(db, "users", uid);
+  await updateDoc(ref, {
+    accountStatus: "close_requested",
+    closureRequestedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+
+
 // Approve a user registration
 export async function approveUser(uid: string) {
   const ref = doc(db, "users", uid);
@@ -143,12 +228,35 @@ export async function updateUserRole(uid: string, role: Role) {
   const ref = doc(db, "users", uid);
   await updateDoc(ref, { role });
 }
-// Increment a user's warnings count by 1
+// Increment a user's warnings and auto‑blacklist if threshold reached
 export async function incrementUserWarnings(uid: string) {
   const ref = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const data = snap.data() as UserProfile;
+
+  const currentWarnings = data.warnings ?? 0;
+  const newWarnings = currentWarnings + 1;
+  const isVip = data.isVip === true;
+
+  // For now: 3 warnings for regular users, 5 for VIPs (you can tweak later)
+  const threshold = isVip ? 5 : 3;
+
+  const update: Partial<UserProfile> & { warnings: number } = {
+    warnings: newWarnings,
+  };
+
+  if (newWarnings >= threshold) {
+    update.blacklisted = true;
+    update.accountStatus = "blacklisted";
+  }
+
   await updateDoc(ref, {
-    warnings: increment(1),
+    ...update,
+    updatedAt: serverTimestamp(),
   });
 }
+
 
 

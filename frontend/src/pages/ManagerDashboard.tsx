@@ -11,6 +11,12 @@ import {
   type UserWithId,
   updateEmployeeStats,
   incrementUserWarnings,
+  getAllCustomers,
+  clearAndCloseCustomerAccount,
+  clearDepositOnly,
+  clearAndBlacklistCustomerAccount,
+  type CustomerSummary,
+  updateUserStats,
 } from "../services/userService";
 
 import {
@@ -28,7 +34,7 @@ import {
 export default function ManagerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<
-  "overview" | "complaints" | "deliveries" | "orders" | "employees"
+  "overview" | "complaints" | "deliveries" | "orders" | "employees" | "customers"
 >("overview");
   const [stats, setStats] = useState<ManagerDashboardStats | null>(null);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -38,7 +44,7 @@ export default function ManagerDashboard() {
   const [error, setError] = useState("");
   const [pendingUsers, setPendingUsers] = useState<UserWithId[]>([]);
   const [employees, setEmployees] = useState<UserWithId[]>([]);
-
+  const [customers, setCustomers] = useState<CustomerSummary[]>([]);  // 👈 NEW
   useEffect(() => {
     loadData();
   }, [activeTab]);
@@ -69,6 +75,10 @@ export default function ManagerDashboard() {
       setPendingUsers(pending);
       setEmployees(emps);
     }
+    else if (activeTab === "customers") {
+        const data = await getAllCustomers();  // 👈 NEW
+        setCustomers(data);
+      }
   } catch (err) {
     setError("Failed to load data");
     console.error(err);
@@ -191,7 +201,55 @@ const handleFireEmployee = async (emp: UserWithId) => {
     alert("Failed to fire employee");
   }
 };
+const handleCloseCustomerAccount = async (customer: CustomerSummary) => {
+    const confirmMsg =
+      `Close account for ${customer.name} (${customer.email})?\n` +
+      `This will clear their deposit and mark the account as closed.`;
 
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await clearAndCloseCustomerAccount(customer.id);
+      await loadData();
+      alert("Customer account closed and deposit cleared.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to close customer account");
+    }
+  };
+  const handleBlacklistCustomer = async (customer: CustomerSummary) => {
+  const confirmMsg =
+    `BLACKLIST ${customer.name} (${customer.email})?\n` +
+    `This will clear their deposit, mark them blacklisted, and prevent future logins.`;
+
+  if (!window.confirm(confirmMsg)) return;
+
+  try {
+    await clearAndBlacklistCustomerAccount(customer.id);
+    await loadData();
+    alert("Customer blacklisted and deposit cleared.");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to blacklist customer");
+  }
+};
+
+const handleClearDepositOnly = async (customer: CustomerSummary) => {
+  const confirmMsg =
+    `Clear deposit for ${customer.name} (${customer.email})?\n` +
+    `Their account will remain ${customer.accountStatus ?? "active"}.`;
+
+  if (!window.confirm(confirmMsg)) return;
+
+  try {
+    await clearDepositOnly(customer.id);
+    await loadData();
+    alert("Customer deposit cleared.");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to clear deposit");
+  }
+};
 
 
   if (!user || user.role !== "manager") {
@@ -222,6 +280,12 @@ const handleFireEmployee = async (emp: UserWithId) => {
           onClick={() => setActiveTab("employees")}
 >
           👥 Employees
+        </button>
+        <button
+          className={`tab ${activeTab === "customers" ? "active" : ""}`}   // 👈 NEW
+          onClick={() => setActiveTab("customers")}
+        >
+          🧾 Customers
         </button>
         <button 
           className={`tab ${activeTab === "complaints" ? "active" : ""}`}
@@ -282,12 +346,24 @@ const handleFireEmployee = async (emp: UserWithId) => {
     onFire={handleFireEmployee}
   />
 )}
+ {/* 👈 Customers tab content */}
+{activeTab === "customers" && (
+  <CustomersTab
+    customers={customers}
+    onClearDeposit={handleClearDepositOnly}
+    onCloseAccount={handleCloseCustomerAccount}
+    onBlacklist={handleBlacklistCustomer}
+  />
+)}
           </>
+          
         )}
+        
       </div>
     </div>
   );
 }
+
 
 function OverviewTab({ stats }: { stats: ManagerDashboardStats }) {
   return (
@@ -654,6 +730,106 @@ function OrdersTab({ orders }: { orders: Order[] }) {
     </div>
   );
 }
+function CustomersTab({
+  customers,
+  onClearDeposit,
+  onCloseAccount,
+  onBlacklist,
+}: {
+  customers: CustomerSummary[];
+  onClearDeposit: (c: CustomerSummary) => void;
+  onCloseAccount: (c: CustomerSummary) => void;
+  onBlacklist: (c: CustomerSummary) => void;
+}) {
+  if (customers.length === 0) {
+    return (
+      <div className="customers-tab">
+        <h3>Customers</h3>
+        <div className="empty-state">No customers found</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="customers-tab">
+      <h3>Customers</h3>
+      <div className="customers-list">
+        {customers.map((c) => {
+          const status = c.accountStatus ?? "active";
+
+          const canBlacklist =
+            c.warnings >= 3 && !c.blacklisted && status !== "blacklisted";
+
+          const canClearDeposit =
+            c.deposit > 0 && status !== "closed" && status !== "blacklisted";
+
+          const canCloseAccount =
+            c.accountStatus === "close_requested" &&
+            !c.blacklisted;
+
+          return (
+            <div key={c.id} className="customer-card">
+              <div className="customer-main">
+                <span className="name">{c.name}</span>
+                <span className="email">{c.email}</span>
+              </div>
+
+              <div className="customer-meta">
+                <span>Deposit: ${c.deposit.toFixed(2)}</span>
+                <span>Warnings: {c.warnings}</span>
+                <span>Status: {status}</span>
+                {c.isVip && <span className="badge">VIP</span>}
+                {c.blacklisted && <span className="badge bad">Blacklisted</span>}
+              </div>
+
+              <div className="customer-actions">
+                {/* Clear deposit – allowed whenever they have money and account not closed/blacklisted */}
+                <button
+                  className="btn btn-sm"
+                  disabled={!canClearDeposit}
+                  onClick={() => onClearDeposit(c)}
+                >
+                  Clear Deposit
+                </button>
+
+                {/* Close account – only when they requested closure */}
+                <button
+                  className="btn btn-sm"
+                  disabled={!canCloseAccount}
+                  onClick={() => onCloseAccount(c)}
+                  title={
+                    canCloseAccount
+                      ? "Close this account (customer requested closure)"
+                      : "Only available when accountStatus = closure_requested"
+                  }
+                >
+                  Close Account
+                </button>
+
+                {/* Blacklist – only when warnings >= 3 */}
+                <button
+                  className="btn btn-sm ghost"
+                  disabled={!canBlacklist}
+                  onClick={() => onBlacklist(c)}
+                  title={
+                    canBlacklist
+                      ? "Blacklist this customer (3+ warnings)"
+                      : "Needs at least 3 warnings and not already blacklisted"
+                  }
+                >
+                  Blacklist & Clear
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+
 function EmployeesTab({
   pendingUsers,
   employees,
