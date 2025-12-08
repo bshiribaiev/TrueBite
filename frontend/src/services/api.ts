@@ -219,6 +219,12 @@ export const mockManagerStats: ManagerDashboardStats = {
 };
 
 // API Service (Mock for now)
+export type ChatResponse = {
+  text: string;
+  source: "KB" | "LLM" | "FALLBACK" | "ERROR" | string;
+  kbIds?: string[];
+};
+
 export const api = {
   // Chef APIs
   getChefOrders: async (chefId: string): Promise<Order[]> => {
@@ -346,19 +352,46 @@ export const api = {
   },
 
   // Chat API
-  sendMessage: async (message: string): Promise<string> => {
+  sendMessage: async (message: string): Promise<ChatResponse> => {
     try {
-      const res = await fetch('http://localhost:5000/api/chat/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+      const res = await fetch("http://localhost:5001/api/chat/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
       });
-      if (!res.ok) throw new Error('Failed to get response');
-      const data = await res.json();
-      return data.response;
+      if (!res.ok) throw new Error("Failed to get response");
+      const data = (await res.json()) as ChatResponse;
+      // Normalize minimal shape
+      return {
+        text: (data as any).text ?? (data as any).response ?? "",
+        source: data.source ?? "UNKNOWN",
+        kbIds: data.kbIds ?? [],
+      };
     } catch (err) {
       console.error(err);
-      return "Sorry, I'm having trouble connecting to the server.";
+      return {
+        text: "Sorry, I'm having trouble connecting to the server.",
+        source: "ERROR",
+        kbIds: [],
+      };
     }
-  }
+  },
+
+  rateChatResponse: async (payload: {
+    question: string;
+    response: string;
+    rating: number;
+    source?: string;
+    kbIds?: string[];
+  }): Promise<void> => {
+    try {
+      await fetch("http://localhost:5001/api/chat/rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error("Failed to send chat rating", err);
+    }
+  },
 };

@@ -3,8 +3,8 @@ import google.generativeai as genai
 import chromadb
 from chromadb.utils import embedding_functions
 from flask import current_app
-from app.models.dish import Dish
-from app import db
+
+from app.firebase_client import get_firestore
 
 class ChatService:
     _instance = None
@@ -18,16 +18,19 @@ class ChatService:
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-2.5-flash')
         
-        # Initialize ChromaDB (in-memory for now, or persistent)
-        # Using a local folder for persistence so we don't re-index every restart
+        # Initialize ChromaDB (persistent local vector store)
         self.chroma_client = chromadb.PersistentClient(path="./instance/knowledge_base")
-        
-        # Use Gemini for embeddings if possible, or default to a lightweight local model
-        # For simplicity in this implementation, we'll use Gemini's embedding model manually
-        # or use Chroma's default which downloads a small model.
-        # Let's use Gemini embeddings for consistency.
+
+        # Use a free local Hugging Face embedding model instead of Gemini embeddings
+        # This avoids embed_content quota limits.
+        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+        # Attach the embedding function to the collection so Chroma handles embeddings.
         self.collection = self.chroma_client.get_or_create_collection(
             name="menu_items",
+            embedding_function=self.embedding_fn,
             metadata={"hnsw:space": "cosine"}
         )
 
@@ -37,58 +40,70 @@ class ChatService:
             cls._instance = cls()
         return cls._instance
 
-    def generate_embedding(self, text):
-        """Generate embedding using Gemini"""
-        result = genai.embed_content(
-            model="models/embedding-001",
-            content=text,
-            task_type="retrieval_document",
-            title="Menu Item"
-        )
-        return result['embedding']
+    def _generate_llm_only(self, user_query: str) -> str:
+        """
+        Fallback: call the LLM directly without embeddings / vector search.
+        Used when embedding quota is exceeded or Chroma/KB is unavailable.
+        """
+        try:
+            prompt = f"""
+You are a helpful culinary assistant.
+Answer the user's question using your general world knowledge about food and cooking.
+If the user explicitly asks for the exact price at TrueBite or at a specific restaurant,
+explain that you don't know the exact price and suggest checking the in-app menu.
+Otherwise, give a clear, self-contained explanation of the dish or concept.
+Write your answer as plain text with complete sentences only – no bullet points,
+no markdown, and no asterisks.
+
+User question: {user_query}
+"""
+            result = self.model.generate_content(prompt)
+            return result.text or "I'm sorry, I can't answer that right now."
+        except Exception as e:
+            print(f"Error in LLM-only fallback: {e}")
+            return "I'm sorry, I'm temporarily unable to answer questions."
 
     def sync_knowledge_base(self):
         """Re-index all menu items into the vector store"""
-        if not current_app.config.get('GOOGLE_API_KEY'):
-            return False
-
         try:
-            # Clear existing
-            # self.chroma_client.delete_collection("menu_items") 
-            # self.collection = self.chroma_client.create_collection("menu_items")
-            # Better: just upsert
-            
-            dishes = Dish.query.filter_by(is_available=True).all()
-            
+            # Load dishes from Firestore instead of the local SQL database.
+            db_fs = get_firestore()
+            dishes_ref = db_fs.collection("dishes")
+            # Only include available dishes in the KB
+            snap = dishes_ref.where("available", "==", True).get()
+
             ids = []
             documents = []
             metadatas = []
-            embeddings = []
 
-            for dish in dishes:
+            for doc in snap:
+                data = doc.to_dict() or {}
+                name = data.get("name", "Unnamed dish")
+                price = data.get("price", 0)
+                description = data.get("description", "")
+                is_vip_only = data.get("is_vip_only") or data.get("vipOnly") or False
+                has_description = bool(str(description).strip())
+
                 # Create a rich description for the vector store
-                content = f"Dish: {dish.name}. Price: ${dish.price}. Description: {dish.description}. "
-                if dish.is_vip_only:
+                content = f"Dish: {name}. Price: ${price}. Description: {description}. "
+                if is_vip_only:
                     content += "This is a VIP exclusive dish. "
-                
-                ids.append(str(dish.id))
-                documents.append(content)
-                metadatas.append({
-                    "name": dish.name,
-                    "price": float(dish.price),
-                    "id": dish.id
-                })
-                
-                # Generate embedding
-                # Note: In production, batch this to avoid rate limits
-                emb = self.generate_embedding(content)
-                embeddings.append(emb)
 
+                ids.append(doc.id)
+                documents.append(content)
+                metadatas.append(
+                    {
+                        "name": name,
+                        "price": float(price) if price is not None else 0.0,
+                        "id": doc.id,
+                        "has_description": has_description,
+                    }
+                )
+                
             if ids:
                 self.collection.upsert(
                     ids=ids,
                     documents=documents,
-                    embeddings=embeddings,
                     metadatas=metadatas
                 )
             return True
@@ -99,44 +114,94 @@ class ChatService:
     def get_response(self, user_query):
         """RAG flow: Retrieve -> Generate"""
         if not current_app.config.get('GOOGLE_API_KEY'):
-            return "I'm sorry, but I'm not configured correctly to answer questions right now."
+            return {
+                "text": "I'm sorry, but I'm not configured correctly to answer questions right now.",
+                "source": "ERROR",
+                "kbIds": [],
+            }
 
         try:
-            # 1. Embed the query
-            query_embedding = genai.embed_content(
-                model="models/embedding-001",
-                content=user_query,
-                task_type="retrieval_query"
-            )
-
-            # 2. Search Knowledge Base
+            # 1. Search Knowledge Base using local embedding function
             results = self.collection.query(
-                query_embeddings=[query_embedding['embedding']],
-                n_results=3
+                query_texts=[user_query],
+                n_results=3,
             )
 
-            # 3. Construct Context
+            # 2. Construct Context + similarity info from retrieved documents
             context = ""
-            if results['documents']:
-                context = "\n".join(results['documents'][0])
+            top_ids = []
+            top_dist = None
+            top_has_description = True
 
-            # 4. Generate Response
-            system_prompt = f"""You are a helpful customer service assistant for TrueBite restaurant.
-            Use the following context about our menu to answer the user's question.
-            If the answer is not in the context, politely say you don't know and offer to connect them with a human manager.
-            Do not make up menu items or prices.
-            
-            Context:
-            {context}
-            """
-            
-            chat = self.model.start_chat(history=[
-                {"role": "user", "parts": [system_prompt + f"\n\nUser Question: {user_query}"]}
-            ])
-            
-            response = chat.last.text
-            return response
+            if results.get("documents"):
+                # results["documents"] is a list of lists
+                top_docs = results["documents"][0]
+                context = "\n".join(top_docs)
+
+            if results.get("ids"):
+                top_ids = results["ids"][0]
+
+            if results.get("metadatas"):
+                top_metas = results["metadatas"][0]
+                if top_metas:
+                    top_has_description = bool(
+                        top_metas[0].get("has_description", False)
+                    )
+
+            if results.get("distances"):
+                dists = results["distances"][0]
+                if dists:
+                    top_dist = dists[0]
+
+            # If we have no usable KB context, the top doc has no description,
+            # or it's too far away, skip RAG and answer with the LLM's own reasoning.
+            # For cosine distance, smaller = more similar; treat > 0.6 as low match.
+            if (
+                not context
+                or not top_has_description
+                or (top_dist is not None and top_dist > 0.6)
+            ):
+                return {
+                    "text": self._generate_llm_only(user_query),
+                    "source": "LLM",
+                    "kbIds": [],
+                }
+
+            # 3. Generate Response with LLM using the retrieved context
+            prompt = f"""
+You are a helpful customer service assistant for TrueBite restaurant.
+Use the following context about our menu to answer the user's question.
+If the answer is not in the context, politely say you don't know and offer to connect a human manager.
+Do not make up menu items or prices.
+Always respond in plain text with complete sentences only – no bullet points,
+no markdown, and no asterisks.
+
+Context:
+{context}
+
+User question: {user_query}
+"""
+
+            result = self.model.generate_content(prompt)
+            if result is not None and getattr(result, "text", None):
+                return {
+                    "text": result.text,
+                    "source": "KB",
+                    "kbIds": top_ids,
+                }
+
+            # If for some reason the model returned no text, fall back
+            return {
+                "text": self._generate_llm_only(user_query),
+                "source": "FALLBACK",
+                "kbIds": [],
+            }
 
         except Exception as e:
-            print(f"Error generating response: {e}")
-            return "I'm sorry, I encountered an error processing your request."
+            # Common case: Gemini embedding quota exceeded (HTTP 429 / limit 0) or Chroma issues.
+            print(f"Error generating response with RAG, falling back to LLM-only: {e}")
+            return {
+                "text": self._generate_llm_only(user_query),
+                "source": "FALLBACK",
+                "kbIds": [],
+            }

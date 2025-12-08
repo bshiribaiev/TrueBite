@@ -13,7 +13,7 @@ export default function Home() {
 
       <Section title="Most Popular">
         <div className="grid">
-          {popular.map(d => (
+          {popular.map((d) => (
             <DishCard key={d.id} dish={d} onOrder={() => nav("/login")} />
           ))}
         </div>
@@ -21,7 +21,7 @@ export default function Home() {
 
       <Section title="Top Rated">
         <div className="grid">
-          {topRated.map(d => (
+          {topRated.map((d) => (
             <DishCard key={d.id} dish={d} onOrder={() => nav("/login")} />
           ))}
         </div>

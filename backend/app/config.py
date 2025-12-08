@@ -3,9 +3,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DEFAULT_SQLITE_PATH = os.path.join(BASE_DIR, "instance", "truebite.db")
+
+
 class Config:
     # Database
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://postgres:password@localhost:5432/truebite')
+    # Use DATABASE_URL if provided, otherwise fall back to local SQLite file
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL",
+        f"sqlite:///{DEFAULT_SQLITE_PATH}"
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # JWT
