@@ -12,10 +12,8 @@ import {
   createComplaint,
   submitRating,
 } from "../services/complaintService";
-// at top of Dashboard.tsx
 import { requestAccountClosure } from "../services/userService";
-
-
+import "../styles.css";
 
 export default function Dashboard() {
   const { user, logout, addDeposit } = useAuth();
@@ -24,7 +22,6 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersError, setOrdersError] = useState("");
-
 
   useEffect(() => {
     if (!user) return;
@@ -48,8 +45,8 @@ export default function Dashboard() {
 
   if (!user)
     return (
-      <div className="panel">
-        <h2 className="h2">You’re not logged in.</h2>
+      <div className="panel" style={{ textAlign: "center" }}>
+        <h2 className="h2">You're not logged in.</h2>
         <button className="btn" onClick={() => nav("/login")}>
           Go to Login
         </button>
@@ -107,109 +104,111 @@ export default function Dashboard() {
   };
 
   const handleRequestAccountClosure = async () => {
-  if (!user) return;
+    if (!user) return;
 
-  const ok = window.confirm(
-    "Are you sure you want to request account closure?\n" +
-    "A manager will review your request. This will eventually disable future logins."
-  );
-  if (!ok) return;
+    const ok = window.confirm(
+      "Are you sure you want to request account closure?\n" +
+      "A manager will review your request. This will eventually disable future logins."
+    );
+    if (!ok) return;
 
-  try {
-    await requestAccountClosure(user.id);
-    alert("Account closure requested. A manager will review it.");
-  } catch (err) {
-    console.error(err);
-    alert("Failed to request account closure");
-  }
-};
-
+    try {
+      await requestAccountClosure(user.id);
+      alert("Account closure requested. A manager will review it.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to request account closure");
+    }
+  };
 
   // 😠 / 😊 Complaint / compliment about people (chef / delivery)
- const handleSubmitFeedback = async (
-  e: FormEvent<HTMLFormElement>,
-  order: Order
-) => {
-  e.preventDefault();
-  if (!user) return;
+  const handleSubmitFeedback = async (
+    e: FormEvent<HTMLFormElement>,
+    order: Order
+  ) => {
+    e.preventDefault();
+    if (!user) return;
 
-  const form = e.currentTarget;
-  const formData = new FormData(form);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
-  const kindRaw = (formData.get("kind") as string) || "COMPLAINT";
-  const targetRaw = (formData.get("target") as string) || "chef";
-  const description = ((formData.get("description") as string) || "").trim();
+    const kindRaw = (formData.get("kind") as string) || "COMPLAINT";
+    const targetRaw = (formData.get("target") as string) || "chef";
+    const description = ((formData.get("description") as string) || "").trim();
 
-  if (!description) {
-    alert("Please enter a description.");
-    return;
-  }
+    if (!description) {
+      alert("Please enter a description.");
+      return;
+    }
 
-  if (kindRaw !== "COMPLAINT" && kindRaw !== "COMPLIMENT") {
-    alert("Invalid feedback type.");
-    return;
-  }
+    if (kindRaw !== "COMPLAINT" && kindRaw !== "COMPLIMENT") {
+      alert("Invalid feedback type.");
+      return;
+    }
 
-  if (targetRaw !== "chef" && targetRaw !== "delivery") {
-    alert("Invalid target.");
-    return;
-  }
+    if (targetRaw !== "chef" && targetRaw !== "delivery") {
+      alert("Invalid target.");
+      return;
+    }
 
-  // 👇 use real IDs + names from the order
-  let targetId: string | null = null;
-  let targetName = "";
+    let targetId: string | null = null;
+    let targetName = "";
 
-  if (targetRaw === "chef") {
-    targetId = order.chefId ?? null;
-    targetName = order.chefName ?? "Unknown Chef";
-  } else {
-    // delivery
-    // delivery
-    targetId = order.deliveryPersonId ?? null;
-    targetName = order.deliveryPersonName ?? "Unknown Delivery"
-  }
+    if (targetRaw === "chef") {
+      targetId = order.chefId ?? null;
+      targetName = order.chefName ?? "Unknown Chef";
+    } else {
+      targetId = order.deliveryPersonId ?? null;
+      targetName = order.deliveryPersonName ?? "Unknown Delivery";
+    }
 
-  if (!targetId) {
-    alert("No target user found for this order (missing chef/delivery on the order).");
-    return;
-  }
+    if (!targetId) {
+      alert("No target user found for this order (missing chef/delivery on the order).");
+      return;
+    }
 
-  try {
-    await createComplaint({
-      orderId: order.id,
-      customerId: user.id,
-      customerName: user.name,
-      targetType: targetRaw as "chef" | "delivery",
-      targetId,
-      targetName,
-      description,
-      kind: kindRaw as "COMPLAINT" | "COMPLIMENT",
-    });
-    alert("Your feedback has been sent to the manager.");
-    form.reset();
-  } catch (err) {
-    console.error(err);
-    alert("Failed to submit feedback.");
-  }
-};
-
+    try {
+      await createComplaint({
+        orderId: order.id,
+        customerId: user.id,
+        customerName: user.name,
+        targetType: targetRaw as "chef" | "delivery",
+        targetId,
+        targetName,
+        description,
+        kind: kindRaw as "COMPLAINT" | "COMPLIMENT",
+      });
+      alert("Your feedback has been sent to the manager.");
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit feedback.");
+    }
+  };
 
   return (
-    <div className="panel">
+    <div className="panel" style={{ textAlign: "center" }}>
       <h1 className="h1">Dashboard</h1>
       <p className="muted">Role: {user.role.toUpperCase()}</p>
 
       {/* Balance & warnings */}
-      <div className="stats">
+      <div className="stats" style={{ justifyContent: "center" }}>
         <div className="stat">
-          Deposit: <b>${user.deposit.toFixed(2)}</b>
+          Deposit: <b>${(user.deposit ?? 0).toFixed(2)}</b>
         </div>
         <div className={`stat ${user.warnings ? "bad" : ""}`}>
-          Warnings: <b>{user.warnings}</b>
+          Warnings: <b>{user.warnings ?? 0}</b>
         </div>
       </div>
 
-      <div className="actions">
+      {/* Centered action buttons */}
+      <div 
+        className="actions" 
+        style={{ 
+          justifyContent: "center",
+          marginTop: "1rem"
+        }}
+      >
         <button className="btn" onClick={() => addDeposit(25)}>
           Add $25 Deposit
         </button>
@@ -222,37 +221,38 @@ export default function Dashboard() {
         >
           Logout
         </button>
-        
-    <button
-      className="btn danger"
-      onClick={() => requestAccountClosure(user.id)}
-    >
-      Request Account Closure
-    </button>
-    <p style={{ color: "red", fontSize: ".9rem" }}>
-    </p>
+        <button
+          className="btn"
+          style={{ 
+            backgroundColor: "#ef4444",
+            color: "white"
+          }}
+          onClick={handleRequestAccountClosure}
+        >
+          Request Account Closure
+        </button>
       </div>
 
       {/* My Orders */}
       <hr style={{ margin: "1.5rem 0" }} />
-      <h2 className="h2">My Orders</h2>
+      <h2 className="h2" style={{ textAlign: "center" }}>My Orders</h2>
 
       {loadingOrders && <p>Loading your orders…</p>}
       {ordersError && <p className="error">{ordersError}</p>}
 
       {!loadingOrders && !ordersError && (
-        <div className="orders-list">
+        <div className="orders-list" style={{ textAlign: "left" }}>
           {orders.length === 0 ? (
-            <p>You have no orders yet.</p>
+            <p style={{ textAlign: "center", color: "#6b7280" }}>You have no orders yet.</p>
           ) : (
             orders.map((order) => (
               <div key={order.id} className="order-card">
                 <div className="order-header">
-                  <span className="order-id">Order #{order.id}</span>
+                  <span className="order-id">Order #{(order.id ?? '').slice(0, 8)}</span>
                   <span
-                    className={`status-badge ${order.status.toLowerCase()}`}
+                    className={`status-badge ${(order.status ?? 'unknown').toLowerCase()}`}
                   >
-                    {statusLabel(order.status)}
+                    {statusLabel(order.status ?? 'UNKNOWN')}
                   </span>
                 </div>
 
@@ -260,9 +260,10 @@ export default function Dashboard() {
                   <div className="detail-row">
                     <span className="label">Placed:</span>
                     <span>
-                      {new Date(
-                        order.createdAt as any
-                      ).toLocaleString()}
+                      {order.createdAt 
+                        ? new Date(order.createdAt as any).toLocaleString()
+                        : 'Unknown'
+                      }
                     </span>
                   </div>
                   <div className="detail-row">
@@ -276,7 +277,7 @@ export default function Dashboard() {
                   <div className="detail-row">
                     <span className="label">Total:</span>
                     <span>
-                      ${((order.totalPrice ?? 0) as number).toFixed(2)}
+                      ${(order.totalPrice ?? 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -284,11 +285,11 @@ export default function Dashboard() {
                 {Array.isArray(order.items) &&
                   order.items.length > 0 && (
                     <div className="order-items">
-                      {order.items.map((item) => (
-                        <div key={item.id} className="detail-row">
+                      {order.items.map((item, idx) => (
+                        <div key={item.id ?? idx} className="detail-row">
                           <span className="label">•</span>
                           <span>
-                            {item.quantity}x {item.dishName}
+                            {item.quantity ?? 1}x {item.dishName ?? 'Unknown Dish'}
                           </span>
                         </div>
                       ))}
@@ -316,9 +317,9 @@ export default function Dashboard() {
                           <option value="" disabled>
                             Select dish
                           </option>
-                          {order.items.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.dishName}
+                          {(order.items ?? []).map((item, idx) => (
+                            <option key={item.id ?? idx} value={item.id}>
+                              {item.dishName ?? 'Dish'}
                             </option>
                           ))}
                         </select>
@@ -337,21 +338,11 @@ export default function Dashboard() {
                           <option value="" disabled>
                             Select rating
                           </option>
-                          <option value="5">
-                            ⭐ 5 - Excellent
-                          </option>
-                          <option value="4">
-                            ⭐ 4 - Good
-                          </option>
-                          <option value="3">
-                            ⭐ 3 - OK
-                          </option>
-                          <option value="2">
-                            ⭐ 2 - Poor
-                          </option>
-                          <option value="1">
-                            ⭐ 1 - Terrible
-                          </option>
+                          <option value="5">⭐ 5 - Excellent</option>
+                          <option value="4">⭐ 4 - Good</option>
+                          <option value="3">⭐ 3 - OK</option>
+                          <option value="2">⭐ 2 - Poor</option>
+                          <option value="1">⭐ 1 - Terrible</option>
                         </select>
                       </label>
                     </div>
@@ -388,12 +379,8 @@ export default function Dashboard() {
                           className="input"
                           defaultValue="COMPLAINT"
                         >
-                          <option value="COMPLAINT">
-                            Complaint
-                          </option>
-                          <option value="COMPLIMENT">
-                            Compliment
-                          </option>
+                          <option value="COMPLAINT">Complaint</option>
+                          <option value="COMPLIMENT">Compliment</option>
                         </select>
                       </label>
                     </div>
@@ -406,9 +393,7 @@ export default function Dashboard() {
                           defaultValue="chef"
                         >
                           <option value="chef">Chef</option>
-                          <option value="delivery">
-                            Delivery
-                          </option>
+                          <option value="delivery">Delivery</option>
                         </select>
                       </label>
                     </div>
@@ -420,10 +405,7 @@ export default function Dashboard() {
                         placeholder="Describe your complaint/compliment"
                       />
                     </div>
-                    <button
-                      className="btn btn-sm"
-                      type="submit"
-                    >
+                    <button className="btn btn-sm" type="submit">
                       Submit Feedback
                     </button>
                   </form>

@@ -45,80 +45,75 @@ export default function ManagerDashboard() {
   const [error, setError] = useState("");
   const [pendingUsers, setPendingUsers] = useState<UserWithId[]>([]);
   const [employees, setEmployees] = useState<UserWithId[]>([]);
-  const [customers, setCustomers] = useState<CustomerSummary[]>([]);  // 👈 NEW
+  const [customers, setCustomers] = useState<CustomerSummary[]>([]);
+
   useEffect(() => {
     loadData();
   }, [activeTab]);
 
   const loadData = async () => {
-  if (!user) return;
-  setLoading(true);
-  setError("");
+    if (!user) return;
+    setLoading(true);
+    setError("");
 
-  try {
-    if (activeTab === "overview") {
-      const data = await api.getManagerStats();
-      setStats(data);
-    } else if (activeTab === "complaints") {
-      const data = await getAllComplaints();   // 👈 Firestore now
-      setComplaints(data);
-    } else if (activeTab === "deliveries") {
-      const data = await getPendingBids();   // 👈 Firestore now
-      setPendingBids(data);
-    } else if (activeTab === "orders") {
-      const data = await getAllOrdersForManager();   // 👈 Firestore
-      setOrders(data);
-    } else if (activeTab === "employees") {
-      const [pending, emps] = await Promise.all([
-        getPendingUsers(),
-        getEmployees(),
-      ]);
-      setPendingUsers(pending);
-      setEmployees(emps);
-    }
-    else if (activeTab === "customers") {
-        const data = await getAllCustomers();  // 👈 NEW
+    try {
+      if (activeTab === "overview") {
+        const data = await api.getManagerStats();
+        setStats(data);
+      } else if (activeTab === "complaints") {
+        const data = await getAllComplaints();
+        setComplaints(data);
+      } else if (activeTab === "deliveries") {
+        const data = await getPendingBids();
+        setPendingBids(data);
+      } else if (activeTab === "orders") {
+        const data = await getAllOrdersForManager();
+        setOrders(data);
+      } else if (activeTab === "employees") {
+        const [pending, emps] = await Promise.all([
+          getPendingUsers(),
+          getEmployees(),
+        ]);
+        setPendingUsers(pending);
+        setEmployees(emps);
+      } else if (activeTab === "customers") {
+        const data = await getAllCustomers();
         setCustomers(data);
       }
-  } catch (err) {
-    setError("Failed to load data");
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
- const handleResolveComplaint = async (
-  complaint: Complaint,
-  resolution: Complaint["status"],
-  notes: string,
-  warn: "none" | "target" | "sender"
-) => {
-  try {
-    // 1) resolve the complaint itself
-    await resolveComplaint(complaint.id, resolution, notes);
-
-    // 2) optionally add warning
-    if (warn === "target" && complaint.targetId) {
-      await incrementUserWarnings(complaint.targetId);
-    } else if (warn === "sender" && complaint.customerId) {
-      await incrementUserWarnings(complaint.customerId);
+    } catch (err) {
+      setError("Failed to load data");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // 3) reload UI
-    await loadData();
-    alert("Complaint resolved successfully");
-  } catch (err) {
-    alert("Failed to resolve complaint");
-    console.error(err);
-  }
-};
+  const handleResolveComplaint = async (
+    complaint: Complaint,
+    resolution: Complaint["status"],
+    notes: string,
+    warn: "none" | "target" | "sender"
+  ) => {
+    try {
+      await resolveComplaint(complaint.id, resolution, notes);
 
+      if (warn === "target" && complaint.targetId) {
+        await incrementUserWarnings(complaint.targetId);
+      } else if (warn === "sender" && complaint.customerId) {
+        await incrementUserWarnings(complaint.customerId);
+      }
+
+      await loadData();
+      alert("Complaint resolved successfully");
+    } catch (err) {
+      alert("Failed to resolve complaint");
+      console.error(err);
+    }
+  };
 
   const handleAssignDelivery = async (orderId: string, bidId: string, managerNote?: string) => {
     try {
-      await assignDeliveryToBidder(orderId, bidId, managerNote);   // 👈 Firestore now
+      await assignDeliveryToBidder(orderId, bidId, managerNote);
       await loadData();
       alert("Delivery assigned successfully");
     } catch (err) {
@@ -127,82 +122,83 @@ export default function ManagerDashboard() {
     }
   };
 
-const handleApproveUser = async (uid: string) => {
-  try {
-    await approveUser(uid);
-    await loadData();
-    alert("User approved successfully");
-  } catch (err) {
-    alert("Failed to approve user");
-    console.error(err);
-  }
-};
+  const handleApproveUser = async (uid: string) => {
+    try {
+      await approveUser(uid);
+      await loadData();
+      alert("User approved successfully");
+    } catch (err) {
+      alert("Failed to approve user");
+      console.error(err);
+    }
+  };
 
-const handleSetEmployeeRole = async (uid: string, role: "chef" | "delivery") => {
-  try {
-    await updateUserRole(uid, role);
-    await loadData();
-    alert(`Role updated to ${role}`);
-  } catch (err) {
-    alert("Failed to update role");
-    console.error(err);
-  }
-};
+  const handleSetEmployeeRole = async (uid: string, role: "chef" | "delivery") => {
+    try {
+      await updateUserRole(uid, role);
+      await loadData();
+      alert(`Role updated to ${role}`);
+    } catch (err) {
+      alert("Failed to update role");
+      console.error(err);
+    }
+  };
 
-const handleGiveBonus = async (emp: UserWithId) => {
-  try {
-    const currentSalary = emp.salary ?? 50000; // placeholder base
-    const newSalary = currentSalary + 5000;    // bonus bump
+  const handleGiveBonus = async (emp: UserWithId) => {
+    try {
+      const currentSalary = emp.salary ?? 50000;
+      const newSalary = currentSalary + 5000;
 
-    await updateEmployeeStats(emp.id, {
-      salary: newSalary,
-    });
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    alert("Failed to give bonus");
-  }
-};
+      await updateEmployeeStats(emp.id, {
+        salary: newSalary,
+      });
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to give bonus");
+    }
+  };
 
-const handleDemoteEmployee = async (emp: UserWithId) => {
-  try {
-    const currentSalary = emp.salary ?? 50000;
-    const newSalary = Math.max(0, currentSalary - 5000); // demotion cut
+  const handleDemoteEmployee = async (emp: UserWithId) => {
+    try {
+      const currentSalary = emp.salary ?? 50000;
+      const newSalary = Math.max(0, currentSalary - 5000);
 
-    await updateEmployeeStats(emp.id, {
-      salary: newSalary,
-    });
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    alert("Failed to demote employee");
-  }
-};
+      await updateEmployeeStats(emp.id, {
+        salary: newSalary,
+      });
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to demote employee");
+    }
+  };
 
-const handleFireEmployee = async (emp: UserWithId) => {
-  const warnings = emp.warnings ?? 0;
-  if (warnings < 6) {
-    alert("You can only fire after 6 warnings (complaints / bad ratings).");
-    return;
-  }
+  const handleFireEmployee = async (emp: UserWithId) => {
+    const warnings = emp.warnings ?? 0;
+    if (warnings < 6) {
+      alert("You can only fire after 6 warnings (complaints / bad ratings).");
+      return;
+    }
 
-  if (!window.confirm(`Are you sure you want to fire ${emp.name}?`)) {
-    return;
-  }
+    if (!window.confirm(`Are you sure you want to fire ${emp.name}?`)) {
+      return;
+    }
 
-  try {
-    await updateEmployeeStats(emp.id, {
-      fired: true,
-      salary: 0,
-      status: "rejected",
-    });
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    alert("Failed to fire employee");
-  }
-};
-const handleCloseCustomerAccount = async (customer: CustomerSummary) => {
+    try {
+      await updateEmployeeStats(emp.id, {
+        fired: true,
+        salary: 0,
+        status: "rejected",
+      });
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fire employee");
+    }
+  };
+
+  const handleCloseCustomerAccount = async (customer: CustomerSummary) => {
     const confirmMsg =
       `Close account for ${customer.name} (${customer.email})?\n` +
       `This will clear their deposit and mark the account as closed.`;
@@ -218,40 +214,40 @@ const handleCloseCustomerAccount = async (customer: CustomerSummary) => {
       alert("Failed to close customer account");
     }
   };
+
   const handleBlacklistCustomer = async (customer: CustomerSummary) => {
-  const confirmMsg =
-    `BLACKLIST ${customer.name} (${customer.email})?\n` +
-    `This will clear their deposit, mark them blacklisted, and prevent future logins.`;
+    const confirmMsg =
+      `BLACKLIST ${customer.name} (${customer.email})?\n` +
+      `This will clear their deposit, mark them blacklisted, and prevent future logins.`;
 
-  if (!window.confirm(confirmMsg)) return;
+    if (!window.confirm(confirmMsg)) return;
 
-  try {
-    await clearAndBlacklistCustomerAccount(customer.id);
-    await loadData();
-    alert("Customer blacklisted and deposit cleared.");
-  } catch (err) {
-    console.error(err);
-    alert("Failed to blacklist customer");
-  }
-};
+    try {
+      await clearAndBlacklistCustomerAccount(customer.id);
+      await loadData();
+      alert("Customer blacklisted and deposit cleared.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to blacklist customer");
+    }
+  };
 
-const handleClearDepositOnly = async (customer: CustomerSummary) => {
-  const confirmMsg =
-    `Clear deposit for ${customer.name} (${customer.email})?\n` +
-    `Their account will remain ${customer.accountStatus ?? "active"}.`;
+  const handleClearDepositOnly = async (customer: CustomerSummary) => {
+    const confirmMsg =
+      `Clear deposit for ${customer.name} (${customer.email})?\n` +
+      `Their account will remain ${customer.accountStatus ?? "active"}.`;
 
-  if (!window.confirm(confirmMsg)) return;
+    if (!window.confirm(confirmMsg)) return;
 
-  try {
-    await clearDepositOnly(customer.id);
-    await loadData();
-    alert("Customer deposit cleared.");
-  } catch (err) {
-    console.error(err);
-    alert("Failed to clear deposit");
-  }
-};
-
+    try {
+      await clearDepositOnly(customer.id);
+      await loadData();
+      alert("Customer deposit cleared.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to clear deposit");
+    }
+  };
 
   if (!user || user.role !== "manager") {
     return (
@@ -279,11 +275,11 @@ const handleClearDepositOnly = async (customer: CustomerSummary) => {
         <button
           className={`tab ${activeTab === "employees" ? "active" : ""}`}
           onClick={() => setActiveTab("employees")}
->
+        >
           👥 Employees
         </button>
         <button
-          className={`tab ${activeTab === "customers" ? "active" : ""}`}   // 👈 NEW
+          className={`tab ${activeTab === "customers" ? "active" : ""}`}
           onClick={() => setActiveTab("customers")}
         >
           🧾 Customers
@@ -322,11 +318,11 @@ const handleClearDepositOnly = async (customer: CustomerSummary) => {
               <OverviewTab stats={stats} />
             )}
             {activeTab === "complaints" && (
-  <ComplaintsTab 
-    complaints={complaints} 
-    onResolve={handleResolveComplaint}
-  />
-)}
+              <ComplaintsTab 
+                complaints={complaints} 
+                onResolve={handleResolveComplaint}
+              />
+            )}
             {activeTab === "deliveries" && (
               <DeliveryBidsTab 
                 bids={pendingBids} 
@@ -334,32 +330,29 @@ const handleClearDepositOnly = async (customer: CustomerSummary) => {
               />
             )}
             {activeTab === "orders" && (
-  <OrdersTab orders={orders} />
-)}
-{activeTab === "employees" && (
-  <EmployeesTab
-    pendingUsers={pendingUsers}
-    employees={employees}
-    onApprove={handleApproveUser}
-    onSetRole={handleSetEmployeeRole}
-    onBonus={handleGiveBonus}
-    onDemote={handleDemoteEmployee}
-    onFire={handleFireEmployee}
-  />
-)}
- {/* 👈 Customers tab content */}
-{activeTab === "customers" && (
-  <CustomersTab
-    customers={customers}
-    onClearDeposit={handleClearDepositOnly}
-    onCloseAccount={handleCloseCustomerAccount}
-    onBlacklist={handleBlacklistCustomer}
-  />
-)}
+              <OrdersTab orders={orders} />
+            )}
+            {activeTab === "employees" && (
+              <EmployeesTab
+                pendingUsers={pendingUsers}
+                employees={employees}
+                onApprove={handleApproveUser}
+                onSetRole={handleSetEmployeeRole}
+                onBonus={handleGiveBonus}
+                onDemote={handleDemoteEmployee}
+                onFire={handleFireEmployee}
+              />
+            )}
+            {activeTab === "customers" && (
+              <CustomersTab
+                customers={customers}
+                onClearDeposit={handleClearDepositOnly}
+                onCloseAccount={handleCloseCustomerAccount}
+                onBlacklist={handleBlacklistCustomer}
+              />
+            )}
           </>
-          
         )}
-        
       </div>
     </div>
   );
@@ -371,27 +364,27 @@ function OverviewTab({ stats }: { stats: ManagerDashboardStats }) {
     <div className="overview-tab">
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-value">{stats.totalUsers}</div>
+          <div className="stat-value">{stats.totalUsers ?? 0}</div>
           <div className="stat-label">Total Users</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.totalOrders}</div>
+          <div className="stat-value">{stats.totalOrders ?? 0}</div>
           <div className="stat-label">Total Orders</div>
         </div>
         <div className="stat-card highlight">
-          <div className="stat-value">{stats.pendingComplaints}</div>
+          <div className="stat-value">{stats.pendingComplaints ?? 0}</div>
           <div className="stat-label">Pending Complaints</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.activeDeliveries}</div>
+          <div className="stat-value">{stats.activeDeliveries ?? 0}</div>
           <div className="stat-label">Active Deliveries</div>
         </div>
         <div className="stat-card success">
-          <div className="stat-value">${stats.dailyRevenue.toLocaleString()}</div>
+          <div className="stat-value">${(stats.dailyRevenue ?? 0).toLocaleString()}</div>
           <div className="stat-label">Daily Revenue</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">${stats.averageOrderValue.toFixed(2)}</div>
+          <div className="stat-value">${(stats.averageOrderValue ?? 0).toFixed(2)}</div>
           <div className="stat-label">Avg Order Value</div>
         </div>
       </div>
@@ -400,13 +393,13 @@ function OverviewTab({ stats }: { stats: ManagerDashboardStats }) {
         <div className="leaderboard">
           <h3>🏆 Top Chefs</h3>
           <div className="leaderboard-list">
-            {stats.topChefs.map((chef, index) => (
+            {(stats.topChefs ?? []).map((chef, index) => (
               <div key={chef.id} className="leaderboard-item">
                 <span className="rank">#{index + 1}</span>
                 <span className="name">{chef.name}</span>
                 <span className="stats">
-                  <span className="rating">⭐ {chef.rating.toFixed(1)}</span>
-                  <span className="count">{chef.orders} orders</span>
+                  <span className="rating">⭐ {(chef.rating ?? 0).toFixed(1)}</span>
+                  <span className="count">{chef.orders ?? 0} orders</span>
                 </span>
               </div>
             ))}
@@ -416,13 +409,13 @@ function OverviewTab({ stats }: { stats: ManagerDashboardStats }) {
         <div className="leaderboard">
           <h3>🚀 Top Delivery Personnel</h3>
           <div className="leaderboard-list">
-            {stats.topDeliveryPersons.map((dp, index) => (
+            {(stats.topDeliveryPersons ?? []).map((dp, index) => (
               <div key={dp.id} className="leaderboard-item">
                 <span className="rank">#{index + 1}</span>
                 <span className="name">{dp.name}</span>
                 <span className="stats">
-                  <span className="rating">⭐ {dp.rating.toFixed(1)}</span>
-                  <span className="count">{dp.deliveries} deliveries</span>
+                  <span className="rating">⭐ {(dp.rating ?? 0).toFixed(1)}</span>
+                  <span className="count">{dp.deliveries ?? 0} deliveries</span>
                 </span>
               </div>
             ))}
@@ -446,39 +439,39 @@ function ComplaintsTab({
   ) => void;
 }) {
   const [selectedComplaint, setSelectedComplaint] = useState<string | null>(null);
-const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState("");
 
-const pendingComplaints = complaints.filter((c) => c.status === "PENDING");
-const resolvedComplaints = complaints.filter((c) => c.status !== "PENDING");
+  const pendingComplaints = complaints.filter((c) => c.status === "PENDING");
+  const resolvedComplaints = complaints.filter((c) => c.status !== "PENDING");
 
-const ensureNotes = () => {
-  if (!notes.trim()) {
-    alert("Please add resolution notes");
-    return false;
-  }
-  return true;
-};
+  const ensureNotes = () => {
+    if (!notes.trim()) {
+      alert("Please add resolution notes");
+      return false;
+    }
+    return true;
+  };
 
-const handleDismiss = (complaint: Complaint) => {
-  if (!ensureNotes()) return;
-  onResolve(complaint, "RESOLVED_NO_ACTION", notes, "none");
-  setSelectedComplaint(null);
-  setNotes("");
-};
+  const handleDismiss = (complaint: Complaint) => {
+    if (!ensureNotes()) return;
+    onResolve(complaint, "RESOLVED_NO_ACTION", notes, "none");
+    setSelectedComplaint(null);
+    setNotes("");
+  };
 
-const handleWarnTarget = (complaint: Complaint) => {
-  if (!ensureNotes()) return;
-  onResolve(complaint, "RESOLVED_WARNING", notes, "target");
-  setSelectedComplaint(null);
-  setNotes("");
-};
+  const handleWarnTarget = (complaint: Complaint) => {
+    if (!ensureNotes()) return;
+    onResolve(complaint, "RESOLVED_WARNING", notes, "target");
+    setSelectedComplaint(null);
+    setNotes("");
+  };
 
-const handleWarnSender = (complaint: Complaint) => {
-  if (!ensureNotes()) return;
-  onResolve(complaint, "RESOLVED_WARNING", notes, "sender");
-  setSelectedComplaint(null);
-  setNotes("");
-};
+  const handleWarnSender = (complaint: Complaint) => {
+    if (!ensureNotes()) return;
+    onResolve(complaint, "RESOLVED_WARNING", notes, "sender");
+    setSelectedComplaint(null);
+    setNotes("");
+  };
 
   return (
     <div className="complaints-tab">
@@ -491,18 +484,17 @@ const handleWarnSender = (complaint: Complaint) => {
             {pendingComplaints.map(complaint => (
               <div key={complaint.id} className="complaint-card">
                 <div className="complaint-header">
-                  <span className="complaint-id">#{complaint.id}</span>
-                  <span className="complaint-type">{complaint.targetType.toUpperCase()}</span>
+                  <span className="complaint-id">#{(complaint.id ?? '').slice(0, 8)}</span>
+                  <span className="complaint-type">{(complaint.targetType ?? '').toUpperCase()}</span>
                   <span className="complaint-date">
-                    {new Date(complaint.createdAt).toLocaleString()}
+                    {complaint.createdAt ? new Date(complaint.createdAt).toLocaleString() : 'Unknown'}
                   </span>
                 </div>
                 <div className="complaint-body">
                   <div className="detail-row">
                     <span className="label">Customer:</span>
-                    <span>{complaint.customerName}</span>
+                    <span>{complaint.customerName ?? 'Unknown'}</span>
                   </div>
-                  {/* ADD WEIGHT DISPLAY */}
                   <div className="detail-row">
                     <span className="label">Weight:</span>
                     <span style={{ 
@@ -529,65 +521,50 @@ const handleWarnSender = (complaint: Complaint) => {
                   </div>
                   <div className="detail-row">
                     <span className="label">Order:</span>
-                    <span>#{complaint.orderId}</span>
+                    <span>#{(complaint.orderId ?? '').slice(0, 8)}</span>
                   </div>
                   <div className="detail-row">
                     <span className="label">Target:</span>
-                    <span>{complaint.targetName}</span>
+                    <span>{complaint.targetName ?? 'Unknown'}</span>
                   </div>
                   <div className="complaint-description">
                     <strong>Description:</strong>
-                    <p>{complaint.description}</p>
+                    <p>{complaint.description ?? 'No description'}</p>
                   </div>
                 </div>
                 
-              {selectedComplaint === complaint.id ? (
-  <div className="resolution-form">
-    <label>
-      Manager Notes:
-      <textarea
-        className="input"
-        rows={3}
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        placeholder="Add resolution notes..."
-      />
-    </label>
-    <div className="resolution-actions">
-      <button
-        className="btn"
-        onClick={() => handleDismiss(complaint)}
-      >
-        Dismiss
-      </button>
-      <button
-        className="btn"
-        onClick={() => handleWarnTarget(complaint)}
-      >
-        Warn Target
-      </button>
-      <button
-        className="btn"
-        onClick={() => handleWarnSender(complaint)}
-      >
-        Warn Sender (Bad Complaint)
-      </button>
-      <button
-        className="btn ghost"
-        onClick={() => setSelectedComplaint(null)}
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-) : (
-  <button
-    className="btn"
-    onClick={() => setSelectedComplaint(complaint.id)}
-  >
-    Resolve
-  </button>
-)}
+                {selectedComplaint === complaint.id ? (
+                  <div className="resolution-form">
+                    <label>
+                      Manager Notes:
+                      <textarea
+                        className="input"
+                        rows={3}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Add resolution notes..."
+                      />
+                    </label>
+                    <div className="resolution-actions">
+                      <button className="btn" onClick={() => handleDismiss(complaint)}>
+                        Dismiss
+                      </button>
+                      <button className="btn" onClick={() => handleWarnTarget(complaint)}>
+                        Warn Target
+                      </button>
+                      <button className="btn" onClick={() => handleWarnSender(complaint)}>
+                        Warn Sender (Bad Complaint)
+                      </button>
+                      <button className="btn ghost" onClick={() => setSelectedComplaint(null)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button className="btn" onClick={() => setSelectedComplaint(complaint.id)}>
+                    Resolve
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -600,13 +577,12 @@ const handleWarnSender = (complaint: Complaint) => {
           {resolvedComplaints.slice(0, 5).map(complaint => (
             <div key={complaint.id} className="complaint-card resolved">
               <div className="complaint-header">
-                <span className="complaint-id">#{complaint.id}</span>
-                <span className={`status-badge ${complaint.status.toLowerCase()}`}>
-                  {complaint.status.replace(/_/g, " ")}
+                <span className="complaint-id">#{(complaint.id ?? '').slice(0, 8)}</span>
+                <span className={`status-badge ${(complaint.status ?? '').toLowerCase()}`}>
+                  {(complaint.status ?? '').replace(/_/g, " ")}
                 </span>
               </div>
               <div className="complaint-body">
-                {/* ADD WEIGHT DISPLAY FOR RESOLVED TOO */}
                 <div className="detail-row">
                   <span className="label">Weight:</span>
                   <span style={{ 
@@ -633,7 +609,7 @@ const handleWarnSender = (complaint: Complaint) => {
                 </div>
                 <div className="detail-row">
                   <span className="label">Target:</span>
-                  <span>{complaint.targetName}</span>
+                  <span>{complaint.targetName ?? 'Unknown'}</span>
                 </div>
                 {complaint.managerNotes && (
                   <div className="manager-notes">
@@ -657,7 +633,6 @@ function DeliveryBidsTab({
   bids: DeliveryBid[]; 
   onAssign: (orderId: string, bidId: string, managerNote?: string) => void;
 }) {
-  // Group bids by order
   const bidsByOrder = bids.reduce((acc, bid) => {
     if (!acc[bid.orderId]) {
       acc[bid.orderId] = [];
@@ -667,12 +642,10 @@ function DeliveryBidsTab({
   }, {} as Record<string, DeliveryBid[]>);
 
   const handleAssignClick = (orderId: string, selectedBid: DeliveryBid, orderBids: DeliveryBid[]) => {
-    // Collect numeric fees
     const numericFees = orderBids
       .map(b => b.proposedFee)
       .filter((fee): fee is number => typeof fee === "number");
 
-    // If no fees recorded, just assign without memo
     if (numericFees.length === 0 || selectedBid.proposedFee == null) {
       onAssign(orderId, selectedBid.id);
       return;
@@ -683,9 +656,7 @@ function DeliveryBidsTab({
 
     if (selectedFee > minFee) {
       const reason = window.prompt(
-        `This bid's fee $${selectedFee.toFixed(2)} is higher than the cheapest bid $${minFee.toFixed(
-          2
-        )}.\n\n` +
+        `This bid's fee $${selectedFee.toFixed(2)} is higher than the cheapest bid $${minFee.toFixed(2)}.\n\n` +
         "Please enter a justification memo:"
       );
 
@@ -696,7 +667,6 @@ function DeliveryBidsTab({
 
       onAssign(orderId, selectedBid.id, reason.trim());
     } else {
-      // chosen bid is the cheapest (or tied for cheapest) → no memo needed
       onAssign(orderId, selectedBid.id);
     }
   };
@@ -708,40 +678,33 @@ function DeliveryBidsTab({
       ) : (
         Object.entries(bidsByOrder).map(([orderId, orderBids]) => (
           <div key={orderId} className="order-bids">
-            <h3>
-              Order #{orderId.slice(0, 8)} - {orderBids.length} Bid(s)
-            </h3>
+            <h3>Order #{orderId.slice(0, 8)} - {orderBids.length} Bid(s)</h3>
             <div className="bids-list">
               {orderBids
-                .sort((a, b) => b.reputationScore - a.reputationScore)
+                .sort((a, b) => (b.reputationScore ?? 0) - (a.reputationScore ?? 0))
                 .map(bid => (
                   <div key={bid.id} className="bid-card">
                     <div className="bid-header">
-                      <span className="delivery-person">{bid.deliveryPersonName}</span>
-                      <span className="reputation">
-                        ⭐ {bid.reputationScore.toFixed(1)}
-                      </span>
+                      <span className="delivery-person">{bid.deliveryPersonName ?? 'Unknown'}</span>
+                      <span className="reputation">⭐ {(bid.reputationScore ?? 0).toFixed(1)}</span>
                     </div>
                     <div className="bid-details">
                       <div className="detail-row">
                         <span className="label">ETA:</span>
-                        <span>{bid.estimatedTime} minutes</span>
+                        <span>{bid.estimatedTime ?? 'N/A'} minutes</span>
                       </div>
                       {bid.proposedFee != null && (
                         <div className="detail-row">
                           <span className="label">Fee:</span>
-                          <span>${bid.proposedFee.toFixed(2)}</span>
+                          <span>${(bid.proposedFee ?? 0).toFixed(2)}</span>
                         </div>
                       )}
                       <div className="detail-row">
                         <span className="label">Submitted:</span>
-                        <span>{new Date(bid.createdAt).toLocaleString()}</span>
+                        <span>{bid.createdAt ? new Date(bid.createdAt).toLocaleString() : 'Unknown'}</span>
                       </div>
                     </div>
-                    <button
-                      className="btn"
-                      onClick={() => handleAssignClick(orderId, bid, orderBids)}
-                    >
+                    <button className="btn" onClick={() => handleAssignClick(orderId, bid, orderBids)}>
                       Assign Delivery
                     </button>
                   </div>
@@ -756,70 +719,108 @@ function DeliveryBidsTab({
 
 function OrdersTab({ orders }: { orders: Order[] }) {
   const [statusFilter, setStatusFilter] = useState<Order["status"] | "ALL">("ALL");
-
-  const filteredOrders = statusFilter === "ALL" 
-    ? orders 
-    : orders.filter(o => o.status === statusFilter);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const statuses: Array<Order["status"] | "ALL"> = [
     "ALL", "CREATED", "IN_KITCHEN", "READY_FOR_DELIVERY", 
     "ASSIGNED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"
   ];
 
+  // Filter orders
+  const filteredOrders = statusFilter === "ALL" 
+    ? orders 
+    : orders.filter(o => o.status === statusFilter);
+
+  // Sort orders
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+  });
+
   return (
-    <div className="orders-tab">
-      <div className="filter-bar">
-        <label>Filter by Status:</label>
-        <select 
-          className="input"
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as Order["status"] | "ALL")}
-        >
-          {statuses.map(status => (
-            <option key={status} value={status}>{status.replace(/_/g, " ")}</option>
-          ))}
-        </select>
+    <div className="orders-tab-container">
+      {/* Filter bar at top, full width */}
+      <div className="filter-bar-top">
+        <div className="filter-group">
+          <label>Filter by Status:</label>
+          <select 
+            className="input"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value as Order["status"] | "ALL")}
+          >
+            {statuses.map(status => (
+              <option key={status} value={status}>{status.replace(/_/g, " ")}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Sort by Time:</label>
+          <select 
+            className="input"
+            value={sortOrder}
+            onChange={e => setSortOrder(e.target.value as "newest" | "oldest")}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+          </select>
+        </div>
+
+        <div className="filter-info">
+          Showing {sortedOrders.length} order{sortedOrders.length !== 1 ? 's' : ''}
+        </div>
       </div>
 
-      <div className="orders-list">
-        {filteredOrders.map(order => (
-          <div key={order.id} className="order-card">
-            <div className="order-header">
-              <span className="order-id">#{order.id.slice(0, 8)}</span>
-              <span className={`status-badge ${order.status.toLowerCase()}`}>
-                {order.status.replace(/_/g, " ")}
-              </span>
-            </div>
-            <div className="order-details">
-              <div className="detail-row">
-                <span className="label">Customer:</span>
-                <span>{order.customerName}</span>
+      {/* Orders list - full width cards */}
+      {sortedOrders.length === 0 ? (
+        <div className="empty-state">No orders found</div>
+      ) : (
+        <div className="orders-list-full">
+          {sortedOrders.map(order => (
+            <div key={order.id} className="order-card-full">
+              <div className="order-card-header">
+                <span className="order-id">#{(order.id ?? '').slice(0, 8)}</span>
+                <span className={`status-badge ${(order.status ?? 'unknown').toLowerCase()}`}>
+                  {(order.status ?? 'UNKNOWN').replace(/_/g, " ")}
+                </span>
               </div>
-              <div className="detail-row">
-                <span className="label">Items:</span>
-                <span>{Array.isArray(order.items) ? order.items.length : 0}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Total:</span>
-                <span>${order.totalPrice.toFixed(2)}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Created:</span>
-                <span>{new Date(order.createdAt).toLocaleString()}</span>
-              </div>
-              {order.deliveryPersonId && (
-                <div className="detail-row">
-                  <span className="label">Delivery Person:</span>
-                  <span>ID: {order.deliveryPersonId.slice(0, 8)}</span>
+              <div className="order-card-body">
+                <div className="order-info-grid">
+                  <div className="info-item">
+                    <span className="info-label">Customer</span>
+                    <span className="info-value">{order.customerName ?? 'Unknown'}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Items</span>
+                    <span className="info-value">{Array.isArray(order.items) ? order.items.length : 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Total</span>
+                    <span className="info-value">${(order.totalPrice ?? 0).toFixed(2)}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Created</span>
+                    <span className="info-value">
+                      {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Unknown'}
+                    </span>
+                  </div>
+                  {order.deliveryPersonId && (
+                    <div className="info-item">
+                      <span className="info-label">Delivery Person</span>
+                      <span className="info-value">ID: {order.deliveryPersonId.slice(0, 8)}</span>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
 function CustomersTab({
   customers,
   onClearDeposit,
@@ -842,7 +843,7 @@ function CustomersTab({
 
   return (
     <div className="customers-tab">
-      <h3>Customers</h3>
+      <h3>Customers ({customers.length})</h3>
       <div className="customers-list">
         {customers.map((c) => {
           const status = c.accountStatus ?? "active";
@@ -854,8 +855,7 @@ function CustomersTab({
             c.deposit > 0 && status !== "closed" && status !== "blacklisted";
 
           const canCloseAccount =
-            c.accountStatus === "close_requested" &&
-            !c.blacklisted;
+            c.accountStatus === "close_requested" && !c.blacklisted;
 
           return (
             <div key={c.id} className="customer-card">
@@ -865,15 +865,14 @@ function CustomersTab({
               </div>
 
               <div className="customer-meta">
-                <span>Deposit: ${c.deposit.toFixed(2)}</span>
-                <span>Warnings: {c.warnings}</span>
-                <span>Status: {status}</span>
-                {c.isVip && <span className="badge">VIP</span>}
+                <span className="meta-item">Deposit: ${(c.deposit ?? 0).toFixed(2)}</span>
+                <span className="meta-item">Warnings: {c.warnings ?? 0}</span>
+                <span className="meta-item">Status: {status}</span>
+                {c.isVip && <span className="badge vip">VIP</span>}
                 {c.blacklisted && <span className="badge bad">Blacklisted</span>}
               </div>
 
               <div className="customer-actions">
-                {/* Clear deposit – allowed whenever they have money and account not closed/blacklisted */}
                 <button
                   className="btn btn-sm"
                   disabled={!canClearDeposit}
@@ -882,7 +881,6 @@ function CustomersTab({
                   Clear Deposit
                 </button>
 
-                {/* Close account – only when they requested closure */}
                 <button
                   className="btn btn-sm"
                   disabled={!canCloseAccount}
@@ -896,9 +894,8 @@ function CustomersTab({
                   Close Account
                 </button>
 
-                {/* Blacklist – only when warnings >= 3 */}
                 <button
-                  className="btn btn-sm ghost"
+                  className="btn btn-sm btn-danger"
                   disabled={!canBlacklist}
                   onClick={() => onBlacklist(c)}
                   title={
@@ -907,7 +904,7 @@ function CustomersTab({
                       : "Needs at least 3 warnings and not already blacklisted"
                   }
                 >
-                  Blacklist & Clear
+                  Blacklist
                 </button>
               </div>
             </div>
@@ -917,8 +914,6 @@ function CustomersTab({
     </div>
   );
 }
-
-
 
 function EmployeesTab({
   pendingUsers,
@@ -937,8 +932,6 @@ function EmployeesTab({
   onDemote: (emp: UserWithId) => void;
   onFire: (emp: UserWithId) => void;
 }) {
-
-
   return (
     <div className="employees-tab">
       <div className="section">
@@ -956,10 +949,7 @@ function EmployeesTab({
                 <div className="employee-meta">
                   <span>Requested as: {u.accountType ?? "unknown"}</span>
                 </div>
-                <button
-                  className="btn"
-                  onClick={() => onApprove(u.id)}
-                >
+                <button className="btn" onClick={() => onApprove(u.id)}>
                   Approve
                 </button>
               </div>
@@ -968,108 +958,86 @@ function EmployeesTab({
         )}
       </div>
 
-  <div className="section">
-  <h3>Employees (Chef / Delivery)</h3>
-  {employees.length === 0 ? (
-    <div className="empty-state">No employees found</div>
-  ) : (
-    <div className="employees-list">
-      {employees.map((emp) => {
-        const salary = emp.salary ?? 50000;
-        const warnings = emp.warnings ?? 0;
-        const commendations = emp.commendations ?? 0;
+      <div className="section">
+        <h3>Employees (Chef / Delivery)</h3>
+        {employees.length === 0 ? (
+          <div className="empty-state">No employees found</div>
+        ) : (
+          <div className="employees-list">
+            {employees.map((emp) => {
+              const salary = emp.salary ?? 50000;
+              const warnings = emp.warnings ?? 0;
+              const commendations = emp.commendations ?? 0;
 
-        const canDemote = warnings >= 3;       // 3 complaints/bad ratings
-        const canBonus = commendations >= 3;   // 3 compliments/good ratings
-        const canFire = warnings >= 6;         // twice-demoted equivalent
+              const canDemote = warnings >= 3;
+              const canBonus = commendations >= 3;
+              const canFire = warnings >= 6;
 
-        return (
-          <div key={emp.id} className="employee-card">
-            <div className="employee-main">
-              <span className="name">{emp.name}</span>
-              <span className="email">{emp.email}</span>
-            </div>
+              return (
+                <div key={emp.id} className="employee-card">
+                  <div className="employee-main">
+                    <span className="name">{emp.name}</span>
+                    <span className="email">{emp.email}</span>
+                  </div>
 
-            <div className="employee-meta">
-              <span>Account: {emp.accountType}</span>
-              <span>Role: {emp.role}</span>
-              <span>Status: {emp.status}</span>
-            </div>
+                  <div className="employee-meta">
+                    <span>Account: {emp.accountType}</span>
+                    <span>Role: {emp.role}</span>
+                    <span>Status: {emp.status}</span>
+                  </div>
 
-            <div className="employee-meta">
-              <span>Salary: ${salary.toLocaleString()}</span>
-              <span>Warnings: {warnings}</span>
-              <span>Commendations: {commendations}</span>
-              {emp.fired && <span className="badge bad">Fired</span>}
-            </div>
+                  <div className="employee-meta">
+                    <span>Salary: ${salary.toLocaleString()}</span>
+                    <span>Warnings: {warnings}</span>
+                    <span>Commendations: {commendations}</span>
+                    {emp.fired && <span className="badge bad">Fired</span>}
+                  </div>
 
-            {/* Role assign (same as before) */}
-            <div className="employee-actions">
-              <button
-                className="btn"
-                onClick={() => onSetRole(emp.id, "chef")}
-              >
-                Set Chef
-              </button>
-              <button
-                className="btn"
-                onClick={() => onSetRole(emp.id, "delivery")}
-              >
-                Set Delivery
-              </button>
-            </div>
+                  <div className="employee-actions">
+                    <button className="btn" onClick={() => onSetRole(emp.id, "chef")}>
+                      Set Chef
+                    </button>
+                    <button className="btn" onClick={() => onSetRole(emp.id, "delivery")}>
+                      Set Delivery
+                    </button>
+                  </div>
 
-            {/* Manager-controlled decisions, gated by criteria */}
-            {!emp.fired && (
-              <div className="employee-actions">
-                <button
-                  className="btn btn-sm"
-                  onClick={() => onDemote(emp)}
-                  disabled={!canDemote}
-                  title={
-                    canDemote
-                      ? "Demote this employee"
-                      : "Needs at least 3 warnings (complaints/bad ratings)"
-                  }
-                >
-                  Demote (lower salary)
-                </button>
+                  {!emp.fired && (
+                    <div className="employee-actions">
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => onDemote(emp)}
+                        disabled={!canDemote}
+                        title={canDemote ? "Demote this employee" : "Needs at least 3 warnings"}
+                      >
+                        Demote
+                      </button>
 
-                <button
-                  className="btn btn-sm"
-                  onClick={() => onBonus(emp)}
-                  disabled={!canBonus}
-                  title={
-                    canBonus
-                      ? "Give bonus to this employee"
-                      : "Needs at least 3 commendations (compliments/good ratings)"
-                  }
-                >
-                  Give Bonus
-                </button>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => onBonus(emp)}
+                        disabled={!canBonus}
+                        title={canBonus ? "Give bonus" : "Needs at least 3 commendations"}
+                      >
+                        Give Bonus
+                      </button>
 
-                <button
-                  className="btn btn-sm ghost"
-                  onClick={() => onFire(emp)}
-                  disabled={!canFire}
-                  title={
-                    canFire
-                      ? "Fire this employee"
-                      : "Need at least 6 warnings to fire"
-                  }
-                >
-                  Fire
-                </button>
-              </div>
-            )}
+                      <button
+                        className="btn btn-sm ghost"
+                        onClick={() => onFire(emp)}
+                        disabled={!canFire}
+                        title={canFire ? "Fire this employee" : "Need at least 6 warnings to fire"}
+                      >
+                        Fire
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
-    </div>
-  )}
-</div>
-
-
+        )}
+      </div>
     </div>
   );
 }

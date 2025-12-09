@@ -3,7 +3,7 @@ export type Dish = {
   name: string;
   price: number;
   rating: number;
-  img: string;
+  img?: string;
   chefId: string;
 };
 

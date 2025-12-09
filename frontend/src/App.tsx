@@ -1,8 +1,8 @@
-import { Suspense, lazy, useEffect } from "react";
-import { Routes, Route, NavLink } from "react-router-dom";
+import { Suspense, lazy } from "react";
+import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import "./styles.css";
 import ErrorBoundary from "./ErrorBoundary";
-import { setUserProfile, getUserProfile } from "./services/userService";
+import { useAuth } from "./context/AuthContext";
 
 const Home = lazy(() => import("./pages/Home"));
 const Menu = lazy(() => import("./pages/Menu"));
@@ -10,58 +10,141 @@ const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Checkout = lazy(() => import("./pages/Checkout"));
-// NEW:
+const Forum = lazy(() => import("./pages/Forum"));
 const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
 const ChefDashboard = lazy(() => import("./pages/ChefDashboard"));
 const DeliveryDashboard = lazy(() => import("./pages/DeliveryDashboard"));
-const Forum = lazy(() => import("./pages/Forum"));
 
 export default function App() {
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  // Determine what role to display
+  const getRoleDisplay = () => {
+    if (loading) return null;
+    if (!user) return { label: "Visitor", color: "#6b7280" };
+    
+    switch (user.role) {
+      case "manager":
+        return { label: "Manager", color: "#8b5cf6" };
+      case "chef":
+        return { label: "Chef", color: "#f59e0b" };
+      case "delivery":
+        return { label: "Delivery", color: "#3b82f6" };
+      case "vip":
+        return { label: "VIP", color: "#eab308" };
+      case "registered":
+        return { label: "Customer", color: "#10b981" };
+      default:
+        return { label: "Customer", color: "#10b981" };
+    }
+  };
+
+  const roleInfo = getRoleDisplay();
 
   return (
     <div>
       <header className="topbar">
-        <NavLink to="/" className="brand">
-          TrueBite
-        </NavLink>
+        <div className="topbar-left">
+          <NavLink to="/" className="brand">
+            🍽️ TrueBite
+          </NavLink>
+          {roleInfo && (
+            <span 
+              className="role-badge"
+              style={{ backgroundColor: roleInfo.color }}
+            >
+              {roleInfo.label}
+            </span>
+          )}
+        </div>
+
         <nav className="nav">
+          {/* Always visible */}
           <NavLink to="/" className="navlink">
             Home
           </NavLink>
           <NavLink to="/menu" className="navlink">
             Menu
           </NavLink>
-          <NavLink to="/login" className="navlink">
-            Login
-          </NavLink>
-          <NavLink to="/dashboard" className="navlink">
-            Dashboard
-          </NavLink>
-          <NavLink to="/chat" className="navlink">
-            Chat
-          </NavLink>
-          <NavLink to="/forum" className="navlink">
-            Forum
-          </NavLink>
-          {/* Optional: quick links for demos in your report */}
-          <NavLink to="/manager" className="navlink">
-            Manager
-          </NavLink>
-          <NavLink to="/chef" className="navlink">
-            Chef
-          </NavLink>
-          <NavLink to="/delivery" className="navlink">
-            Delivery
-          </NavLink>
-          <NavLink to="/checkout" className="navlink">
-            Checkout
-          </NavLink>
 
+          {/* Show Chat only for visitors and customers */}
+          {(!user || user.role === "registered" || user.role === "vip" || user.role === "customer") && (
+            <NavLink to="/chat" className="navlink">
+              Chat
+            </NavLink>
+          )}
+
+          {/* Not logged in - show Login */}
+          {!user && (
+            <NavLink to="/login" className="navlink">
+              Login
+            </NavLink>
+          )}
+
+          {/* Logged in users */}
+          {user && (
+            <>
+              {/* Customers see Dashboard, Checkout, Forum */}
+              {(user.role === "registered" || user.role === "vip" || user.role === "customer") && (
+                <>
+                  <NavLink to="/dashboard" className="navlink">
+                    Dashboard
+                  </NavLink>
+                  <NavLink to="/checkout" className="navlink">
+                    Checkout
+                  </NavLink>
+                  <NavLink to="/forum" className="navlink">
+                    Forum
+                  </NavLink>
+                </>
+              )}
+
+              {/* Manager sees Manager Dashboard */}
+              {user.role === "manager" && (
+                <NavLink to="/manager" className="navlink">
+                  Dashboard
+                </NavLink>
+              )}
+
+              {/* Chef sees Chef Dashboard */}
+              {user.role === "chef" && (
+                <NavLink to="/chef" className="navlink">
+                  Dashboard
+                </NavLink>
+              )}
+
+              {/* Delivery sees Delivery Dashboard */}
+              {user.role === "delivery" && (
+                <NavLink to="/delivery" className="navlink">
+                  Dashboard
+                </NavLink>
+              )}
+
+              {/* User name */}
+              <span className="nav-user">
+                {user.name}
+              </span>
+
+              {/* Logout button for ALL logged-in users */}
+              <button 
+                className="nav-logout"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          )}
         </nav>
       </header>
 
       <main className="container">
-        <Suspense fallback={<p>Loading…</p>}>
+        <Suspense fallback={<div className="loading-page">Loading…</div>}>
           <Routes>
             <Route
               path="/"
@@ -109,7 +192,7 @@ export default function App() {
                 <ErrorBoundary>
                   <Checkout />
                 </ErrorBoundary>
-  }
+              }
             />
             <Route
               path="/forum"
@@ -120,7 +203,7 @@ export default function App() {
               }
             />
 
-            {/* NEW ROLE DASHBOARDS */}
+            {/* Role-specific dashboards */}
             <Route
               path="/manager"
               element={

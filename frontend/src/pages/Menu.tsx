@@ -129,6 +129,7 @@ export default function Menu() {
       id: dish.id,
       name: dish.name,
       price: dish.price ?? 0,
+      image: dish.img
     });
 
     nav("/checkout");

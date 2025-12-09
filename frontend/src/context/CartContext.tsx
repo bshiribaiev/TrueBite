@@ -9,7 +9,9 @@ import type { CartItem } from "../services/orderService";
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: { id: string; name: string; price: number }) => void;
+  addItem: (item: { id: string; name: string; price: number; image?: string }) => void;
+  updateItemQuantity: (id: string, quantity: number) => void;
+  removeItem: (id: string) => void;
   clearCart: () => void;
 }
 
@@ -30,10 +32,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const updateItemQuantity: CartContextType["updateItemQuantity"] = (
+    id,
+    quantity
+  ) => {
+    setItems((prev) =>
+      prev
+        .map((item) =>
+          item.id === id ? { ...item, quantity: Math.max(0, quantity) } : item
+        )
+        // if quantity hits 0, remove the item from cart
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const removeItem: CartContextType["removeItem"] = (id) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
   const clearCart = () => setItems([]);
 
   return (
-    <CartContext.Provider value={{ items, addItem, clearCart }}>
+    <CartContext.Provider
+      value={{ items, addItem, updateItemQuantity, removeItem, clearCart }}
+    >
       {children}
     </CartContext.Provider>
   );
