@@ -1,3 +1,4 @@
+// frontend/src/pages/ManagerDashboard.tsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
@@ -501,6 +502,31 @@ const handleWarnSender = (complaint: Complaint) => {
                     <span className="label">Customer:</span>
                     <span>{complaint.customerName}</span>
                   </div>
+                  {/* ADD WEIGHT DISPLAY */}
+                  <div className="detail-row">
+                    <span className="label">Weight:</span>
+                    <span style={{ 
+                      fontWeight: "bold",
+                      color: complaint.weight === 2 ? "#7c3aed" : "#6b7280",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem"
+                    }}>
+                      {complaint.weight || 1}x
+                      {complaint.weight === 2 && (
+                        <span style={{
+                          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          color: "white",
+                          padding: "0.125rem 0.5rem",
+                          borderRadius: "4px",
+                          fontSize: "0.75rem",
+                          fontWeight: "bold"
+                        }}>
+                          👑 VIP
+                        </span>
+                      )}
+                    </span>
+                  </div>
                   <div className="detail-row">
                     <span className="label">Order:</span>
                     <span>#{complaint.orderId}</span>
@@ -580,6 +606,31 @@ const handleWarnSender = (complaint: Complaint) => {
                 </span>
               </div>
               <div className="complaint-body">
+                {/* ADD WEIGHT DISPLAY FOR RESOLVED TOO */}
+                <div className="detail-row">
+                  <span className="label">Weight:</span>
+                  <span style={{ 
+                    fontWeight: "bold",
+                    color: complaint.weight === 2 ? "#7c3aed" : "#6b7280",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    {complaint.weight || 1}x
+                    {complaint.weight === 2 && (
+                      <span style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        color: "white",
+                        padding: "0.125rem 0.5rem",
+                        borderRadius: "4px",
+                        fontSize: "0.75rem",
+                        fontWeight: "bold"
+                      }}>
+                        👑 VIP
+                      </span>
+                    )}
+                  </span>
+                </div>
                 <div className="detail-row">
                   <span className="label">Target:</span>
                   <span>{complaint.targetName}</span>

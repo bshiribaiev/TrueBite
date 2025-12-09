@@ -11,6 +11,7 @@ import {
   addDoc, 
 } from "firebase/firestore";
 import type { Complaint } from "../types";
+import { getUserProfile } from "./userService";
 
 import { applyFeedbackToEmployee } from "./userService";
 
@@ -65,11 +66,11 @@ export async function createComplaint(params: {
   orderId: string;
   customerId: string;
   customerName: string;
-  targetType: "chef" | "delivery" | "CUSTOMER";
-  targetId: string;         // 👈 NEW
+  targetType: "chef" | "delivery";
+  targetId: string;
   targetName: string;
   description: string;
-  kind?: "COMPLAINT" | "COMPLIMENT";  // default complaint
+  kind?: "COMPLAINT" | "COMPLIMENT";
 }) {
   const {
     orderId,
@@ -82,6 +83,10 @@ export async function createComplaint(params: {
     kind = "COMPLAINT",
   } = params;
 
+  // CHECK IF COMPLAINANT IS VIP
+  const complainant = await getUserProfile(customerId);
+  const weight = complainant?.role === "vip" ? 2 : 1;
+
   await addDoc(collection(db, "complaints"), {
     orderId,
     customerId,
@@ -91,22 +96,22 @@ export async function createComplaint(params: {
     targetName,
     description,
     kind,
+    weight,  // STORE THE WEIGHT
     status: "PENDING",
     createdAt: serverTimestamp(),
   });
 
-  // 🔁 auto-update warnings / commendations
+  // AUTO-UPDATE WITH VIP WEIGHT
   if (kind === "COMPLAINT") {
     await applyFeedbackToEmployee({
       targetId,
-      deltaWarnings: 1,
+      deltaWarnings: weight,  // 2 for VIP, 1 for regular
     });
   } else if (kind === "COMPLIMENT") {
-    // compliment adds commendation and cancels 1 warning if present
     await applyFeedbackToEmployee({
       targetId,
-      deltaWarnings: -1,
-      deltaCommendations: 1,
+      deltaWarnings: -weight,  // Cancel 2 warnings if VIP
+      deltaCommendations: weight,  // 2 commendations if VIP
     });
   }
 }
