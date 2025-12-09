@@ -12,7 +12,7 @@ export default function Checkout() {
   if (!user) {
     return (
       <div className="panel">
-        <h2 className="h2">You’re not logged in.</h2>
+        <h2 className="h2">You're not logged in.</h2>
         <button className="btn" onClick={() => nav("/login")}>
           Go to Login
         </button>
@@ -32,51 +32,65 @@ export default function Checkout() {
     );
   }
 
-  const total = items.reduce(
+  // ✅ CHANGED: Calculate VIP discount
+  const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+  
+  const isVIP = user.role === "vip";
+  const discount = isVIP ? subtotal * 0.05 : 0;
+  const total = subtotal - discount;
 
   const handlePlaceOrder = async () => {
-  if (!user) return;
+    if (!user) return;
 
-  const total = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+    // ✅ CHANGED: Use calculated total (with discount)
+    if (user.deposit < total) {
+      addWarning();
+      alert(
+        "Insufficient deposit — please add more funds on your Dashboard. A warning has been added."
+      );
+      return;
+    }
 
-  // 1) Check deposit
-  if (user.deposit < total) {
-    addWarning();
-    alert(
-      "Insufficient deposit — please add more funds on your Dashboard. A warning has been added."
-    );
-    return;
-  }
-
-  try {
-    // 2) Create Firestore order
-    const orderId = await createOrder(user.id, user.name, items);
-
-    // 3) Deduct balance locally
-    deductDeposit(total);
-
-    // 4) Clear cart & navigate
-    clearCart();
-    alert(`Order placed! Your order ID is ${orderId}.`);
-    nav("/dashboard");
-  } catch (err) {
-    console.error(err);
-    alert("Failed to place order. Please try again.");
-  }
-};
-
-
+    try {
+      const orderId = await createOrder(user.id, user.name, items);
+      deductDeposit(total);
+      clearCart();
+      
+      // ✅ CHANGED: Show discount in success message
+      const message = isVIP 
+        ? `Order placed! Your order ID is ${orderId}.\n🎉 VIP Discount Applied: $${discount.toFixed(2)} saved!`
+        : `Order placed! Your order ID is ${orderId}.`;
+      
+      alert(message);
+      nav("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to place order. Please try again.");
+    }
+  };
 
   return (
     <div className="panel">
       <h1 className="h1">Checkout</h1>
       <p className="muted">Review your items and place your order.</p>
+
+      {/* ✅ NEW: VIP Badge */}
+      {isVIP && (
+        <div style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          color: "white",
+          padding: "1rem",
+          borderRadius: "8px",
+          marginBottom: "1rem",
+          textAlign: "center",
+          fontWeight: "bold"
+        }}>
+          👑 VIP Member - 5% Discount Applied!
+        </div>
+      )}
 
       <div className="orders-list">
         {items.map((item) => (
@@ -102,8 +116,21 @@ export default function Checkout() {
         ))}
       </div>
 
+      {/* ✅ CHANGED: Show discount breakdown */}
       <div className="stats" style={{ marginTop: "1rem" }}>
         <div className="stat">
+          Subtotal: <b>${subtotal.toFixed(2)}</b>
+        </div>
+        {isVIP && discount > 0 && (
+          <div className="stat" style={{ color: "#059669" }}>
+            VIP Discount (5%): <b>-${discount.toFixed(2)}</b>
+          </div>
+        )}
+        <div className="stat" style={{ 
+          fontSize: "1.25rem", 
+          borderTop: "2px solid #e5e7eb", 
+          paddingTop: "0.5rem" 
+        }}>
           Total: <b>${total.toFixed(2)}</b>
         </div>
       </div>

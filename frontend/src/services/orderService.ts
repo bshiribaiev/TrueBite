@@ -1,5 +1,7 @@
 // src/services/orderService.ts
 import { db } from "../firebaseConfig";
+import { doc, updateDoc } from "firebase/firestore";
+import { getUserProfile } from "./userService";
 import {
   collection,
   addDoc,
@@ -30,25 +32,24 @@ export async function createOrder(
   );
 
   const docRef = await addDoc(collection(db, "deliveries"), {
-  // order info
-  customerId: userId,
-  customerName: userName,
-  items: items.map((i) => ({
-    dishId: i.id,
-    name: i.name,
-    price: i.price,
-    quantity: i.quantity,
-  })),
-  totalPrice,
-  status: "CREATED",        // for kitchen/manager flow
-  createdAt: serverTimestamp(),
+    customerId: userId,
+    customerName: userName,
+    items: items.map((i) => ({
+      dishId: i.id,
+      name: i.name,
+      price: i.price,
+      quantity: i.quantity,
+    })),
+    totalPrice,
+    status: "CREATED",
+    createdAt: serverTimestamp(),
+    deliveryStatus: "PENDING",
+    assignedDriverId: null,
+    assignedDriverName: null,
+    bids: [],
+  });
 
-  // delivery-related fields (for later driver bidding)
-  deliveryStatus: "PENDING",   // or "UNASSIGNED"
-  assignedDriverId: null,
-  assignedDriverName: null,
-  bids: [],                    // you can fill this later with bid objects
-});
+  await checkAndUpgradeVIP(userId);
 
   return docRef.id;
 }
@@ -125,6 +126,31 @@ export async function getAllOrdersForManager(): Promise<Order[]> {
     data.assignedDriverName ?? data.deliveryPersonName ?? null,
     } as Order;
   });
+}
+async function checkAndUpgradeVIP(userId: string): Promise<void> {
+  const user = await getUserProfile(userId);
+  
+  if (!user || user.role === "vip") {
+    return; // Already VIP or user not found
+  }
+  
+  // Get all orders for this user
+  const orders = await getOrdersForUser(userId);
+  
+  // Calculate totals
+  const totalSpent = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const orderCount = orders.length;
+  
+  // Check if qualifies for VIP
+  if (totalSpent >= 100 || orderCount >= 3) {
+    console.log(`Upgrading user ${userId} to VIP! Spent: $${totalSpent}, Orders: ${orderCount}`);
+    
+    // Upgrade to VIP
+    await updateDoc(doc(db, "users", userId), {
+      role: "vip",
+      VIP: true, // Nick's flag
+    });
+  }
 }
 
 
