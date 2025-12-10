@@ -89,7 +89,7 @@ export async function getChefDishes(chefId: string): Promise<Dish[]> {
       img: data.img ?? "",
       available: data.available ?? true,
       rating: data.rating ?? 0,
-      vipOnly: data.vipOnly ?? false,  // ✅ ADD THIS LINE
+      vipOnly: data.vipOnly ?? false,  // ADD THIS LINE
     } as Dish;
   });
 

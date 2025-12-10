@@ -21,108 +21,118 @@ export default function ChefDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // 🆕 Modal state
+  const [showDishModal, setShowDishModal] = useState(false);
+  const [editingDish, setEditingDish] = useState<Dish | null>(null);
+
   useEffect(() => {
     loadData();
   }, [activeTab]);
 
   const loadData = async () => {
-  if (!user) return;
-  setLoading(true);
-  setError("");
+    if (!user) return;
+    setLoading(true);
+    setError("");
 
-  try {
-    if (activeTab === "orders") {
-      const data = await getChefOrders(user.id);      // 🔥 Firestore
-      setOrders(data);
-    } else if (activeTab === "menu") {
-      const data = await getChefDishes(user.id);      // 🔥 Firestore
-      setDishes(data);
-    } else {
-      // For now, you can either compute analytics from orders or just stub it.
-      // To avoid toFixed issues, we'll just disable analytics if not needed yet.
-      setAnalytics(null);
+    try {
+      if (activeTab === "orders") {
+        const data = await getChefOrders(user.id);
+        setOrders(data);
+      } else if (activeTab === "menu") {
+        const data = await getChefDishes(user.id);
+        setDishes(data);
+      } else {
+        setAnalytics(null);
+      }
+    } catch (err) {
+      setError("Failed to load data");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError("Failed to load data");
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const handleStatusChange = async (
+    orderId: string,
+    newStatus: Order["status"]
+  ) => {
+    if (!user) return;
 
- const handleStatusChange = async (
-  orderId: string,
-  newStatus: Order["status"]
-) => {
-  if (!user) return;
-
-  // find the full order from local state
-  const order = orders.find((o) => o.id === orderId);
-  if (!order) {
-    console.error("Order not found in state", orderId);
-    return;
-  }
-
-  try {
-    if (newStatus === "IN_KITCHEN" && !order.chefId) {
-      // first time a chef starts this order → attach chef id
-      await updateOrderStatus(orderId, newStatus, {
-        chefId: user.id,
-        chefName: user.name,
-      });
-    } else {
-      await updateOrderStatus(orderId, newStatus);
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) {
+      console.error("Order not found in state", orderId);
+      return;
     }
 
-    await loadData();
-  } catch (err) {
-    alert("Failed to update order status");
-    console.error(err);
-  }
-};
+    try {
+      if (newStatus === "IN_KITCHEN" && !order.chefId) {
+        await updateOrderStatus(orderId, newStatus, {
+          chefId: user.id,
+          chefName: user.name,
+        });
+      } else {
+        await updateOrderStatus(orderId, newStatus);
+      }
 
+      await loadData();
+    } catch (err) {
+      alert("Failed to update order status");
+      console.error(err);
+    }
+  };
 
+  // 🆕 Open modal for adding new dish
+  const handleAddDish = () => {
+    setEditingDish(null);
+    setShowDishModal(true);
+  };
 
-const handleAddDish = async () => {
-  if (!user) return;
+  // 🆕 Open modal for editing existing dish
+  const handleEditDish = (dish: Dish) => {
+    setEditingDish(dish);
+    setShowDishModal(true);
+  };
 
-  const name = window.prompt("Dish name:");
-  if (!name) return;
+  // 🆕 Save dish (create or update)
+  const handleSaveDish = async (dishData: {
+    name: string;
+    description: string;
+    price: number;
+    img: string;
+    vipOnly: boolean;
+  }) => {
+    if (!user) return;
 
-  const priceStr = window.prompt("Price (e.g. 12.99):", "10.00");
-  if (!priceStr) return;
-  const price = Number(priceStr) || 0;
+    try {
+      if (editingDish) {
+        // Update existing dish
+        await updateDish(editingDish.id, dishData);
+      } else {
+        // Create new dish
+        await createDish(user.id, dishData);
+      }
+      
+      await loadData();
+      setShowDishModal(false);
+      setEditingDish(null);
+    } catch (err) {
+      alert("Failed to save dish");
+      console.error(err);
+    }
+  };
 
-  const img = window.prompt("Image URL (optional):", "") || "";
-  const description = window.prompt("Description (optional):", "") || "";
-  
-  // ADD THIS - Ask if VIP only
-  const vipOnlyResponse = window.confirm("Make this a VIP-only dish?\n\nClick OK for VIP-only, Cancel for regular dish");
-  const vipOnly = vipOnlyResponse;
-
-  try {
-    await createDish(user.id, { name, description, price, img, vipOnly });
-    await loadData();
-    alert(`Dish created! ${vipOnly ? "👑 VIP-only" : "Available to all"}`);
-  } catch (err) {
-    alert("Failed to create dish");
-    console.error(err);
-  }
-};
-
-const toggleDishAvailability = async (
-  dishId: string,
-  available: boolean
-) => {
-  try {
-    await updateDish(dishId, { available });       // 🔥 Firestore
-    await loadData();
-  } catch (err) {
-    alert("Failed to update dish");
-    console.error(err);
-  }
-};
+  const toggleDishAvailability = async (
+    dishId: string,
+    available: boolean
+  ) => {
+    try {
+      await updateDish(dishId, { available });
+      await loadData();
+    } catch (err) {
+      alert("Failed to update dish");
+      console.error(err);
+    }
+  };
 
   if (!user || user.role !== "chef") {
     return (
@@ -175,9 +185,10 @@ const toggleDishAvailability = async (
             )}
             {activeTab === "menu" && (
               <MenuTab
-              dishes={dishes}
-              onToggleAvailability={toggleDishAvailability}
-              onAddDish={handleAddDish}       // 👈 new prop
+                dishes={dishes}
+                onToggleAvailability={toggleDishAvailability}
+                onAddDish={handleAddDish}
+                onEditDish={handleEditDish}
               />
             )}
             {activeTab === "analytics" && analytics && (
@@ -185,6 +196,154 @@ const toggleDishAvailability = async (
             )}
           </>
         )}
+      </div>
+
+      {/* 🆕 Dish Modal */}
+      {showDishModal && (
+        <DishModal
+          dish={editingDish}
+          onSave={handleSaveDish}
+          onClose={() => {
+            setShowDishModal(false);
+            setEditingDish(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// 🆕 Dish Modal Component
+function DishModal({
+  dish,
+  onSave,
+  onClose,
+}: {
+  dish: Dish | null;
+  onSave: (data: {
+    name: string;
+    description: string;
+    price: number;
+    img: string;
+    vipOnly: boolean;
+  }) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(dish?.name || "");
+  const [description, setDescription] = useState(dish?.description || "");
+  const [price, setPrice] = useState(dish?.price.toString() || "");
+  const [img, setImg] = useState(dish?.img || "");
+  const [vipOnly, setVipOnly] = useState(dish?.vipOnly || false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      alert("Please enter a dish name");
+      return;
+    }
+
+    const priceNum = parseFloat(price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      alert("Please enter a valid price");
+      return;
+    }
+
+    onSave({
+      name: name.trim(),
+      description: description.trim(),
+      price: priceNum,
+      img: img.trim(),
+      vipOnly,
+    });
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{dish ? "Edit Dish" : "Add New Dish"}</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="dish-form">
+          <div className="form-group">
+            <label>Dish Name *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Wagyu Beef Steak"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Price *</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="e.g. 12.99"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your dish..."
+              rows={3}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Image URL</label>
+            <input
+              type="url"
+              value={img}
+              onChange={(e) => setImg(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          {/* 🆕 VIP Toggle */}
+          <div className="form-group vip-toggle-group">
+            <label className="toggle-label">
+              <span className="toggle-text">
+                <span className="toggle-title">
+                  {vipOnly ? "👑 VIP-Only Dish" : "Regular Dish"}
+                </span>
+                <span className="toggle-subtitle">
+                  {vipOnly
+                    ? "Only visible to VIP customers"
+                    : "Available to all customers"}
+                </span>
+              </span>
+              <div className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={vipOnly}
+                  onChange={(e) => setVipOnly(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </div>
+            </label>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              {dish ? "Update Dish" : "Create Dish"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -230,10 +389,6 @@ function OrdersTab({
   );
 }
 
-
-
-
-
 function OrderQueue({
   title,
   orders,
@@ -274,11 +429,11 @@ function OrderQueue({
                 <span className="order-total">${order.totalPrice.toFixed(2)}</span>
                 {actionLabel && actionStatus && (
                   <button
-                  className="btn btn-sm"
-                  onClick={() => onAction(order.id, actionStatus)}
+                    className="btn btn-sm"
+                    onClick={() => onAction(order.id, actionStatus)}
                   >
-                  {actionLabel}
-                </button>
+                    {actionLabel}
+                  </button>
                 )}
               </div>
             </div>
@@ -293,10 +448,12 @@ function MenuTab({
   dishes,
   onToggleAvailability,
   onAddDish,
+  onEditDish,
 }: {
   dishes: Dish[];
   onToggleAvailability: (id: string, available: boolean) => void;
   onAddDish: () => void;
+  onEditDish: (dish: Dish) => void;
 }) {
   return (
     <div className="menu-tab">
@@ -309,20 +466,9 @@ function MenuTab({
       <div className="dish-grid">
         {dishes.map(dish => (
           <div key={dish.id} className="dish-card">
-            {/* ✅ ADD VIP BADGE */}
+            {/* VIP Badge */}
             {dish.vipOnly && (
-              <div style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                padding: "4px 12px",
-                borderRadius: "20px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                zIndex: 10
-              }}>
+              <div className="vip-badge">
                 👑 VIP
               </div>
             )}
@@ -344,6 +490,13 @@ function MenuTab({
                   <span>{dish.available ? "Available" : "Unavailable"}</span>
                 </label>
               </div>
+              {/* 🆕 Edit Button */}
+              <button
+                className="btn btn-sm btn-edit"
+                onClick={() => onEditDish(dish)}
+              >
+                ✏️ Edit
+              </button>
             </div>
           </div>
         ))}
