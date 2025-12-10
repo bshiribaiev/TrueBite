@@ -55,6 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const profile = await getUserProfile(fbUser.uid);
 
+        if (profile && ((profile.accountStatus && profile.accountStatus === "closed") || profile.blacklisted)) {
+          console.warn("Blocked login for closed/blacklisted account");
+          await signOut(auth);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
         if (profile) {
           const formatted: User = {
             id: fbUser.uid,
@@ -151,10 +159,26 @@ const addWarning = () => {
 
 
   // Login → Firebase Auth → load profile
-  const login = async (email: string, password: string) => {
-    const { signInWithEmailAndPassword } = await import("firebase/auth");
-    await signInWithEmailAndPassword(auth, email, password);
-  };
+ const login = async (email: string, password: string) => {
+  const { signInWithEmailAndPassword } = await import("firebase/auth");
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+
+  // 🔍 fetch profile immediately after auth
+  const profile = await getUserProfile(cred.user.uid);
+
+  if (profile) {
+    if (profile.accountStatus && profile.accountStatus === "closed") {
+      await signOut(auth);
+      throw new Error("This account has been closed. Please contact support.");
+    }
+    if (profile.blacklisted) {
+      await signOut(auth);
+      throw new Error("This account has been blacklisted.");
+    }
+  }
+
+  // if OK, onAuthStateChanged will fill `user` as usual
+};
 
   const logout = async () => {
     await signOut(auth);
