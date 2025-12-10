@@ -1,7 +1,7 @@
 // frontend/src/pages/ManagerDashboard.tsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { api } from "../services/api";
+import { getManagerStats } from "../services/managerService";
 import type { Complaint, Order, DeliveryBid, ManagerDashboardStats } from "../types";
 import "../styles/manager.css";
 import {
@@ -17,7 +17,6 @@ import {
   clearDepositOnly,
   clearAndBlacklistCustomerAccount,
   type CustomerSummary,
-  updateUserStats,
 } from "../services/userService";
 
 import {
@@ -58,7 +57,8 @@ export default function ManagerDashboard() {
 
     try {
       if (activeTab === "overview") {
-        const data = await api.getManagerStats();
+        // Use real Firebase stats instead of mock
+        const data = await getManagerStats();
         setStats(data);
       } else if (activeTab === "complaints") {
         const data = await getAllComplaints();
@@ -314,7 +314,7 @@ export default function ManagerDashboard() {
           <div className="error">{error}</div>
         ) : (
           <>
-            {activeTab === "overview" && stats && (
+            {activeTab === "overview" && (
               <OverviewTab stats={stats} />
             )}
             {activeTab === "complaints" && (
@@ -359,7 +359,16 @@ export default function ManagerDashboard() {
 }
 
 
-function OverviewTab({ stats }: { stats: ManagerDashboardStats }) {
+function OverviewTab({ stats }: { stats: ManagerDashboardStats | null }) {
+  // Handle null stats gracefully
+  if (!stats) {
+    return (
+      <div className="overview-tab">
+        <div className="empty-state">Unable to load statistics</div>
+      </div>
+    );
+  }
+
   return (
     <div className="overview-tab">
       <div className="stats-grid">
@@ -381,7 +390,7 @@ function OverviewTab({ stats }: { stats: ManagerDashboardStats }) {
         </div>
         <div className="stat-card success">
           <div className="stat-value">${(stats.dailyRevenue ?? 0).toLocaleString()}</div>
-          <div className="stat-label">Daily Revenue</div>
+          <div className="stat-label">Today's Revenue</div>
         </div>
         <div className="stat-card">
           <div className="stat-value">${(stats.averageOrderValue ?? 0).toFixed(2)}</div>
@@ -393,32 +402,40 @@ function OverviewTab({ stats }: { stats: ManagerDashboardStats }) {
         <div className="leaderboard">
           <h3>🏆 Top Chefs</h3>
           <div className="leaderboard-list">
-            {(stats.topChefs ?? []).map((chef, index) => (
-              <div key={chef.id} className="leaderboard-item">
-                <span className="rank">#{index + 1}</span>
-                <span className="name">{chef.name}</span>
-                <span className="stats">
-                  <span className="rating">⭐ {(chef.rating ?? 0).toFixed(1)}</span>
-                  <span className="count">{chef.orders ?? 0} orders</span>
-                </span>
-              </div>
-            ))}
+            {(stats.topChefs ?? []).length === 0 ? (
+              <div className="empty-state">No chefs registered yet</div>
+            ) : (
+              (stats.topChefs ?? []).map((chef, index) => (
+                <div key={chef.id} className="leaderboard-item">
+                  <span className="rank">#{index + 1}</span>
+                  <span className="name">{chef.name}</span>
+                  <span className="stats">
+                    <span className="rating">⭐ {(chef.rating ?? 0).toFixed(1)}</span>
+                    <span className="count">{chef.orders ?? 0} orders</span>
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
         <div className="leaderboard">
           <h3>🚀 Top Delivery Personnel</h3>
           <div className="leaderboard-list">
-            {(stats.topDeliveryPersons ?? []).map((dp, index) => (
-              <div key={dp.id} className="leaderboard-item">
-                <span className="rank">#{index + 1}</span>
-                <span className="name">{dp.name}</span>
-                <span className="stats">
-                  <span className="rating">⭐ {(dp.rating ?? 0).toFixed(1)}</span>
-                  <span className="count">{dp.deliveries ?? 0} deliveries</span>
-                </span>
-              </div>
-            ))}
+            {(stats.topDeliveryPersons ?? []).length === 0 ? (
+              <div className="empty-state">No delivery personnel registered yet</div>
+            ) : (
+              (stats.topDeliveryPersons ?? []).map((dp, index) => (
+                <div key={dp.id} className="leaderboard-item">
+                  <span className="rank">#{index + 1}</span>
+                  <span className="name">{dp.name}</span>
+                  <span className="stats">
+                    <span className="rating">⭐ {(dp.rating ?? 0).toFixed(1)}</span>
+                    <span className="count">{dp.deliveries ?? 0} deliveries</span>
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -573,54 +590,58 @@ function ComplaintsTab({
 
       <div className="section">
         <h3>Resolved Complaints ({resolvedComplaints.length})</h3>
-        <div className="complaints-list">
-          {resolvedComplaints.slice(0, 5).map(complaint => (
-            <div key={complaint.id} className="complaint-card resolved">
-              <div className="complaint-header">
-                <span className="complaint-id">#{(complaint.id ?? '').slice(0, 8)}</span>
-                <span className={`status-badge ${(complaint.status ?? '').toLowerCase()}`}>
-                  {(complaint.status ?? '').replace(/_/g, " ")}
-                </span>
-              </div>
-              <div className="complaint-body">
-                <div className="detail-row">
-                  <span className="label">Weight:</span>
-                  <span style={{ 
-                    fontWeight: "bold",
-                    color: complaint.weight === 2 ? "#7c3aed" : "#6b7280",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem"
-                  }}>
-                    {complaint.weight || 1}x
-                    {complaint.weight === 2 && (
-                      <span style={{
-                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                        color: "white",
-                        padding: "0.125rem 0.5rem",
-                        borderRadius: "4px",
-                        fontSize: "0.75rem",
-                        fontWeight: "bold"
-                      }}>
-                        👑 VIP
-                      </span>
-                    )}
+        {resolvedComplaints.length === 0 ? (
+          <div className="empty-state">No resolved complaints yet</div>
+        ) : (
+          <div className="complaints-list">
+            {resolvedComplaints.slice(0, 5).map(complaint => (
+              <div key={complaint.id} className="complaint-card resolved">
+                <div className="complaint-header">
+                  <span className="complaint-id">#{(complaint.id ?? '').slice(0, 8)}</span>
+                  <span className={`status-badge ${(complaint.status ?? '').toLowerCase()}`}>
+                    {(complaint.status ?? '').replace(/_/g, " ")}
                   </span>
                 </div>
-                <div className="detail-row">
-                  <span className="label">Target:</span>
-                  <span>{complaint.targetName ?? 'Unknown'}</span>
-                </div>
-                {complaint.managerNotes && (
-                  <div className="manager-notes">
-                    <strong>Resolution:</strong>
-                    <p>{complaint.managerNotes}</p>
+                <div className="complaint-body">
+                  <div className="detail-row">
+                    <span className="label">Weight:</span>
+                    <span style={{ 
+                      fontWeight: "bold",
+                      color: complaint.weight === 2 ? "#7c3aed" : "#6b7280",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem"
+                    }}>
+                      {complaint.weight || 1}x
+                      {complaint.weight === 2 && (
+                        <span style={{
+                          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          color: "white",
+                          padding: "0.125rem 0.5rem",
+                          borderRadius: "4px",
+                          fontSize: "0.75rem",
+                          fontWeight: "bold"
+                        }}>
+                          👑 VIP
+                        </span>
+                      )}
+                    </span>
                   </div>
-                )}
+                  <div className="detail-row">
+                    <span className="label">Target:</span>
+                    <span>{complaint.targetName ?? 'Unknown'}</span>
+                  </div>
+                  {complaint.managerNotes && (
+                    <div className="manager-notes">
+                      <strong>Resolution:</strong>
+                      <p>{complaint.managerNotes}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
