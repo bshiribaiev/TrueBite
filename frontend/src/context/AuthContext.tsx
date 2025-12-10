@@ -169,6 +169,7 @@ const addWarning = async () => {
       
       if (result?.action === "vip_downgraded") {
         alert("⚠️ You have been downgraded from VIP to Registered due to 2 warnings. Your warnings have been cleared.");
+        window.location.reload(); // Force page refresh to update UI
       } else if (result?.action === "deregistered") {
         alert("🚫 Your account has been deregistered due to 3 warnings.");
         await signOut(auth);

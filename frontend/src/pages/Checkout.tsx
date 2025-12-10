@@ -75,9 +75,17 @@ export default function Checkout() {
     }
 
     try {
+
+      // Store VIP status BEFORE order
+      const wasVIP = isVIP; 
+
       const orderId = await createOrder(user.id, user.name, items);
       deductDeposit(total);
       clearCart();
+
+      const { getUserProfile } = await import("../services/userService");
+      const updatedUser = await getUserProfile(user.id);
+      const isNowVIP = updatedUser?.role === "vip";
 
       let message = `Order placed! Your order ID is ${orderId}.`;
       if (isVIP) {
@@ -86,6 +94,14 @@ export default function Checkout() {
       if (isFreeDelivery) {
         message += `\n🚚 FREE DELIVERY on your ${nextOrderNumber}${getOrdinalSuffix(nextOrderNumber)} order!`;
       }
+
+    // ✅ IF JUST BECAME VIP, SHOW SPECIAL MESSAGE AND RELOAD
+    if (!wasVIP && isNowVIP) {
+      message += `\n\n🎊 CONGRATULATIONS! You've been upgraded to VIP status! You now get 5% discounts and free delivery every 3rd order!`;
+      alert(message);
+      window.location.reload(); // Reload to show VIP status
+      return;
+    }
 
       alert(message);
       nav("/dashboard");
