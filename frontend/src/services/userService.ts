@@ -10,7 +10,6 @@ import {
   query,
   where,
   updateDoc,
-  increment,
 } from "firebase/firestore";
 
 import type { Role } from "../types"; // you already have Role type
@@ -59,15 +58,54 @@ export async function applyFeedbackToEmployee(params: {
   const data = snap.data() as UserProfile;
   const currentWarnings = data.warnings ?? 0;
   const currentCommendations = data.commendations ?? 0;
+  const currentRole = data.role;
 
-  const newWarnings = Math.max(0, currentWarnings + deltaWarnings);
+  let newWarnings = Math.max(0, currentWarnings + deltaWarnings);
   const newCommendations = Math.max(0, currentCommendations + deltaCommendations);
 
-  await updateDoc(ref, {
+  // VIP DOWNGRADE LOGIC
+  const updates: any = {
     warnings: newWarnings,
     commendations: newCommendations,
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  // CHECK VIP DOWNGRADE (2 warnings → downgrade to registered, clear warnings)
+  if (currentRole === "vip" && newWarnings >= 2) {
+    console.log(`⚠️ VIP ${targetId} reached 2 warnings! Downgrading to Registered and clearing warnings.`);
+    
+    updates.role = "registered";
+    updates.VIP = false;
+    updates.isVip = false;
+    updates.warnings = 0; // CLEAR WARNINGS after downgrade
+    updates.vipSince = null;
+    updates.downgradeReason = "2 warnings";
+    updates.downgradedAt = serverTimestamp();
+    
+    newWarnings = 0; // Update local variable too
+  }
+  
+  // CHECK REGISTERED DEREGISTRATION (3 warnings → blacklist)
+  else if (currentRole === "registered" && newWarnings >= 3) {
+    console.log(`🚫 Registered user ${targetId} reached 3 warnings! Blacklisting account.`);
+    
+    updates.blacklisted = true;
+    updates.accountStatus = "blacklisted";
+    updates.role = "visitor"; // Demote to visitor
+    updates.deregisteredReason = "3 warnings";
+    updates.deregisteredAt = serverTimestamp();
+  }
+
+  await updateDoc(ref, updates);
+  
+  // Return the action taken for logging/notifications
+  if (currentRole === "vip" && newWarnings === 0 && deltaWarnings > 0) {
+    return { action: "vip_downgraded", message: "VIP downgraded to Registered. Warnings cleared." };
+  } else if (currentRole === "registered" && updates.blacklisted) {
+    return { action: "deregistered", message: "User has been deregistered and blacklisted." };
+  }
+  
+  return { action: "warnings_updated", warnings: newWarnings };
 }
 
 // src/services/userService.ts
@@ -228,35 +266,12 @@ export async function updateUserRole(uid: string, role: Role) {
   const ref = doc(db, "users", uid);
   await updateDoc(ref, { role });
 }
-// Increment a user's warnings and auto‑blacklist if threshold reached
+// Increment a user's warnings and auto-handle VIP downgrade/blacklist
 export async function incrementUserWarnings(uid: string) {
-  const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return;
-
-  const data = snap.data() as UserProfile;
-
-  const currentWarnings = data.warnings ?? 0;
-  const newWarnings = currentWarnings + 1;
-  const isVip = data.isVip === true;
-
-  // For now: 3 warnings for regular users, 5 for VIPs (you can tweak later)
-  const threshold = isVip ? 5 : 3;
-
-  const update: Partial<UserProfile> & { warnings: number } = {
-    warnings: newWarnings,
-  };
-
-  if (newWarnings >= threshold) {
-    update.blacklisted = true;
-    update.accountStatus = "blacklisted";
-  }
-
-  await updateDoc(ref, {
-    ...update,
-    updatedAt: serverTimestamp(),
+  // Use the main applyFeedbackToEmployee function which has all the correct logic
+  return await applyFeedbackToEmployee({
+    targetId: uid,
+    deltaWarnings: 1,
   });
 }
-
-
 

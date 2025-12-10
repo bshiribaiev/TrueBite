@@ -106,6 +106,7 @@ export interface Complaint {
   resolvedAt?: Date;
   resolution?: string;
   managerNotes?: string;
+  weight: number;  
 }
 
 // Rating Types

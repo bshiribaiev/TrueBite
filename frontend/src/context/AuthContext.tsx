@@ -12,7 +12,7 @@ import {
   signOut,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { getUserProfile, setUserProfile, type UserProfile, updateUserStats } from "../services/userService";
+import { getUserProfile, setUserProfile, updateUserStats } from "../services/userService";
 import type { Role, User } from "../types";
 
 interface AuthContextType {
@@ -32,7 +32,7 @@ interface AuthContextType {
   // 👇 new helpers for balance / warnings
   addDeposit: (amount: number) => void;
   deductDeposit: (amount: number) => void;
-  addWarning: () => void;
+  addWarning: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -145,21 +145,42 @@ const deductDeposit = (amount: number) => {
   });
 };
 
-const addWarning = () => {
-  setUser((prev) => {
-    if (!prev) return prev;
-    const newWarnings = (prev.warnings ?? 0) + 1;
-
-    updateUserStats(prev.id, { warnings: newWarnings }).catch(console.error);
-
-    return { ...prev, warnings: newWarnings };
-  });
+const addWarning = async () => {
+  if (!user) return;
+  
+  try {
+    const { applyFeedbackToEmployee } = await import("../services/userService");
+    
+    const result = await applyFeedbackToEmployee({
+      targetId: user.id,
+      deltaWarnings: 1,
+    });
+    
+    console.log("Warning applied:", result);
+    
+    const updatedProfile = await getUserProfile(user.id);
+    if (updatedProfile) {
+      setUser({
+        ...user,
+        role: updatedProfile.role,
+        warnings: updatedProfile.warnings ?? 0,
+        isVip: updatedProfile.isVip,
+      });
+      
+      if (result?.action === "vip_downgraded") {
+        alert("⚠️ You have been downgraded from VIP to Registered due to 2 warnings. Your warnings have been cleared.");
+      } else if (result?.action === "deregistered") {
+        alert("🚫 Your account has been deregistered due to 3 warnings.");
+        await signOut(auth);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to add warning:", error);
+  }
 };
 
-
-
   // Login → Firebase Auth → load profile
- const login = async (email: string, password: string) => {
+const login = async (email: string, password: string) => {
   const { signInWithEmailAndPassword } = await import("firebase/auth");
   const cred = await signInWithEmailAndPassword(auth, email, password);
 

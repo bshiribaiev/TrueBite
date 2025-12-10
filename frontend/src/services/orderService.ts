@@ -27,11 +27,41 @@ export async function createOrder(
   userName: string,
   items: CartItem[]
 ) {
-  const totalPrice = items.reduce(
+  // 1) GET USER PROFILE FIRST
+  const user = await getUserProfile(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // 2) GET CURRENT ORDER COUNT
+  const existingOrders = await getOrdersForUser(userId);
+  const currentOrderCount = existingOrders.length;
+
+  // 3) CALCULATE SUBTOTAL
+  const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
+  // 4) CALCULATE DISCOUNT (5% for VIP)
+  let discount = 0;
+  if (user.role === "vip") {
+    discount = subtotal * 0.05;
+  }
+
+  // 5) CALCULATE DELIVERY FEE (FREE EVERY 3RD ORDER FOR VIP)
+  let deliveryFee = 5.00; // Default $5 delivery
+  const isThirdOrder = (currentOrderCount + 1) % 3 === 0;
+  
+  if (user.role === "vip" && isThirdOrder) {
+    deliveryFee = 0; // FREE DELIVERY on 3rd, 6th, 9th order, etc.
+    console.log(`🎉 FREE DELIVERY! This is order #${currentOrderCount + 1} for VIP ${userName}`);
+  }
+
+  // 6) CALCULATE TOTAL
+  const totalPrice = subtotal - discount + deliveryFee;
+
+  // 7) CREATE ORDER IN FIREBASE
   const docRef = await addDoc(collection(db, "deliveries"), {
     customerId: userId,
     customerName: userName,
@@ -41,6 +71,9 @@ export async function createOrder(
       price: i.price,
       quantity: i.quantity,
     })),
+    subtotal,
+    discount,
+    deliveryFee,
     totalPrice,
     status: "CREATED",
     createdAt: serverTimestamp(),
@@ -48,8 +81,12 @@ export async function createOrder(
     assignedDriverId: null,
     assignedDriverName: null,
     bids: [],
+    // Store for reference
+    orderNumber: currentOrderCount + 1,
+    isFreeDelivery: user.role === "vip" && isThirdOrder,
   });
 
+  // 8) CHECK AND UPGRADE VIP (for non-VIP users)
   await checkAndUpgradeVIP(userId);
 
   return docRef.id;

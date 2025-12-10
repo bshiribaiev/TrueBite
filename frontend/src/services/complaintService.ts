@@ -9,6 +9,7 @@ import {
   doc,
   serverTimestamp,
   addDoc, 
+  getDoc,
 } from "firebase/firestore";
 import type { Complaint } from "../types";
 import { getUserProfile } from "./userService";
@@ -66,7 +67,7 @@ export async function createComplaint(params: {
   orderId: string;
   customerId: string;
   customerName: string;
-  targetType: "chef" | "delivery";
+  targetType: "chef" | "delivery" | "CUSTOMER";  // ✅ Added CUSTOMER type
   targetId: string;
   targetName: string;
   description: string;
@@ -105,16 +106,17 @@ export async function createComplaint(params: {
   if (kind === "COMPLAINT") {
     await applyFeedbackToEmployee({
       targetId,
-      deltaWarnings: weight,  // 2 for VIP, 1 for regular
+      deltaWarnings: weight,          // Adds warnings
+      deltaCommendations: -weight,    // Reduces commendations (CANCEL EFFECT!)
     });
   } else if (kind === "COMPLIMENT") {
     await applyFeedbackToEmployee({
       targetId,
-      deltaWarnings: -weight,  // Cancel 2 warnings if VIP
-      deltaCommendations: weight,  // 2 commendations if VIP
+      deltaWarnings: -weight,         // Reduces warnings (CANCEL EFFECT!)
+      deltaCommendations: weight,     // Adds commendations
     });
   }
-}
+} // ✅ ADDED MISSING CLOSING BRACE
 
 
 // Customer rating for chef or delivery person
@@ -150,6 +152,8 @@ export async function submitRating(params: {
     comment: comment ?? "",
     createdAt: serverTimestamp(),
   });
+
+  await updateDishRating(dishId, score);
 
   // 2) Look up the dish to find which chef owns it
   try {
@@ -194,8 +198,6 @@ export async function submitRating(params: {
 
 
 // Helper: recompute rating on /dishes/{dishId}
-import { getDoc } from "firebase/firestore";
-
 async function updateDishRating(dishId: string, newScore: number) {
   const ref = doc(db, "dishes", dishId);
   const snap = await getDoc(ref);
@@ -214,6 +216,7 @@ async function updateDishRating(dishId: string, newScore: number) {
     ratingCount,
   });
 }
+
 export async function createDriverComplaintAgainstCustomer(args: {
   driverId: string;
   driverName: string;
@@ -227,11 +230,9 @@ export async function createDriverComplaintAgainstCustomer(args: {
     customerId: args.driverId,
     customerName: args.driverName,
     orderId: args.orderId,
-    targetType: "CUSTOMER",
+    targetType: "CUSTOMER",  // ✅ Now this is allowed
     targetId: args.customerName,    // we don't have a separate customerId, so use name
     targetName: args.customerName,
     description: args.description,
   });
 }
-
-

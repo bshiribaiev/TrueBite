@@ -1,14 +1,28 @@
-// src/pages/Checkout.tsx
+// frontend/src/pages/Checkout.tsx
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { createOrder } from "../services/orderService";
+import { createOrder, getOrdersForUser } from "../services/orderService";
+import { useState, useEffect } from "react";
 import "../styles.css";
 
 export default function Checkout() {
   const { user, addWarning, deductDeposit } = useAuth();
   const { items, clearCart, updateItemQuantity, removeItem } = useCart();
   const nav = useNavigate();
+  
+  const [orderCount, setOrderCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user's order count on mount
+  useEffect(() => {
+    if (user) {
+      getOrdersForUser(user.id).then((orders) => {
+        setOrderCount(orders.length);
+        setLoading(false);
+      });
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -40,7 +54,14 @@ export default function Checkout() {
 
   const isVIP = user.role === "vip";
   const discount = isVIP ? subtotal * 0.05 : 0;
-  const total = subtotal - discount;
+  
+  // Calculate delivery fee (FREE every 3rd order for VIP)
+  const deliveryFee = 5.00;
+  const nextOrderNumber = orderCount + 1;
+  const isFreeDelivery = isVIP && nextOrderNumber % 3 === 0;
+  const finalDeliveryFee = isFreeDelivery ? 0 : deliveryFee;
+  
+  const total = subtotal - discount + finalDeliveryFee;
 
   const handlePlaceOrder = async () => {
     if (!user) return;
@@ -58,11 +79,13 @@ export default function Checkout() {
       deductDeposit(total);
       clearCart();
 
-      const message = isVIP
-        ? `Order placed! Your order ID is ${orderId}.\n🎉 VIP Discount Applied: $${discount.toFixed(
-            2
-          )} saved!`
-        : `Order placed! Your order ID is ${orderId}.`;
+      let message = `Order placed! Your order ID is ${orderId}.`;
+      if (isVIP) {
+        message += `\n🎉 VIP Discount Applied: $${discount.toFixed(2)} saved!`;
+      }
+      if (isFreeDelivery) {
+        message += `\n🚚 FREE DELIVERY on your ${nextOrderNumber}${getOrdinalSuffix(nextOrderNumber)} order!`;
+      }
 
       alert(message);
       nav("/dashboard");
@@ -71,6 +94,17 @@ export default function Checkout() {
       alert("Failed to place order. Please try again.");
     }
   };
+
+  // Helper function for ordinal suffix
+  function getOrdinalSuffix(n: number): string {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return s[(v - 20) % 10] || s[v] || s[0];
+  }
+
+  if (loading) {
+    return <div className="panel"><p>Loading...</p></div>;
+  }
 
   return (
     <div className="cart-layout">
@@ -93,6 +127,28 @@ export default function Checkout() {
             }}
           >
             👑 VIP Member - 5% Discount Applied!
+          </div>
+        )}
+
+        {/* FREE DELIVERY BANNER */}
+        {isFreeDelivery && (
+          <div
+            style={{
+              background: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+              color: "white",
+              padding: "1.25rem",
+              borderRadius: "8px",
+              margin: "1rem 0",
+              textAlign: "center",
+              fontWeight: "bold",
+              fontSize: "1.1rem",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            }}
+          >
+            🎉 <strong>FREE DELIVERY!</strong> 🎉
+            <div style={{ fontSize: "0.9rem", marginTop: "0.5rem", opacity: 0.95 }}>
+              This is your {nextOrderNumber}{getOrdinalSuffix(nextOrderNumber)} order - You save $5.00!
+            </div>
           </div>
         )}
 
@@ -174,12 +230,27 @@ export default function Checkout() {
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
+            
             {isVIP && discount > 0 && (
-              <div className="summary-row">
+              <div className="summary-row" style={{ color: '#667eea' }}>
                 <span>VIP Discount (5%)</span>
                 <span>- ${discount.toFixed(2)}</span>
               </div>
             )}
+            
+            {/* DELIVERY FEE ROW */}
+            <div className="summary-row">
+              <span>Delivery Fee</span>
+              {isFreeDelivery ? (
+                <span style={{ color: '#38ef7d', fontWeight: 'bold' }}>
+                  <del style={{ color: '#999', marginRight: '0.5rem' }}>$5.00</del>
+                  FREE!
+                </span>
+              ) : (
+                <span>${deliveryFee.toFixed(2)}</span>
+              )}
+            </div>
+            
             <div className="summary-row summary-total">
               <span>Total</span>
               <span>${total.toFixed(2)}</span>
