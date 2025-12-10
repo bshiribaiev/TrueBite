@@ -1,12 +1,39 @@
-import type { Dish } from "../mock/data";
+// src/components/DishCard.tsx
 
-export default function DishCard({ dish, onOrder }: { dish: Dish; onOrder?: (id: string) => void }) {
+interface DishCardProps {
+  dish: {
+    id: string;
+    name: string;
+    price?: number;
+    img?: string;
+    image?: string;
+    rating?: number;
+    averageRating?: number;
+  };
+  onOrder?: (id: string) => void;
+}
+
+export default function DishCard({ dish, onOrder }: DishCardProps) {
+  // Handle both 'img' and 'image' properties
+  const imageUrl = dish.img || dish.image || "/placeholder-dish.jpg";
+  
+  // Handle both 'rating' (from Menu/mock) and 'averageRating' (from Home Firebase)
+  const rating = dish.rating ?? dish.averageRating ?? 0;
+  
+  // Safely handle price
+  const price = dish.price ?? 0;
+
+  // Format rating display - show "New" if no rating yet
+  const ratingDisplay = rating > 0 ? `⭐ ${rating.toFixed(1)}` : "✨ New";
+
   return (
     <div className="card">
-      <img src={dish.img} alt={dish.name} className="card-img" />
+      <img src={imageUrl} alt={dish.name} className="card-img" />
       <div className="card-body">
         <div className="card-title">{dish.name}</div>
-        <div className="card-sub">${dish.price.toFixed(2)} • ⭐ {dish.rating.toFixed(1)}</div>
+        <div className="card-sub">
+          ${price.toFixed(2)} • {ratingDisplay}
+        </div>
         {onOrder && (
           <button className="btn" onClick={() => onOrder(dish.id)}>
             Order
