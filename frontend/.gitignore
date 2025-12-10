@@ -37,3 +37,4 @@ tailwind.config.js
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+.DS_Store

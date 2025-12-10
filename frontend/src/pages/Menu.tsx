@@ -53,6 +53,7 @@ export default function Menu() {
             img: d.img ?? "",
             available: d.available ?? true,
             rating: d.rating ?? 0,
+            vipOnly: d.vipOnly ?? false,
           };
         });
 
@@ -68,8 +69,14 @@ export default function Menu() {
     load();
   }, []);
 
-  // Filter dishes based on search term
+  // Filter dishes based on search term AND VIP status
   const filteredDishes = dishes.filter((dish) => {
+    // First check VIP access
+    if (dish.vipOnly && user?.role !== "vip") {
+      return false; // Hide VIP-only dishes from non-VIP users
+    }
+    
+    // Then check search term
     const term = searchTerm.toLowerCase();
     return (
       dish.name.toLowerCase().includes(term) ||
@@ -240,7 +247,30 @@ export default function Menu() {
             <p>No dishes match your search. Try something else!</p>
           ) : (
             filteredDishes.map((d) => (
-              <DishCard key={d.id} dish={d} onOrder={handleOrder} />
+              <div key={d.id} style={{ position: "relative" }}>
+                {/* ADD VIP BADGE */}
+                {d.vipOnly && (
+                  <div style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    padding: "6px 12px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    zIndex: 10,
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}>
+                    👑 VIP ONLY
+                  </div>
+                )}
+                <DishCard dish={d} onOrder={handleOrder} />
+              </div>
             ))
           )}
         </div>

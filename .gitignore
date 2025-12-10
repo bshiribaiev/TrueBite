@@ -211,4 +211,4 @@ dmypy.json
 # User uploads (NEVER COMMIT USER DATA!)
 backend/uploads/
 frontend/public/uploads/
-uploads/
+uploads/.DS_Store

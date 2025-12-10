@@ -1,3 +1,4 @@
+// frontend/src/pages/ChefDashboard.tsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import type { Order, Dish, ChefAnalytics } from "../types";
@@ -95,10 +96,15 @@ const handleAddDish = async () => {
 
   const img = window.prompt("Image URL (optional):", "") || "";
   const description = window.prompt("Description (optional):", "") || "";
+  
+  // ADD THIS - Ask if VIP only
+  const vipOnlyResponse = window.confirm("Make this a VIP-only dish?\n\nClick OK for VIP-only, Cancel for regular dish");
+  const vipOnly = vipOnlyResponse;
 
   try {
-    await createDish(user.id, { name, description, price, img });
+    await createDish(user.id, { name, description, price, img, vipOnly });
     await loadData();
+    alert(`Dish created! ${vipOnly ? "👑 VIP-only" : "Available to all"}`);
   } catch (err) {
     alert("Failed to create dish");
     console.error(err);
@@ -297,13 +303,29 @@ function MenuTab({
       <div className="menu-header">
         <h3>My Dishes</h3>
         <button className="btn" onClick={onAddDish}>
-  + Add New Dish
-</button>
-
+          + Add New Dish
+        </button>
       </div>
       <div className="dish-grid">
         {dishes.map(dish => (
           <div key={dish.id} className="dish-card">
+            {/* ✅ ADD VIP BADGE */}
+            {dish.vipOnly && (
+              <div style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                padding: "4px 12px",
+                borderRadius: "20px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                zIndex: 10
+              }}>
+                👑 VIP
+              </div>
+            )}
             <img src={dish.img} alt={dish.name} className="dish-img" />
             <div className="dish-body">
               <div className="dish-header">

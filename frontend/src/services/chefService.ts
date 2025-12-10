@@ -73,7 +73,6 @@ export async function updateOrderStatus(
 
 // 🔹 Dishes live in "dishes" collection
 export async function getChefDishes(chefId: string): Promise<Dish[]> {
-  // 🔥 no orderBy here → no index required
   const q = query(
     collection(db, "dishes"),
     where("chefId", "==", chefId)
@@ -90,12 +89,11 @@ export async function getChefDishes(chefId: string): Promise<Dish[]> {
       img: data.img ?? "",
       available: data.available ?? true,
       rating: data.rating ?? 0,
+      vipOnly: data.vipOnly ?? false,  // ✅ ADD THIS LINE
     } as Dish;
   });
 
-  // sort by name on the client
   dishes.sort((a, b) => a.name.localeCompare(b.name));
-
   return dishes;
 }
 
@@ -113,12 +111,14 @@ export async function createDish(chefId: string, data: {
   description: string;
   price: number;
   img: string;
+  vipOnly?: boolean;  
 }) {
   await addDoc(collection(db, "dishes"), {
     ...data,
     chefId,
     available: true,
     rating: 0,
+    vipOnly: data.vipOnly || false,  
     createdAt: serverTimestamp(),
   });
 }

@@ -1,3 +1,4 @@
+// f
 // Core User Types
 export type Role = "visitor" | "registered" | "vip" | "manager" | "chef" | "delivery";
 
@@ -68,6 +69,7 @@ export interface Dish {
   category: string;
   available: boolean;
   tags: string[];
+  vipOnly?: boolean; 
 }
 
 // Delivery Bid Types
