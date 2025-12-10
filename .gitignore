@@ -212,3 +212,4 @@ dmypy.json
 backend/uploads/
 frontend/public/uploads/
 uploads/.DS_Store
+.DS_Store
