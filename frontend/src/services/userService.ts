@@ -260,7 +260,10 @@ export async function approveUser(uid: string) {
   const ref = doc(db, "users", uid);
   await updateDoc(ref, { status: "approved" });
 }
-
+export async function rejectUser(uid: string) {
+  const ref = doc(db, "users", uid);
+  await updateDoc(ref, { status: "rejected" });
+}
 // Change an employee's role (e.g. "chef" or "delivery")
 export async function updateUserRole(uid: string, role: Role) {
   const ref = doc(db, "users", uid);

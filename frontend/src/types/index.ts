@@ -16,6 +16,7 @@ export interface User {
    // NEW:
   isVip?: boolean; // future use
   blacklisted?: boolean;
+  status?: "pending" | "approved" | "rejected"; 
   accountStatus?: "active" | "blacklisted" | "closed";
 
 }

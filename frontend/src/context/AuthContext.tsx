@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             name: profile.name,
             email: profile.email,
             role: profile.role,
+            status: profile.status,              // 👈 add this
             // 🔥 pull from Firestore, fall back to 0
             deposit: profile.deposit ?? 0,
             warnings: profile.warnings ?? 0,
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             name: fbUser.displayName ?? "Customer",
             email: fbUser.email ?? "",
             role: "registered",
+            status: "pending",
             deposit: 0,
             warnings: 0,
             reputationScore: 0,

@@ -38,6 +38,21 @@ export default function Checkout() {
       </div>
     );
   }
+  // 👇 NEW: block pending / rejected / closed / blacklisted accounts
+  if (user.status !== "approved"){
+    return (
+      <div className="panel">
+        <h1 className="h1">Checkout</h1>
+        <p className="muted">
+          Your account is not approved yet or has been closed.  
+          Please contact a manager if you think this is an error.
+        </p>
+        <button className="btn" onClick={() => nav("/dashboard")}>
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

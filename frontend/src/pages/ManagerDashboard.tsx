@@ -1,13 +1,14 @@
 // frontend/src/pages/ManagerDashboard.tsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getManagerStats } from "../services/managerService";
+import { getManagerStats } from "../services/managerServices";
 import type { Complaint, Order, DeliveryBid, ManagerDashboardStats } from "../types";
 import "../styles/manager.css";
 import {
   getPendingUsers,
   getEmployees,
   approveUser,
+  rejectUser,
   updateUserRole,
   type UserWithId,
   updateEmployeeStats,
@@ -125,6 +126,17 @@ export default function ManagerDashboard() {
       alert("User approved successfully");
     } catch (err) {
       alert("Failed to approve user");
+      console.error(err);
+    }
+  };
+
+  const handleRejectUser = async (uid: string) => {
+    try {
+      await rejectUser(uid);
+      await loadData();
+      alert("User rejected successfully");
+    } catch (err) {
+      alert("Failed to rejected user");
       console.error(err);
     }
   };
@@ -333,6 +345,7 @@ export default function ManagerDashboard() {
                 pendingUsers={pendingUsers}
                 employees={employees}
                 onApprove={handleApproveUser}
+                onReject={handleRejectUser}
                 onSetRole={handleSetEmployeeRole}
                 onBonus={handleGiveBonus}
                 onDemote={handleDemoteEmployee}
@@ -933,6 +946,7 @@ function EmployeesTab({
   pendingUsers,
   employees,
   onApprove,
+  onReject,
   onSetRole,
   onBonus,
   onDemote,
@@ -941,6 +955,7 @@ function EmployeesTab({
   pendingUsers: UserWithId[];
   employees: UserWithId[];
   onApprove: (uid: string) => void;
+  onReject: (uid: string) => void;
   onSetRole: (uid: string, role: "chef" | "delivery") => void;
   onBonus: (emp: UserWithId) => void;
   onDemote: (emp: UserWithId) => void;
@@ -965,10 +980,18 @@ function EmployeesTab({
                 </div>
                 <button className="btn" onClick={() => onApprove(u.id)}>
                   Approve
-                </button>
-              </div>
+      </button>
+      <button
+        className="btn ghost"
+        onClick={() => onReject(u.id)}
+        style={{ marginLeft: "0.5rem" }} // optional spacing
+      >
+        Reject
+      </button>
+    </div>
             ))}
-          </div>
+  </div>
+
         )}
       </div>
 
