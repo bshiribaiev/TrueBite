@@ -22,6 +22,9 @@ export default function Menu() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
+  
+  // Added to cart feedback
+  const [addedDishId, setAddedDishId] = useState<string | null>(null);
 
   // Check if browser supports speech recognition
   useEffect(() => {
@@ -123,7 +126,7 @@ export default function Menu() {
     recognition.start();
   };
 
-  const handleOrder = (id: string) => {
+  const handleAddToCart = (id: string) => {
     if (!user) return nav("/login");
 
     const dish = dishes.find((d) => d.id === id);
@@ -139,7 +142,11 @@ export default function Menu() {
       image: dish.img
     });
 
-    nav("/checkout");
+    // Show brief "Added!" feedback instead of navigating
+    setAddedDishId(id);
+    setTimeout(() => setAddedDishId(null), 1500);
+    
+    // DON'T navigate to checkout - stay on menu
   };
 
   return (
@@ -248,7 +255,7 @@ export default function Menu() {
           ) : (
             filteredDishes.map((d) => (
               <div key={d.id} style={{ position: "relative" }}>
-                {/* ADD VIP BADGE */}
+                {/* VIP BADGE */}
                 {d.vipOnly && (
                   <div style={{
                     position: "absolute",
@@ -269,7 +276,11 @@ export default function Menu() {
                     👑 VIP ONLY
                   </div>
                 )}
-                <DishCard dish={d} onOrder={handleOrder} />
+                <DishCard 
+                  dish={d} 
+                  onOrder={handleAddToCart}
+                  buttonText={addedDishId === d.id ? "✓ Added!" : "Add to Cart"}
+                />
               </div>
             ))
           )}

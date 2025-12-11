@@ -7,6 +7,7 @@ import {
   orderBy,
   updateDoc,
   doc,
+  setDoc,
   serverTimestamp,
   addDoc, 
   getDoc,
@@ -67,7 +68,7 @@ export async function createComplaint(params: {
   orderId: string;
   customerId: string;
   customerName: string;
-  targetType: "chef" | "delivery" | "CUSTOMER";  // ✅ Added CUSTOMER type
+  targetType: "chef" | "delivery" | "CUSTOMER";
   targetId: string;
   targetName: string;
   description: string;
@@ -116,12 +117,14 @@ export async function createComplaint(params: {
       deltaCommendations: weight,     // Adds commendations
     });
   }
-} // ✅ ADDED MISSING CLOSING BRACE
+}
 
 
-// Customer rating for chef or delivery person
-// Customer rating for a dish (not a person)
-// Customer rating for a dish (also updates chef warnings/commendations)
+// ─────────────────────────────────────────────────────────────
+// Customer rating for a dish
+// Uses UPSERT logic: one rating per dish per order per customer
+// Re-submitting will OVERWRITE the previous rating (not create duplicates)
+// ─────────────────────────────────────────────────────────────
 export async function submitRating(params: {
   orderId: string;
   dishId: string;
@@ -141,8 +144,19 @@ export async function submitRating(params: {
     comment,
   } = params;
 
-  // 1) Save the rating itself
-  await addDoc(collection(db, "ratings"), {
+  // Create a deterministic document ID so re-rating overwrites
+  // Format: orderId_dishId_customerId
+  const ratingDocId = `${orderId}_${dishId}_${customerId}`;
+  const ratingRef = doc(db, "ratings", ratingDocId);
+
+  // Check if this rating already exists (to handle dish average correctly)
+  const existingRatingSnap = await getDoc(ratingRef);
+  const existingScore = existingRatingSnap.exists() 
+    ? (existingRatingSnap.data() as any).score 
+    : null;
+
+  // Use setDoc to upsert - creates if doesn't exist, overwrites if it does
+  await setDoc(ratingRef, {
     orderId,
     dishId,
     dishName,
@@ -150,14 +164,16 @@ export async function submitRating(params: {
     customerName,
     score,
     comment: comment ?? "",
-    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
 
-  await updateDishRating(dishId, score);
+  // Update the dish's global average rating
+  // If overwriting, we need to adjust (remove old score, add new score)
+  await updateDishRating(dishId, score, existingScore);
 
-  // 2) Look up the dish to find which chef owns it
+  // Look up the dish to find which chef owns it (for warnings/commendations)
   try {
-    const dishRef = doc(db, "dishes", dishId);   // or "menuItems" if that's your collection
+    const dishRef = doc(db, "dishes", dishId);
     const dishSnap = await getDoc(dishRef);
 
     if (!dishSnap.exists()) {
@@ -167,7 +183,6 @@ export async function submitRating(params: {
 
     const dishData = dishSnap.data() as {
       chefId?: string;
-      // ...other fields (name, price, etc.)
     };
 
     if (!dishData.chefId) {
@@ -177,19 +192,22 @@ export async function submitRating(params: {
 
     const chefId = dishData.chefId;
 
-    // 3) Convert score → warnings / commendations
-    if (score <= 2) {
-      // bad rating → warning
-      await applyFeedbackToEmployee({
-        targetId: chefId,
-        deltaWarnings: 1,
-      });
-    } else if (score >= 4) {
-      // good rating → commendation
-      await applyFeedbackToEmployee({
-        targetId: chefId,
-        deltaCommendations: 1,
-      });
+    // Only apply chef feedback if this is a NEW rating (not an update)
+    // This prevents double-penalizing/rewarding chefs when users change their rating
+    if (existingScore === null) {
+      if (score <= 2) {
+        // bad rating → warning
+        await applyFeedbackToEmployee({
+          targetId: chefId,
+          deltaWarnings: 1,
+        });
+      } else if (score >= 4) {
+        // good rating → commendation
+        await applyFeedbackToEmployee({
+          targetId: chefId,
+          deltaCommendations: 1,
+        });
+      }
     }
   } catch (err) {
     console.error("Failed to apply rating feedback to chef", err);
@@ -198,18 +216,40 @@ export async function submitRating(params: {
 
 
 // Helper: recompute rating on /dishes/{dishId}
-async function updateDishRating(dishId: string, newScore: number) {
+// Now handles updates (removing old score, adding new score) to keep average accurate
+async function updateDishRating(
+  dishId: string, 
+  newScore: number, 
+  oldScore: number | null = null
+) {
   const ref = doc(db, "dishes", dishId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
 
   const data = snap.data() as any;
-  const currentCount = data.ratingCount ?? 0;
-  const currentAvg = data.rating ?? 0;
+  let currentCount = data.ratingCount ?? 0;
+  let currentAvg = data.rating ?? 0;
 
-  const ratingCount = currentCount + 1;
-  const rating =
-    (currentAvg * currentCount + newScore) / ratingCount;
+  let ratingCount: number;
+  let rating: number;
+
+  if (oldScore !== null) {
+    // UPDATE: Remove old score contribution, add new score
+    // Formula: newAvg = (oldAvg * count - oldScore + newScore) / count
+    if (currentCount > 0) {
+      const totalScore = currentAvg * currentCount - oldScore + newScore;
+      rating = totalScore / currentCount;
+      ratingCount = currentCount; // Count stays the same
+    } else {
+      // Edge case: shouldn't happen, but handle gracefully
+      rating = newScore;
+      ratingCount = 1;
+    }
+  } else {
+    // NEW RATING: Add to the average
+    ratingCount = currentCount + 1;
+    rating = (currentAvg * currentCount + newScore) / ratingCount;
+  }
 
   await updateDoc(ref, {
     rating,
@@ -230,7 +270,7 @@ export async function createDriverComplaintAgainstCustomer(args: {
     customerId: args.driverId,
     customerName: args.driverName,
     orderId: args.orderId,
-    targetType: "CUSTOMER",  // ✅ Now this is allowed
+    targetType: "CUSTOMER",
     targetId: args.customerName,    // we don't have a separate customerId, so use name
     targetName: args.customerName,
     description: args.description,

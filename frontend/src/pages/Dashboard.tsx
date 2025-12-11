@@ -13,6 +13,7 @@ import {
   submitRating,
 } from "../services/complaintService";
 import { requestAccountClosure } from "../services/userService";
+import StarRating from "../components/StarRating";
 import "../styles.css";
 
 export default function Dashboard() {
@@ -22,6 +23,9 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersError, setOrdersError] = useState("");
+  
+  // Track ratings per order (for the star rating component)
+  const [orderRatings, setOrderRatings] = useState<Record<string, { dishId: string; score: number; comment: string }>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -56,6 +60,19 @@ export default function Dashboard() {
   const statusLabel = (status: Order["status"]) =>
     status.replace(/_/g, " ");
 
+  // Get or initialize rating state for an order
+  const getOrderRating = (orderId: string) => {
+    return orderRatings[orderId] || { dishId: "", score: 0, comment: "" };
+  };
+
+  // Update rating state for an order
+  const updateOrderRating = (orderId: string, updates: Partial<{ dishId: string; score: number; comment: string }>) => {
+    setOrderRatings(prev => ({
+      ...prev,
+      [orderId]: { ...getOrderRating(orderId), ...updates }
+    }));
+  };
+
   // ⭐ Dish rating submit
   const handleSubmitRating = async (
     e: FormEvent<HTMLFormElement>,
@@ -64,39 +81,38 @@ export default function Dashboard() {
     e.preventDefault();
     if (!user) return;
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const rating = getOrderRating(order.id);
 
-    const dishId = (formData.get("dishId") as string) || "";
-    const scoreStr = (formData.get("score") as string) || "";
-    const comment = (formData.get("comment") as string) || "";
-
-    if (!dishId) {
+    if (!rating.dishId) {
       alert("Please select a dish to rate.");
       return;
     }
 
-    const score = Number(scoreStr);
-    if (!scoreStr || isNaN(score) || score < 1 || score > 5) {
-      alert("Please choose a rating between 1 and 5.");
+    if (!rating.score || rating.score < 1 || rating.score > 5) {
+      alert("Please select a star rating.");
       return;
     }
 
-    const dish = order.items.find((it) => it.id === dishId);
+    const dish = order.items.find((it) => it.id === rating.dishId);
     const dishName = dish?.dishName ?? "Dish";
 
     try {
       await submitRating({
         orderId: order.id,
-        dishId: dishId,
+        dishId: rating.dishId,
         dishName,
         customerId: user.id,
         customerName: user.name,
-        score,
-        comment,
+        score: rating.score,
+        comment: rating.comment,
       });
       alert("Thank you! Your rating has been recorded.");
-      form.reset();
+      // Clear the rating state for this order
+      setOrderRatings(prev => {
+        const newState = { ...prev };
+        delete newState[order.id];
+        return newState;
+      });
     } catch (err) {
       console.error(err);
       alert("Failed to submit rating. Please try again.");
@@ -245,173 +261,182 @@ export default function Dashboard() {
           {orders.length === 0 ? (
             <p style={{ textAlign: "center", color: "#6b7280" }}>You have no orders yet.</p>
           ) : (
-            orders.map((order) => (
-              <div key={order.id} className="order-card">
-                <div className="order-header">
-                  <span className="order-id">Order #{(order.id ?? '').slice(0, 8)}</span>
-                  <span
-                    className={`status-badge ${(order.status ?? 'unknown').toLowerCase()}`}
-                  >
-                    {statusLabel(order.status ?? 'UNKNOWN')}
-                  </span>
-                </div>
-
-                <div className="order-details">
-                  <div className="detail-row">
-                    <span className="label">Placed:</span>
-                    <span>
-                      {order.createdAt 
-                        ? new Date(order.createdAt as any).toLocaleString()
-                        : 'Unknown'
-                      }
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Items:</span>
-                    <span>
-                      {Array.isArray(order.items)
-                        ? order.items.length
-                        : 0}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Total:</span>
-                    <span>
-                      ${(order.totalPrice ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {Array.isArray(order.items) &&
-                  order.items.length > 0 && (
-                    <div className="order-items">
-                      {order.items.map((item, idx) => (
-                        <div key={item.id ?? idx} className="detail-row">
-                          <span className="label">•</span>
-                          <span>
-                            {item.quantity ?? 1}x {item.dishName ?? 'Unknown Dish'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                {/* Feedback area */}
-                <div className="order-feedback">
-                  {/* Dish rating form */}
-                  <form
-                    className="feedback-form"
-                    onSubmit={(e) => handleSubmitRating(e, order)}
-                  >
-                    <h4 className="h4">Rate a dish</h4>
-
-                    <div className="feedback-row">
-                      <label>
-                        Dish:
-                        <select
-                          name="dishId"
-                          className="input"
-                          defaultValue=""
-                          disabled={order.status !== "DELIVERED"}
-                        >
-                          <option value="" disabled>
-                            Select dish
-                          </option>
-                          {(order.items ?? []).map((item, idx) => (
-                            <option key={item.id ?? idx} value={item.id}>
-                              {item.dishName ?? 'Dish'}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-
-                    <div className="feedback-row">
-                      <label>
-                        Rating:
-                        <select
-                          name="score"
-                          defaultValue=""
-                          disabled={order.status !== "DELIVERED"}
-                          className="input"
-                        >
-                          <option value="" disabled>
-                            Select rating
-                          </option>
-                          <option value="5">⭐ 5 - Excellent</option>
-                          <option value="4">⭐ 4 - Good</option>
-                          <option value="3">⭐ 3 - OK</option>
-                          <option value="2">⭐ 2 - Poor</option>
-                          <option value="1">⭐ 1 - Terrible</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    <div className="feedback-row">
-                      <input
-                        name="comment"
-                        className="input"
-                        placeholder="Optional comment about this dish"
-                        disabled={order.status !== "DELIVERED"}
-                      />
-                    </div>
-
-                    <button
-                      className="btn btn-sm"
-                      type="submit"
-                      disabled={order.status !== "DELIVERED"}
+            orders.map((order) => {
+              const rating = getOrderRating(order.id);
+              
+              return (
+                <div key={order.id} className="order-card">
+                  <div className="order-header">
+                    <span className="order-id">Order #{(order.id ?? '').slice(0, 8)}</span>
+                    <span
+                      className={`status-badge ${(order.status ?? 'unknown').toLowerCase()}`}
                     >
-                      Submit Dish Rating
-                    </button>
-                  </form>
+                      {statusLabel(order.status ?? 'UNKNOWN')}
+                    </span>
+                  </div>
 
-                  {/* Complaint / compliment form (about chef/delivery) */}
-                  <form
-                    className="feedback-form"
-                    onSubmit={(e) => handleSubmitFeedback(e, order)}
-                  >
-                    <h4 className="h4">Complaint / Compliment</h4>
-                    <div className="feedback-row">
-                      <label>
-                        Type:
-                        <select
-                          name="kind"
+                  <div className="order-details">
+                    <div className="detail-row">
+                      <span className="label">Placed:</span>
+                      <span>
+                        {order.createdAt 
+                          ? new Date(order.createdAt as any).toLocaleString()
+                          : 'Unknown'
+                        }
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Items:</span>
+                      <span>
+                        {Array.isArray(order.items)
+                          ? order.items.length
+                          : 0}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Total:</span>
+                      <span>
+                        ${(order.totalPrice ?? 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {Array.isArray(order.items) &&
+                    order.items.length > 0 && (
+                      <div className="order-items">
+                        {order.items.map((item, idx) => (
+                          <div key={item.id ?? idx} className="detail-row">
+                            <span className="label">•</span>
+                            <span>
+                              {item.quantity ?? 1}x {item.dishName ?? 'Unknown Dish'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                  {/* Feedback area */}
+                  <div className="order-feedback">
+                    {/* Dish rating form with Star Rating */}
+                    <form
+                      className="feedback-form"
+                      onSubmit={(e) => handleSubmitRating(e, order)}
+                    >
+                      <h4 className="h4">Rate a dish</h4>
+
+                      <div className="feedback-row">
+                        <label>
+                          Dish:
+                          <select
+                            className="input"
+                            value={rating.dishId}
+                            onChange={(e) => updateOrderRating(order.id, { dishId: e.target.value })}
+                            disabled={order.status !== "DELIVERED"}
+                          >
+                            <option value="" disabled>
+                              Select dish
+                            </option>
+                            {(order.items ?? []).map((item, idx) => (
+                              <option key={item.id ?? idx} value={item.id}>
+                                {item.dishName ?? 'Dish'}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="feedback-row">
+                        <label style={{ display: "block", marginBottom: "8px" }}>
+                          Rating:
+                        </label>
+                        <StarRating
+                          value={rating.score}
+                          onChange={(score) => updateOrderRating(order.id, { score })}
+                          disabled={order.status !== "DELIVERED"}
+                          size="lg"
+                        />
+                        {rating.score > 0 && (
+                          <span style={{ 
+                            marginLeft: "12px", 
+                            color: "#6b7280",
+                            fontSize: "14px"
+                          }}>
+                            {rating.score === 5 && "Excellent!"}
+                            {rating.score === 4 && "Good"}
+                            {rating.score === 3 && "OK"}
+                            {rating.score === 2 && "Poor"}
+                            {rating.score === 1 && "Terrible"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="feedback-row">
+                        <input
                           className="input"
-                          defaultValue="COMPLAINT"
-                        >
-                          <option value="COMPLAINT">Complaint</option>
-                          <option value="COMPLIMENT">Compliment</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div className="feedback-row">
-                      <label>
-                        About:
-                        <select
-                          name="target"
+                          placeholder="Optional comment about this dish"
+                          value={rating.comment}
+                          onChange={(e) => updateOrderRating(order.id, { comment: e.target.value })}
+                          disabled={order.status !== "DELIVERED"}
+                        />
+                      </div>
+
+                      <button
+                        className="btn btn-sm"
+                        type="submit"
+                        disabled={order.status !== "DELIVERED"}
+                      >
+                        Submit Dish Rating
+                      </button>
+                    </form>
+
+                    {/* Complaint / compliment form (about chef/delivery) */}
+                    <form
+                      className="feedback-form"
+                      onSubmit={(e) => handleSubmitFeedback(e, order)}
+                    >
+                      <h4 className="h4">Complaint / Compliment</h4>
+                      <div className="feedback-row">
+                        <label>
+                          Type:
+                          <select
+                            name="kind"
+                            className="input"
+                            defaultValue="COMPLAINT"
+                          >
+                            <option value="COMPLAINT">Complaint</option>
+                            <option value="COMPLIMENT">Compliment</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div className="feedback-row">
+                        <label>
+                          About:
+                          <select
+                            name="target"
+                            className="input"
+                            defaultValue="chef"
+                          >
+                            <option value="chef">Chef</option>
+                            <option value="delivery">Delivery</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div className="feedback-row">
+                        <textarea
+                          name="description"
                           className="input"
-                          defaultValue="chef"
-                        >
-                          <option value="chef">Chef</option>
-                          <option value="delivery">Delivery</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div className="feedback-row">
-                      <textarea
-                        name="description"
-                        className="input"
-                        rows={2}
-                        placeholder="Describe your complaint/compliment"
-                      />
-                    </div>
-                    <button className="btn btn-sm" type="submit">
-                      Submit Feedback
-                    </button>
-                  </form>
+                          rows={2}
+                          placeholder="Describe your complaint/compliment"
+                        />
+                      </div>
+                      <button className="btn btn-sm" type="submit">
+                        Submit Feedback
+                      </button>
+                    </form>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}

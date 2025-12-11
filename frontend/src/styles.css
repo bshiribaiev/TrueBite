@@ -488,6 +488,12 @@ body {
   flex-direction: column;
 }
 
+.cart-items .orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .cart-summary {
   min-width: 0;
 }

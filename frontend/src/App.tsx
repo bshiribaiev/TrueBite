@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import "./styles.css";
 import ErrorBoundary from "./ErrorBoundary";
 import { useAuth } from "./context/AuthContext";
+import { useCart } from "./context/CartContext";
 
 const Home = lazy(() => import("./pages/Home"));
 const Menu = lazy(() => import("./pages/Menu"));
@@ -17,7 +18,11 @@ const DeliveryDashboard = lazy(() => import("./pages/DeliveryDashboard"));
 
 export default function App() {
   const { user, loading, logout } = useAuth();
+  const { items } = useCart();
   const navigate = useNavigate();
+
+  // Calculate total items in cart
+  const cartCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   const handleLogout = async () => {
     await logout();
@@ -46,6 +51,9 @@ export default function App() {
   };
 
   const roleInfo = getRoleDisplay();
+
+  // Check if user is a customer (can see cart)
+  const isCustomer = !user || user.role === "registered" || user.role === "vip" || user.role === "customer";
 
   return (
     <div>
@@ -90,14 +98,17 @@ export default function App() {
           {/* Logged in users */}
           {user && (
             <>
-              {/* Customers see Dashboard, Checkout, Forum */}
+              {/* Customers see Dashboard, Checkout (Cart), Forum */}
               {(user.role === "registered" || user.role === "vip" || user.role === "customer") && (
                 <>
                   <NavLink to="/dashboard" className="navlink">
                     Dashboard
                   </NavLink>
-                  <NavLink to="/checkout" className="navlink">
-                    Checkout
+                  <NavLink to="/checkout" className="navlink cart-navlink">
+                    Cart
+                    {cartCount > 0 && (
+                      <span className="cart-badge">{cartCount}</span>
+                    )}
                   </NavLink>
                   <NavLink to="/forum" className="navlink">
                     Forum
@@ -233,6 +244,31 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+
+      {/* Cart badge styles */}
+      <style>{`
+        .cart-navlink {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .cart-badge {
+          position: absolute;
+          top: -8px;
+          right: -12px;
+          background: #ef4444;
+          color: white;
+          font-size: 11px;
+          font-weight: bold;
+          padding: 2px 6px;
+          border-radius: 999px;
+          min-width: 18px;
+          text-align: center;
+          line-height: 1.2;
+        }
+      `}</style>
     </div>
   );
 }

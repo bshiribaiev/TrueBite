@@ -10,6 +10,7 @@ import type { Dish } from "../types";
 
 interface DishWithStats extends Dish {
   orderCount: number;
+  userAverageRating?: number; // User's personal average rating for this dish
 }
 
 export default function Home() {
@@ -17,14 +18,22 @@ export default function Home() {
   const { user } = useAuth();
   const { addItem } = useCart();
 
+  // Global stats (for visitors/new customers)
   const [popular, setPopular] = useState<DishWithStats[]>([]);
   const [topRated, setTopRated] = useState<DishWithStats[]>([]);
+  
+  // Personalized stats (for returning customers)
+  const [userFavorites, setUserFavorites] = useState<DishWithStats[]>([]); // Most ordered by user
+  const [userHighestRated, setUserHighestRated] = useState<DishWithStats[]>([]); // User's 4+ star rated dishes
+  const [recommendedForYou, setRecommendedForYou] = useState<DishWithStats[]>([]); // Highly rated dishes user hasn't tried
+  const [isReturningCustomer, setIsReturningCustomer] = useState(false);
+  
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDishStats = async () => {
       try {
-        // Step 1: Fetch all available dishes from dishes collection (same as Menu.tsx)
+        // Step 1: Fetch all available dishes from dishes collection
         const dishQuery = query(
           collection(db, "dishes"),
           where("available", "==", true)
@@ -42,37 +51,149 @@ export default function Home() {
             price: d.price ?? 0,
             img: d.img ?? "/placeholder-dish.jpg",
             available: d.available ?? true,
-            rating: d.rating ?? 0,
+            rating: d.rating ?? 0, // Global average rating
             orderCount: 0,
           });
         });
 
-        // Step 2: Fetch orders to count popularity
-        const ordersSnapshot = await getDocs(collection(db, "orders"));
+        // Step 2: Fetch all orders from "deliveries" collection to calculate popularity
+        const ordersSnapshot = await getDocs(collection(db, "deliveries"));
+        const allOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        ordersSnapshot.docs.forEach((doc) => {
-          const order = doc.data();
+        // Track which dishes the user has ordered (for "Your Favorites")
+        const userOrderedDishes = new Map<string, number>(); // dishId -> total quantity ordered
+        let userOrderCount = 0;
+
+        allOrders.forEach((order: any) => {
+          const isUserOrder = user && order.customerId === user.id;
+          
+          if (isUserOrder) {
+            userOrderCount++;
+          }
 
           order.items?.forEach((item: any) => {
             const dishId = item.dishId || item.id;
 
-            // Only count if this dish exists in our dishes collection
+            // Update global order count for popularity
             if (dishesMap.has(dishId)) {
               const dish = dishesMap.get(dishId)!;
               dish.orderCount += item.quantity || 1;
             }
+
+            // Track user's order history
+            if (isUserOrder && dishId) {
+              const currentCount = userOrderedDishes.get(dishId) || 0;
+              userOrderedDishes.set(dishId, currentCount + (item.quantity || 1));
+            }
           });
         });
 
+        // Step 3: Fetch user's personal ratings from "ratings" collection
+        // These are stored with composite keys: {orderId}_{dishId}_{customerId}
+        const userDishRatings = new Map<string, { totalScore: number; count: number }>(); // dishId -> ratings
+        
+        if (user) {
+          const ratingsSnapshot = await getDocs(collection(db, "ratings"));
+          
+          ratingsSnapshot.docs.forEach((docSnap) => {
+            const rating = docSnap.data();
+            
+            // Only include this user's ratings
+            if (rating.customerId === user.id && rating.dishId && rating.score) {
+              const dishId = rating.dishId;
+              
+              if (!userDishRatings.has(dishId)) {
+                userDishRatings.set(dishId, { totalScore: 0, count: 0 });
+              }
+              
+              const stats = userDishRatings.get(dishId)!;
+              stats.totalScore += rating.score;
+              stats.count += 1;
+            }
+          });
+        }
+
         const allDishes = Array.from(dishesMap.values());
 
-        // Get top 6 most popular (by order count, must have at least 1 order)
+        // Check if user is a returning customer (has placed orders before)
+        const hasOrderHistory = user && userOrderCount > 0;
+        setIsReturningCustomer(!!hasOrderHistory);
+
+        if (hasOrderHistory) {
+          // ─────────────────────────────────────────────────────────────
+          // PERSONALIZED SECTIONS for returning customers
+          // ─────────────────────────────────────────────────────────────
+
+          // 1. YOUR FAVORITES: Dishes the user has ordered most (by quantity)
+          const favorites = Array.from(userOrderedDishes.entries())
+            .map(([dishId, orderCount]) => {
+              const dish = dishesMap.get(dishId);
+              if (dish) {
+                return { ...dish, orderCount };
+              }
+              return null;
+            })
+            .filter((d): d is DishWithStats => d !== null)
+            .sort((a, b) => b.orderCount - a.orderCount)
+            .slice(0, 6);
+
+          setUserFavorites(favorites);
+
+          // 2. HIGHEST RATED: Dishes the user has personally rated 4+ stars (their average)
+          const highestRatedByUser = Array.from(userDishRatings.entries())
+            .map(([dishId, stats]) => {
+              const dish = dishesMap.get(dishId);
+              const userAverage = stats.totalScore / stats.count;
+              
+              // Only include dishes rated 4+ stars by this user
+              if (dish && userAverage >= 4) {
+                return { 
+                  ...dish, 
+                  userAverageRating: userAverage,
+                  // Display the user's average rating instead of global
+                  rating: userAverage 
+                };
+              }
+              return null;
+            })
+            .filter((d): d is DishWithStats => d !== null)
+            .sort((a, b) => (b.userAverageRating ?? 0) - (a.userAverageRating ?? 0))
+            .slice(0, 6);
+
+          setUserHighestRated(highestRatedByUser);
+
+          // 3. RECOMMENDED FOR YOU: Highly-rated dishes (global) user hasn't ordered
+          const notOrderedByUser = allDishes.filter(
+            d => !userOrderedDishes.has(d.id) && (d.rating ?? 0) > 0
+          );
+          
+          const recommendations = notOrderedByUser
+            .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+            .slice(0, 6);
+
+          // If not enough rated dishes, fill with popular dishes they haven't tried
+          if (recommendations.length < 6) {
+            const additionalRecs = allDishes
+              .filter(d => !userOrderedDishes.has(d.id) && !recommendations.includes(d))
+              .sort((a, b) => b.orderCount - a.orderCount)
+              .slice(0, 6 - recommendations.length);
+            recommendations.push(...additionalRecs);
+          }
+
+          setRecommendedForYou(recommendations);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GLOBAL SECTIONS (for visitors OR as additional sections for returning customers)
+        // ─────────────────────────────────────────────────────────────
+
+        // Most Popular: by total order count across all users
         const mostPopular = [...allDishes]
           .filter((d) => d.orderCount > 0)
           .sort((a, b) => b.orderCount - a.orderCount)
           .slice(0, 6);
 
-        // Get top 6 highest rated (must have rating > 0)
+        // Top Rated: by global average rating
         const highestRated = [...allDishes]
           .filter((d) => (d.rating ?? 0) > 0)
           .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
@@ -80,6 +201,7 @@ export default function Home() {
 
         setPopular(mostPopular);
         setTopRated(highestRated);
+
       } catch (error) {
         console.error("Error fetching dish stats:", error);
       } finally {
@@ -88,15 +210,22 @@ export default function Home() {
     };
 
     fetchDishStats();
-  }, []);
+  }, [user]);
 
-  const handleOrder = (id: string) => {
+  const handleAddToCart = (id: string) => {
     if (!user) {
       nav("/login");
       return;
     }
 
-    const dish = popular.find((d) => d.id === id) || topRated.find((d) => d.id === id);
+    // Find dish from any of our lists
+    const dish = 
+      popular.find((d) => d.id === id) || 
+      topRated.find((d) => d.id === id) ||
+      userFavorites.find((d) => d.id === id) ||
+      userHighestRated.find((d) => d.id === id) ||
+      recommendedForYou.find((d) => d.id === id);
+      
     if (!dish) return;
 
     addItem({
@@ -105,8 +234,6 @@ export default function Home() {
       price: dish.price ?? 0,
       image: dish.img,
     });
-
-    nav("/checkout");
   };
 
   if (loading) {
@@ -117,16 +244,87 @@ export default function Home() {
     );
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // RETURNING CUSTOMER VIEW - Personalized sections
+  // ─────────────────────────────────────────────────────────────
+  if (isReturningCustomer && user) {
+    return (
+      <>
+        <h1 className="h1">Welcome back, {user.name}!</h1>
+        <p className="muted">Here are some dishes picked just for you.</p>
+
+        {/* Your Favorites - most ordered by this user */}
+        <Section title="❤️ Your Favorites">
+          {userFavorites.length > 0 ? (
+            <div className="grid">
+              {userFavorites.map((d) => (
+                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+              ))}
+            </div>
+          ) : (
+            <p className="muted">Start ordering to see your favorites here!</p>
+          )}
+        </Section>
+
+        {/* Highest Rated - dishes this user rated 4+ stars */}
+        <Section title="⭐ Your Highest Rated">
+          {userHighestRated.length > 0 ? (
+            <div className="grid">
+              {userHighestRated.map((d) => (
+                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+              ))}
+            </div>
+          ) : (
+            <p className="muted">Rate dishes 4+ stars to see them here!</p>
+          )}
+        </Section>
+
+        {/* Recommended - highly rated dishes (global) user hasn't tried */}
+        <Section title="✨ Recommended For You">
+          {recommendedForYou.length > 0 ? (
+            <div className="grid">
+              {recommendedForYou.map((d) => (
+                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+              ))}
+            </div>
+          ) : (
+            <p className="muted">You've tried everything! Check back for new dishes.</p>
+          )}
+        </Section>
+
+        {/* Trending Now - global top rated */}
+        <Section title="🔥 Trending Now">
+          {topRated.length > 0 ? (
+            <div className="grid">
+              {topRated.slice(0, 4).map((d) => (
+                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+              ))}
+            </div>
+          ) : (
+            <p className="muted">No trending dishes yet.</p>
+          )}
+        </Section>
+      </>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // VISITOR / NEW CUSTOMER VIEW - Global stats only
+  // ─────────────────────────────────────────────────────────────
   return (
     <>
       <h1 className="h1">Welcome to TrueBite</h1>
-      <p className="muted">Discover top-rated dishes, then sign in to order.</p>
+      <p className="muted">
+        {user 
+          ? "Discover our top dishes and start ordering!" 
+          : "Discover top-rated dishes, then sign in to order."}
+      </p>
 
-      <Section title="Most Popular">
+      <Section title="🔥 Most Popular">
         {popular.length > 0 ? (
           <div className="grid">
             {popular.map((d) => (
-              <DishCard key={d.id} dish={d} onOrder={handleOrder} />
+              <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
             ))}
           </div>
         ) : (
@@ -134,11 +332,11 @@ export default function Home() {
         )}
       </Section>
 
-      <Section title="Top Rated">
+      <Section title="⭐ Top Rated">
         {topRated.length > 0 ? (
           <div className="grid">
             {topRated.map((d) => (
-              <DishCard key={d.id} dish={d} onOrder={handleOrder} />
+              <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
             ))}
           </div>
         ) : (

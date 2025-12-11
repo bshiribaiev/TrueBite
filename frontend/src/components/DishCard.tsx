@@ -11,9 +11,10 @@ interface DishCardProps {
     averageRating?: number;
   };
   onOrder?: (id: string) => void;
+  buttonText?: string;
 }
 
-export default function DishCard({ dish, onOrder }: DishCardProps) {
+export default function DishCard({ dish, onOrder, buttonText = "Order" }: DishCardProps) {
   // Handle both 'img' and 'image' properties
   const imageUrl = dish.img || dish.image || "/placeholder-dish.jpg";
   
@@ -26,6 +27,9 @@ export default function DishCard({ dish, onOrder }: DishCardProps) {
   // Format rating display - show "New" if no rating yet
   const ratingDisplay = rating > 0 ? `⭐ ${rating.toFixed(1)}` : "✨ New";
 
+  // Check if button shows "Added" state
+  const isAdded = buttonText?.includes("Added");
+
   return (
     <div className="card">
       <img src={imageUrl} alt={dish.name} className="card-img" />
@@ -35,8 +39,15 @@ export default function DishCard({ dish, onOrder }: DishCardProps) {
           ${price.toFixed(2)} • {ratingDisplay}
         </div>
         {onOrder && (
-          <button className="btn" onClick={() => onOrder(dish.id)}>
-            Order
+          <button 
+            className="btn" 
+            onClick={() => onOrder(dish.id)}
+            style={isAdded ? {
+              backgroundColor: "#22c55e",
+              cursor: "default"
+            } : undefined}
+          >
+            {buttonText}
           </button>
         )}
       </div>
