@@ -11,7 +11,6 @@ import {
   updateUserRole,
   type UserWithId,
   updateEmployeeStats,
-  incrementUserWarnings,
   getAllCustomers,
   clearAndCloseCustomerAccount,
   clearDepositOnly,
@@ -90,18 +89,15 @@ export default function ManagerDashboard() {
 
   const handleResolveComplaint = async (
     complaint: Complaint,
-    resolution: Complaint["status"],
-    notes: string,
-    warn: "none" | "target" | "sender"
+    resolution: "approved" | "dismissed",  // ✅ Simpler
+    notes: string
   ) => {
     try {
-      await resolveComplaint(complaint.id, resolution, notes);
-
-      if (warn === "target" && complaint.targetId) {
-        await incrementUserWarnings(complaint.targetId);
-      } else if (warn === "sender" && complaint.customerId) {
-        await incrementUserWarnings(complaint.customerId);
-      }
+    await resolveComplaint({
+      complaintId: complaint.id,  //  Use complaint.id
+      decision: resolution,  // Just pass it directly
+      managerNotes: notes
+    }); 
 
       await loadData();
       alert("Complaint resolved successfully");
@@ -450,9 +446,8 @@ function ComplaintsTab({
   complaints: Complaint[]; 
   onResolve: (
     complaint: Complaint,
-    resolution: Complaint["status"],
-    notes: string,
-    warn: "none" | "target" | "sender"
+    resolution: "approved" | "dismissed",
+    notes: string
   ) => void;
 }) {
   const [selectedComplaint, setSelectedComplaint] = useState<string | null>(null);
@@ -469,23 +464,16 @@ function ComplaintsTab({
     return true;
   };
 
+  const handleApprove = (complaint: Complaint) => {
+    if (!ensureNotes()) return;
+    onResolve(complaint, "approved", notes);
+    setSelectedComplaint(null);
+    setNotes("");
+  };
+
   const handleDismiss = (complaint: Complaint) => {
     if (!ensureNotes()) return;
-    onResolve(complaint, "RESOLVED_NO_ACTION", notes, "none");
-    setSelectedComplaint(null);
-    setNotes("");
-  };
-
-  const handleWarnTarget = (complaint: Complaint) => {
-    if (!ensureNotes()) return;
-    onResolve(complaint, "RESOLVED_WARNING", notes, "target");
-    setSelectedComplaint(null);
-    setNotes("");
-  };
-
-  const handleWarnSender = (complaint: Complaint) => {
-    if (!ensureNotes()) return;
-    onResolve(complaint, "RESOLVED_WARNING", notes, "sender");
+    onResolve(complaint, "dismissed", notes);
     setSelectedComplaint(null);
     setNotes("");
   };
@@ -563,19 +551,24 @@ function ComplaintsTab({
                       />
                     </label>
                     <div className="resolution-actions">
-                      <button className="btn" onClick={() => handleDismiss(complaint)}>
-                        Dismiss
-                      </button>
-                      <button className="btn" onClick={() => handleWarnTarget(complaint)}>
-                        Warn Target
-                      </button>
-                      <button className="btn" onClick={() => handleWarnSender(complaint)}>
-                        Warn Sender (Bad Complaint)
-                      </button>
-                      <button className="btn ghost" onClick={() => setSelectedComplaint(null)}>
-                        Cancel
-                      </button>
-                    </div>
+                    <button 
+                      className="btn" 
+                      onClick={() => handleApprove(complaint)}
+                      title="Approve complaint - warns target employee"
+                    >
+                      ✅ Approve (Warn Target)
+                    </button>
+                    <button 
+                      className="btn ghost" 
+                      onClick={() => handleDismiss(complaint)}
+                      title="Dismiss as frivolous - warns complainant"
+                    >
+                      ❌ Dismiss (Warn Sender)
+                    </button>
+                    <button className="btn ghost" onClick={() => setSelectedComplaint(null)}>
+                      Cancel
+                    </button>
+                  </div>
                   </div>
                 ) : (
                   <button className="btn" onClick={() => setSelectedComplaint(complaint.id)}>

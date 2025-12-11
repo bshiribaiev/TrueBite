@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import {
   createForumPost,
   subscribeToForumPosts,
+  reportPost,
+  deletePost,
   type ForumPost,
 } from "../services/forumService";
 
@@ -13,6 +15,8 @@ export default function Forum() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [reportingPostId, setReportingPostId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
 
   useEffect(() => {
     // Subscribe to real-time updates
@@ -47,6 +51,55 @@ export default function Forum() {
       alert("Failed to post message");
     } finally {
       setPosting(false);
+    }
+  };
+
+  const handleReport = async (post: ForumPost) => {
+    if (!user) {
+      alert("You must be logged in to report");
+      return;
+    }
+
+    if (!reportReason.trim()) {
+      alert("Please enter a reason for the report");
+      return;
+    }
+
+    try {
+      await reportPost(
+        post.id,
+        post.message,
+        post.userId,
+        post.userName,
+        user.id,
+        user.name,
+        reportReason.trim()
+      );
+      alert("Report submitted. The manager will review it.");
+      setReportingPostId(null);
+      setReportReason("");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit report");
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    if (!user || user.role !== "manager") {
+      alert("Only managers can delete posts");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this post?")) {
+      return;
+    }
+
+    try {
+      await deletePost(postId);
+      alert("Post deleted successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete post");
     }
   };
 
@@ -239,6 +292,114 @@ export default function Forum() {
                   >
                     {post.message}
                   </p>
+
+                  {/* Action buttons */}
+                  {user && (
+                    <div
+                      style={{
+                        marginTop: "12px",
+                        paddingTop: "12px",
+                        borderTop: "1px solid #e5e7eb",
+                        display: "flex",
+                        gap: "8px",
+                        alignItems: "center",
+                      }}
+                    >
+                      {/* Report button - for any logged-in user (except own posts) */}
+                      {user.id !== post.userId && (
+                        <>
+                          {reportingPostId === post.id ? (
+                            <div style={{ display: "flex", gap: "8px", flex: 1 }}>
+                              <input
+                                type="text"
+                                placeholder="Reason for report..."
+                                value={reportReason}
+                                onChange={(e) => setReportReason(e.target.value)}
+                                style={{
+                                  flex: 1,
+                                  padding: "6px 10px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #d1d5db",
+                                  fontSize: "13px",
+                                }}
+                              />
+                              <button
+                                onClick={() => handleReport(post)}
+                                style={{
+                                  backgroundColor: "#ef4444",
+                                  color: "white",
+                                  border: "none",
+                                  padding: "6px 12px",
+                                  borderRadius: "6px",
+                                  fontSize: "13px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Submit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setReportingPostId(null);
+                                  setReportReason("");
+                                }}
+                                style={{
+                                  backgroundColor: "#e5e7eb",
+                                  color: "#374151",
+                                  border: "none",
+                                  padding: "6px 12px",
+                                  borderRadius: "6px",
+                                  fontSize: "13px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setReportingPostId(post.id)}
+                              style={{
+                                backgroundColor: "transparent",
+                                color: "#6b7280",
+                                border: "1px solid #d1d5db",
+                                padding: "4px 10px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              🚩 Report
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      {/* Delete button - for managers only */}
+                      {user.role === "manager" && (
+                        <button
+                          onClick={() => handleDelete(post.id)}
+                          style={{
+                            backgroundColor: "#fee2e2",
+                            color: "#dc2626",
+                            border: "1px solid #fecaca",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            marginLeft: "auto",
+                          }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
