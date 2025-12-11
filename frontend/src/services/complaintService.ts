@@ -40,19 +40,7 @@ export async function getAllComplaints(): Promise<Complaint[]> {
   });
 }
 
-// Resolve a complaint (update status + manager notes)
-export async function resolveComplaint(
-  complaintId: string,
-  resolution: Complaint["status"],
-  notes: string
-) {
-  const ref = doc(db, "complaints", complaintId);
-  await updateDoc(ref, {
-    status: resolution,
-    managerNotes: notes,
-    resolvedAt: serverTimestamp(),
-  });
-}
+
 export type NewComplaintPayload = {
   customerId: string;
   customerName: string;
@@ -102,21 +90,6 @@ export async function createComplaint(params: {
     status: "PENDING",
     createdAt: serverTimestamp(),
   });
-
-  // AUTO-UPDATE WITH VIP WEIGHT
-  if (kind === "COMPLAINT") {
-    await applyFeedbackToEmployee({
-      targetId,
-      deltaWarnings: weight,          // Adds warnings
-      deltaCommendations: -weight,    // Reduces commendations (CANCEL EFFECT!)
-    });
-  } else if (kind === "COMPLIMENT") {
-    await applyFeedbackToEmployee({
-      targetId,
-      deltaWarnings: -weight,         // Reduces warnings (CANCEL EFFECT!)
-      deltaCommendations: weight,     // Adds commendations
-    });
-  }
 }
 
 
@@ -275,4 +248,54 @@ export async function createDriverComplaintAgainstCustomer(args: {
     targetName: args.customerName,
     description: args.description,
   });
+}
+
+/**
+ * Manager approves or dismisses a complaint
+ */
+export async function resolveComplaint(params: {
+  complaintId: string;
+  decision: "approved" | "dismissed";
+  managerNotes?: string;
+}) {
+  const { complaintId, decision, managerNotes } = params;
+  
+  const complaintRef = doc(db, "complaints", complaintId);
+  const snap = await getDoc(complaintRef);
+  
+  if (!snap.exists()) {
+    throw new Error("Complaint not found");
+  }
+  
+  const complaint = snap.data();
+  const { targetId, customerId, kind, weight } = complaint;  
+  // Update complaint status
+  await updateDoc(complaintRef, {
+    status: decision === "approved" ? "resolved" : "dismissed",
+    managerNotes: managerNotes ?? "",
+    resolvedAt: serverTimestamp(),
+  });
+  
+  if (decision === "approved") {
+    // Apply the warning/commendation to target
+    if (kind === "COMPLAINT") {
+      await applyFeedbackToEmployee({
+        targetId,
+        deltaWarnings: weight,
+        deltaCommendations: -weight,
+      });
+    } else if (kind === "COMPLIMENT") {
+      await applyFeedbackToEmployee({
+        targetId,
+        deltaWarnings: -weight,
+        deltaCommendations: weight,
+      });
+    }
+  } else {
+    // Frivolous complaint - warn the complainant
+    await applyFeedbackToEmployee({
+      targetId: customerId,
+      deltaWarnings: 1,
+    });
+  }
 }
