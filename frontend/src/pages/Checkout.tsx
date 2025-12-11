@@ -13,6 +13,10 @@ export default function Checkout() {
   
   const [orderCount, setOrderCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  // Delivery address state
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [addressError, setAddressError] = useState("");
 
   // Fetch user's order count on mount
   useEffect(() => {
@@ -66,6 +70,18 @@ export default function Checkout() {
   const handlePlaceOrder = async () => {
     if (!user) return;
 
+    // Validate delivery address
+    const trimmedAddress = deliveryAddress.trim();
+    if (!trimmedAddress) {
+      setAddressError("Please enter a delivery address");
+      return;
+    }
+    if (trimmedAddress.length < 10) {
+      setAddressError("Please enter a complete address");
+      return;
+    }
+    setAddressError("");
+
     if ((user.deposit ?? 0) < total) {
       addWarning();
       alert(
@@ -75,11 +91,10 @@ export default function Checkout() {
     }
 
     try {
-
       // Store VIP status BEFORE order
       const wasVIP = isVIP; 
 
-      const orderId = await createOrder(user.id, user.name, items);
+      const orderId = await createOrder(user.id, user.name, items, trimmedAddress);
       deductDeposit(total);
       clearCart();
 
@@ -95,13 +110,13 @@ export default function Checkout() {
         message += `\n🚚 FREE DELIVERY on your ${nextOrderNumber}${getOrdinalSuffix(nextOrderNumber)} order!`;
       }
 
-    // ✅ IF JUST BECAME VIP, SHOW SPECIAL MESSAGE AND RELOAD
-    if (!wasVIP && isNowVIP) {
-      message += `\n\n🎊 CONGRATULATIONS! You've been upgraded to VIP status! You now get 5% discounts and free delivery every 3rd order!`;
-      alert(message);
-      window.location.reload(); // Reload to show VIP status
-      return;
-    }
+      // IF JUST BECAME VIP, SHOW SPECIAL MESSAGE AND RELOAD
+      if (!wasVIP && isNowVIP) {
+        message += `\n\n🎊 CONGRATULATIONS! You've been upgraded to VIP status! You now get 5% discounts and free delivery every 3rd order!`;
+        alert(message);
+        window.location.reload(); // Reload to show VIP status
+        return;
+      }
 
       alert(message);
       nav("/dashboard");
@@ -168,7 +183,7 @@ export default function Checkout() {
           </div>
         )}
 
-        <div className="orders-list">
+        <div className="orders-list" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {items.map((item) => (
             <div key={item.id} className="order-card">
               <div className="cart-item">
@@ -240,6 +255,46 @@ export default function Checkout() {
       <div className="cart-summary">
         <div className="cart-summary-card">
           <h2 className="h2">Order Summary</h2>
+
+          {/* DELIVERY ADDRESS INPUT */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label 
+              htmlFor="deliveryAddress" 
+              style={{ 
+                display: "block", 
+                marginBottom: "0.5rem", 
+                fontWeight: 600,
+                color: "#374151",
+                justifyContent: "center"
+              }}
+            >
+              Delivery Address <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <textarea
+              id="deliveryAddress"
+              value={deliveryAddress}
+              onChange={(e) => {
+                setDeliveryAddress(e.target.value);
+                if (addressError) setAddressError("");
+              }}
+              placeholder="Enter your full delivery address (e.g., 123 Main St, Apt 4B, New York, NY 10001)"
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: addressError ? "2px solid #ef4444" : "1px solid #d1d5db",
+                fontSize: "0.95rem",
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+            />
+            {addressError && (
+              <p style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.25rem" }}>
+                {addressError}
+              </p>
+            )}
+          </div>
 
           <div className="summary-rows">
             <div className="summary-row">

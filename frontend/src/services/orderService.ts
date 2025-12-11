@@ -25,7 +25,8 @@ export type CartItem = {
 export async function createOrder(
   userId: string,
   userName: string,
-  items: CartItem[]
+  items: CartItem[],
+  deliveryAddress: string // Required delivery address
 ) {
   // 1) GET USER PROFILE FIRST
   const user = await getUserProfile(userId);
@@ -65,6 +66,7 @@ export async function createOrder(
   const docRef = await addDoc(collection(db, "deliveries"), {
     customerId: userId,
     customerName: userName,
+    deliveryAddress, // Store the delivery address
     items: items.map((i) => ({
       dishId: i.id,
       name: i.name,
@@ -120,8 +122,9 @@ export async function getOrdersForUser(userId: string): Promise<Order[]> {
       chefName: data.chefName ?? null,
       deliveryPersonId: data.assignedDriverId ?? data.deliveryPersonId ?? null,
       deliveryPersonName:
-      data.assignedDriverName ?? data.deliveryPersonName ?? null,
+        data.assignedDriverName ?? data.deliveryPersonName ?? null,
       customerName: data.customerName ?? "Customer",
+      deliveryAddress: data.deliveryAddress ?? "", // Include in returned order
       items,
       totalPrice: data.totalPrice ?? 0,
       status: data.status ?? "CREATED",
@@ -155,16 +158,18 @@ export async function getAllOrdersForManager(): Promise<Order[]> {
     return {
       id: d.id,
       ...data,
-      items,         // 👈 ensure items is always an array
+      items,
       createdAt,
+      deliveryAddress: data.deliveryAddress ?? "", // Include delivery address
       chefId: data.chefId ?? null,
-  chefName: data.chefName ?? null,
-  deliveryPersonId: data.assignedDriverId ?? data.deliveryPersonId ?? null,
-  deliveryPersonName:
-    data.assignedDriverName ?? data.deliveryPersonName ?? null,
+      chefName: data.chefName ?? null,
+      deliveryPersonId: data.assignedDriverId ?? data.deliveryPersonId ?? null,
+      deliveryPersonName:
+        data.assignedDriverName ?? data.deliveryPersonName ?? null,
     } as Order;
   });
 }
+
 async function checkAndUpgradeVIP(userId: string): Promise<void> {
   const user = await getUserProfile(userId);
   
@@ -190,5 +195,3 @@ async function checkAndUpgradeVIP(userId: string): Promise<void> {
     });
   }
 }
-
-

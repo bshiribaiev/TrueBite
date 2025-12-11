@@ -29,7 +29,7 @@ export async function getAvailableOrdersForBidding(): Promise<Order[]> {
   );
   const snap = await getDocs(q);
 
-  return snap.docs
+  const orders =  snap.docs
     .map((d) => {
       const data = d.data() as any;
       
@@ -52,6 +52,10 @@ export async function getAvailableOrdersForBidding(): Promise<Order[]> {
       } as Order;
     })
     .filter((order): order is Order => order !== null);
+
+  orders.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  return orders;  
 }
 
 /**
