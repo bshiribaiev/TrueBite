@@ -165,6 +165,7 @@ export async function getAllOrdersForManager(): Promise<Order[]> {
     } as Order;
   });
 }
+
 async function checkAndUpgradeVIP(userId: string): Promise<void> {
   const user = await getUserProfile(userId);
   
@@ -179,15 +180,33 @@ async function checkAndUpgradeVIP(userId: string): Promise<void> {
   const totalSpent = orders.reduce((sum, order) => sum + order.totalPrice, 0);
   const orderCount = orders.length;
   
+  // ✅ CHECK FOR UNRESOLVED COMPLAINTS
+  const complaintsQuery = query(
+    collection(db, "complaints"),
+    where("customerId", "==", userId),
+    where("status", "==", "PENDING")
+  );
+  const complaintsSnap = await getDocs(complaintsQuery);
+  const unresolvedComplaints = complaintsSnap.size;
+  
   // Check if qualifies for VIP
-  if (totalSpent >= 100 || orderCount >= 3) {
-    console.log(`Upgrading user ${userId} to VIP! Spent: $${totalSpent}, Orders: ${orderCount}`);
+  // Must meet ONE of the monetary/order requirements AND have no unresolved complaints
+  const meetsSpendingRequirement = totalSpent >= 100;
+  const meetsOrderRequirement = orderCount >= 3;
+  const hasNoUnresolvedComplaints = unresolvedComplaints === 0;
+  
+  if ((meetsSpendingRequirement || meetsOrderRequirement) && hasNoUnresolvedComplaints) {
+    console.log(`✅ Upgrading user ${userId} to VIP! Spent: $${totalSpent}, Orders: ${orderCount}, Unresolved Complaints: ${unresolvedComplaints}`);
     
     // Upgrade to VIP
     await updateDoc(doc(db, "users", userId), {
       role: "vip",
-      VIP: true, // Nick's flag
+      VIP: true,
+      isVip: true,
+      vipSince: serverTimestamp(),
     });
+  } else {
+    console.log(`❌ Not upgrading user ${userId}. Spent: $${totalSpent}, Orders: ${orderCount}, Unresolved Complaints: ${unresolvedComplaints}`);
   }
 }
 
