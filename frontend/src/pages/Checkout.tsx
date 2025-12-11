@@ -277,7 +277,7 @@ export default function Checkout() {
                 setDeliveryAddress(e.target.value);
                 if (addressError) setAddressError("");
               }}
-              placeholder="Enter your full delivery address (e.g., 123 Main St, Apt 4B, New York, NY 10001)"
+              placeholder="Enter your full delivery address (e.g., 160 Convent Ave, New York, NY 10031)"
               rows={3}
               style={{
                 width: "100%",

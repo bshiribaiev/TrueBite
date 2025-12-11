@@ -15,12 +15,24 @@ import {
 } from "firebase/firestore";
 import type { Order, DeliveryBid, DeliveryAnalytics } from "../types";
 
+// Helper function to safely convert any date format to timestamp for sorting
+function getTimestamp(date: any): number {
+  if (!date) return 0;
+  if (date instanceof Date) return date.getTime();
+  if (date.toDate) return date.toDate().getTime(); // Firestore Timestamp
+  if (date.toMillis) return date.toMillis(); // Another Firestore format
+  if (typeof date === 'string') return new Date(date).getTime();
+  if (typeof date === 'number') return date;
+  return 0;
+}
+
 // ============================================
 // DELIVERY PERSON FUNCTIONS
 // ============================================
 
 /**
  * Get all orders that are ready for delivery (available for bidding)
+ * Sorted by newest first (most recent orders at top)
  */
 export async function getAvailableOrdersForBidding(): Promise<Order[]> {
   const q = query(
@@ -29,13 +41,14 @@ export async function getAvailableOrdersForBidding(): Promise<Order[]> {
   );
   const snap = await getDocs(q);
 
-  const orders =  snap.docs
+  const orders = snap.docs
     .map((d) => {
       const data = d.data() as any;
       
       // Skip orders that already have an assigned driver
       if (data.assignedDriverId) return null;
 
+      // Convert Firestore Timestamp to Date safely
       const createdAt = data.createdAt?.toDate?.() ?? new Date();
       const updatedAt = data.updatedAt?.toDate?.() ?? createdAt;
 
@@ -53,7 +66,12 @@ export async function getAvailableOrdersForBidding(): Promise<Order[]> {
     })
     .filter((order): order is Order => order !== null);
 
-  orders.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+  // Sort by createdAt descending (newest first)
+  orders.sort((a, b) => {
+    const timeA = getTimestamp(a.createdAt);
+    const timeB = getTimestamp(b.createdAt);
+    return timeB - timeA; // Descending (newest first)
+  });
 
   return orders;  
 }
@@ -67,7 +85,7 @@ type NewDeliveryBidInput = {
   deliveryPersonName: string;
   estimatedTime: number;
   reputationScore: number;
-  proposedFee: number;   // 👈 NEW
+  proposedFee: number;
 };
 
 export async function submitDeliveryBid(bid: NewDeliveryBidInput): Promise<string> {
@@ -77,20 +95,21 @@ export async function submitDeliveryBid(bid: NewDeliveryBidInput): Promise<strin
     deliveryPersonName: bid.deliveryPersonName,
     estimatedTime: bid.estimatedTime,
     reputationScore: bid.reputationScore,
-    proposedFee: bid.proposedFee,   // 👈 store in Firestore
+    proposedFee: bid.proposedFee,
     status: "PENDING",
     createdAt: serverTimestamp(),
   });
 
   return bidRef.id;
 }
+
 export async function getCompletedDeliveriesForDriver(
   driverId: string
 ): Promise<Order[]> {
   const q = query(
     collection(db, "deliveries"),
     where("assignedDriverId", "==", driverId),
-    where("status", "==", "DELIVERED")  // you can use deliveryStatus here too, but be consistent
+    where("status", "==", "DELIVERED")
   );
 
   const snap = await getDocs(q);
@@ -105,18 +124,19 @@ export async function getCompletedDeliveriesForDriver(
       totalPrice: data.totalPrice ?? 0,
       status: data.status ?? "DELIVERED",
       items: data.items ?? [],
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      createdAt: data.createdAt?.toDate?.() ?? new Date(),
+      updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
       deliveryPersonId: data.assignedDriverId,
     } as Order;
 
     return mapped;
   });
 
-  return deliveries.sort((a: any, b: any) => {
-    const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-    const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-    return bTime - aTime;
+  // Sort by createdAt descending (newest first)
+  return deliveries.sort((a, b) => {
+    const timeA = getTimestamp(a.createdAt);
+    const timeB = getTimestamp(b.createdAt);
+    return timeB - timeA;
   });
 }
 
@@ -131,7 +151,7 @@ export async function getMyBids(deliveryPersonId: string): Promise<DeliveryBid[]
   );
   const snap = await getDocs(q);
 
-  return snap.docs.map((d) => {
+  const bids = snap.docs.map((d) => {
     const data = d.data() as any;
     const createdAt = data.createdAt?.toDate?.() ?? new Date();
 
@@ -147,6 +167,13 @@ export async function getMyBids(deliveryPersonId: string): Promise<DeliveryBid[]
       reputationScore: data.reputationScore ?? 0,
     } as DeliveryBid;
   });
+
+  // Sort by createdAt descending (newest first)
+  return bids.sort((a, b) => {
+    const timeA = getTimestamp(a.createdAt);
+    const timeB = getTimestamp(b.createdAt);
+    return timeB - timeA;
+  });
 }
 
 /**
@@ -159,7 +186,7 @@ export async function getActiveDeliveries(deliveryPersonId: string): Promise<Ord
   );
   const snap = await getDocs(q);
 
-  return snap.docs
+  const orders = snap.docs
     .map((d) => {
       const data = d.data() as any;
       const status = data.status;
@@ -187,6 +214,13 @@ export async function getActiveDeliveries(deliveryPersonId: string): Promise<Ord
       } as Order;
     })
     .filter((order): order is Order => order !== null);
+
+  // Sort by createdAt descending (newest first)
+  return orders.sort((a, b) => {
+    const timeA = getTimestamp(a.createdAt);
+    const timeB = getTimestamp(b.createdAt);
+    return timeB - timeA;
+  });
 }
 
 /**
@@ -264,7 +298,7 @@ export async function getPendingBids(orderId?: string): Promise<DeliveryBid[]> {
 
   const snap = await getDocs(q);
 
-  return snap.docs.map((d) => {
+  const bids = snap.docs.map((d) => {
     const data = d.data() as any;
     const createdAt = data.createdAt?.toDate?.() ?? new Date();
 
@@ -279,6 +313,13 @@ export async function getPendingBids(orderId?: string): Promise<DeliveryBid[]> {
       createdAt,
       reputationScore: data.reputationScore ?? 0,
     } as DeliveryBid;
+  });
+
+  // Sort by createdAt descending (newest first)
+  return bids.sort((a, b) => {
+    const timeA = getTimestamp(a.createdAt);
+    const timeB = getTimestamp(b.createdAt);
+    return timeB - timeA;
   });
 }
 

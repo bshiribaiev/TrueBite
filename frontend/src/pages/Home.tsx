@@ -29,6 +29,9 @@ export default function Home() {
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   
   const [loading, setLoading] = useState(true);
+  
+  // Added to cart feedback
+  const [addedDishId, setAddedDishId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDishStats = async () => {
@@ -89,8 +92,7 @@ export default function Home() {
         });
 
         // Step 3: Fetch user's personal ratings from "ratings" collection
-        // These are stored with composite keys: {orderId}_{dishId}_{customerId}
-        const userDishRatings = new Map<string, { totalScore: number; count: number }>(); // dishId -> ratings
+        const userDishRatings = new Map<string, { totalScore: number; count: number }>();
         
         if (user) {
           const ratingsSnapshot = await getDocs(collection(db, "ratings"));
@@ -139,7 +141,7 @@ export default function Home() {
 
           setUserFavorites(favorites);
 
-          // 2. HIGHEST RATED: Dishes the user has personally rated 4+ stars (their average)
+          // 2. HIGHEST RATED: Dishes the user has personally rated 4+ stars
           const highestRatedByUser = Array.from(userDishRatings.entries())
             .map(([dishId, stats]) => {
               const dish = dishesMap.get(dishId);
@@ -150,8 +152,7 @@ export default function Home() {
                 return { 
                   ...dish, 
                   userAverageRating: userAverage,
-                  // Display the user's average rating instead of global
-                  rating: userAverage 
+                  rating: userAverage // Display user's rating
                 };
               }
               return null;
@@ -184,7 +185,7 @@ export default function Home() {
         }
 
         // ─────────────────────────────────────────────────────────────
-        // GLOBAL SECTIONS (for visitors OR as additional sections for returning customers)
+        // GLOBAL SECTIONS (for visitors OR as additional sections)
         // ─────────────────────────────────────────────────────────────
 
         // Most Popular: by total order count across all users
@@ -234,6 +235,10 @@ export default function Home() {
       price: dish.price ?? 0,
       image: dish.img,
     });
+    
+    // Show brief "Added!" feedback
+    setAddedDishId(id);
+    setTimeout(() => setAddedDishId(null), 2000);
   };
 
   if (loading) {
@@ -258,7 +263,12 @@ export default function Home() {
           {userFavorites.length > 0 ? (
             <div className="grid">
               {userFavorites.map((d) => (
-                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+                <DishCard 
+                  key={d.id} 
+                  dish={d} 
+                  onOrder={handleAddToCart}
+                  buttonText={addedDishId === d.id ? "✓ Added!" : "Add to Cart"}
+                />
               ))}
             </div>
           ) : (
@@ -271,7 +281,12 @@ export default function Home() {
           {userHighestRated.length > 0 ? (
             <div className="grid">
               {userHighestRated.map((d) => (
-                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+                <DishCard 
+                  key={d.id} 
+                  dish={d} 
+                  onOrder={handleAddToCart}
+                  buttonText={addedDishId === d.id ? "✓ Added!" : "Add to Cart"}
+                />
               ))}
             </div>
           ) : (
@@ -284,7 +299,12 @@ export default function Home() {
           {recommendedForYou.length > 0 ? (
             <div className="grid">
               {recommendedForYou.map((d) => (
-                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+                <DishCard 
+                  key={d.id} 
+                  dish={d} 
+                  onOrder={handleAddToCart}
+                  buttonText={addedDishId === d.id ? "✓ Added!" : "Add to Cart"}
+                />
               ))}
             </div>
           ) : (
@@ -297,7 +317,12 @@ export default function Home() {
           {topRated.length > 0 ? (
             <div className="grid">
               {topRated.slice(0, 4).map((d) => (
-                <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+                <DishCard 
+                  key={d.id} 
+                  dish={d} 
+                  onOrder={handleAddToCart}
+                  buttonText={addedDishId === d.id ? "✓ Added!" : "Add to Cart"}
+                />
               ))}
             </div>
           ) : (
@@ -324,7 +349,12 @@ export default function Home() {
         {popular.length > 0 ? (
           <div className="grid">
             {popular.map((d) => (
-              <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+              <DishCard 
+                key={d.id} 
+                dish={d} 
+                onOrder={handleAddToCart}
+                buttonText={addedDishId === d.id ? "✓ Added!" : "Add to Cart"}
+              />
             ))}
           </div>
         ) : (
@@ -336,7 +366,12 @@ export default function Home() {
         {topRated.length > 0 ? (
           <div className="grid">
             {topRated.map((d) => (
-              <DishCard key={d.id} dish={d} onOrder={handleAddToCart} />
+              <DishCard 
+                key={d.id} 
+                dish={d} 
+                onOrder={handleAddToCart}
+                buttonText={addedDishId === d.id ? "✓ Added!" : "Add to Cart"}
+              />
             ))}
           </div>
         ) : (

@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
+import { Routes, Route, NavLink, useNavigate, Navigate } from "react-router-dom";
 import "./styles.css";
 import ErrorBoundary from "./ErrorBoundary";
 import { useAuth } from "./context/AuthContext";
@@ -52,6 +52,12 @@ export default function App() {
 
   const roleInfo = getRoleDisplay();
 
+  // Check if user is a customer (can access Home, Cart, etc.)
+  const isCustomer = !user || user.role === "registered" || user.role === "vip" || user.role === "customer";
+  
+  // Check if user is staff (chef, manager, delivery)
+  const isStaff = user && (user.role === "chef" || user.role === "manager" || user.role === "delivery");
+
   return (
     <div>
       <header className="topbar">
@@ -70,22 +76,28 @@ export default function App() {
         </div>
 
         <nav className="nav">
-          {/* Always visible */}
-          <NavLink to="/" className="navlink">
-            Home
-          </NavLink>
-          <NavLink to="/menu" className="navlink">
-            Menu
-          </NavLink>
+          {/* Home - only for visitors and customers (not chef/manager/delivery) */}
+          {isCustomer && (
+            <NavLink to="/" className="navlink">
+              Home
+            </NavLink>
+          )}
 
-          {/* Show Chat only for visitors and customers */}
-          {(!user || user.role === "registered" || user.role === "vip" || user.role === "customer") && (
+          {/* Menu - visible to everyone EXCEPT delivery */}
+          {(!user || user.role !== "delivery") && (
+            <NavLink to="/menu" className="navlink">
+              Menu
+            </NavLink>
+          )}
+
+          {/* Chat - only for visitors and customers */}
+          {isCustomer && (
             <NavLink to="/chat" className="navlink">
               Chat
             </NavLink>
           )}
 
-          {/* Forum visible to everyone (visitors can view, logged-in can post) */}
+          {/* Forum - visible to everyone */}
           <NavLink to="/forum" className="navlink">
             Forum
           </NavLink>
@@ -100,8 +112,8 @@ export default function App() {
           {/* Logged in users */}
           {user && (
             <>
-              {/* Customers see Dashboard, Checkout (Cart) */}
-              {(user.role === "registered" || user.role === "vip" || user.role === "customer") && (
+              {/* Customers see Dashboard, Cart */}
+              {isCustomer && (
                 <>
                   <NavLink to="/dashboard" className="navlink">
                     Dashboard
@@ -141,7 +153,7 @@ export default function App() {
                 {user.name}
               </span>
 
-              {/* Logout button for ALL logged-in users */}
+              {/* Logout button */}
               <button 
                 className="nav-logout"
                 onClick={handleLogout}
@@ -156,11 +168,20 @@ export default function App() {
       <main className="container">
         <Suspense fallback={<div className="loading-page">Loading…</div>}>
           <Routes>
+            {/* Home - redirect staff to their dashboards */}
             <Route
               path="/"
               element={
                 <ErrorBoundary>
-                  <Home />
+                  {user?.role === "chef" ? (
+                    <Navigate to="/chef" replace />
+                  ) : user?.role === "manager" ? (
+                    <Navigate to="/manager" replace />
+                  ) : user?.role === "delivery" ? (
+                    <Navigate to="/delivery" replace />
+                  ) : (
+                    <Home />
+                  )}
                 </ErrorBoundary>
               }
             />
@@ -239,7 +260,7 @@ export default function App() {
               }
             />
 
-            <Route path="*" element={<h2>404 – Page Not Found</h2>} />
+            <Route path="*" element={<h2>404 — Page Not Found</h2>} />
           </Routes>
         </Suspense>
       </main>
