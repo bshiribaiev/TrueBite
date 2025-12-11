@@ -90,7 +90,7 @@ export default function ManagerDashboard() {
 
   const handleResolveComplaint = async (
     complaint: Complaint,
-    resolution: "approved" | "dismissed",  // ✅ Simpler
+    resolution: "approved" | "dismissed" | "no_action",
     notes: string
   ) => {
     try {
@@ -452,14 +452,14 @@ function OverviewTab({ stats }: { stats: ManagerDashboardStats | null }) {
   );
 }
 
-function ComplaintsTab({ 
-  complaints, 
-  onResolve 
-}: { 
-  complaints: Complaint[]; 
+function ComplaintsTab({
+  complaints,
+  onResolve,
+}: {
+  complaints: Complaint[];
   onResolve: (
     complaint: Complaint,
-    resolution: "approved" | "dismissed",
+    resolution: "approved" | "dismissed" | "no_action",
     notes: string
   ) => void;
 }) {
@@ -484,9 +484,16 @@ function ComplaintsTab({
     setNotes("");
   };
 
-  const handleDismiss = (complaint: Complaint) => {
+  const handleDismissWarnSender = (complaint: Complaint) => {
     if (!ensureNotes()) return;
     onResolve(complaint, "dismissed", notes);
+    setSelectedComplaint(null);
+    setNotes("");
+  };
+
+  const handleDismissNoAction = (complaint: Complaint) => {
+    // This path does NOT require manager notes; they are optional.
+    onResolve(complaint, "no_action", notes.trim());
     setSelectedComplaint(null);
     setNotes("");
   };
@@ -564,24 +571,34 @@ function ComplaintsTab({
                       />
                     </label>
                     <div className="resolution-actions">
-                    <button 
-                      className="btn" 
-                      onClick={() => handleApprove(complaint)}
-                      title="Approve complaint - warns target employee"
-                    >
-                      ✅ Approve (Warn Target)
-                    </button>
-                    <button 
-                      className="btn ghost" 
-                      onClick={() => handleDismiss(complaint)}
-                      title="Dismiss as frivolous - warns complainant"
-                    >
-                      ❌ Dismiss (Warn Sender)
-                    </button>
-                    <button className="btn ghost" onClick={() => setSelectedComplaint(null)}>
-                      Cancel
-                    </button>
-                  </div>
+                      <button
+                        className="btn"
+                        onClick={() => handleApprove(complaint)}
+                        title="Approve complaint - warns target employee"
+                      >
+                        ✅ Approve (Warn Target)
+                      </button>
+                      <button
+                        className="btn ghost"
+                        onClick={() => handleDismissNoAction(complaint)}
+                        title="Dismiss complaint without any warnings"
+                      >
+                        ⚪ Dismiss
+                      </button>
+                      <button
+                        className="btn ghost"
+                        onClick={() => handleDismissWarnSender(complaint)}
+                        title="Dismiss as frivolous - warns complainant"
+                      >
+                        ❌ Dismiss (Warn Sender)
+                      </button>
+                      <button
+                        className="btn ghost"
+                        onClick={() => setSelectedComplaint(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button className="btn" onClick={() => setSelectedComplaint(complaint.id)}>
@@ -600,7 +617,7 @@ function ComplaintsTab({
           <div className="empty-state">No resolved complaints yet</div>
         ) : (
           <div className="complaints-list">
-            {resolvedComplaints.slice(0, 5).map(complaint => (
+            {resolvedComplaints.map(complaint => (
               <div key={complaint.id} className="complaint-card resolved">
                 <div className="complaint-header">
                   <span className="complaint-id">#{(complaint.id ?? '').slice(0, 8)}</span>

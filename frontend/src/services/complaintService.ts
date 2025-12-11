@@ -251,11 +251,15 @@ export async function createDriverComplaintAgainstCustomer(args: {
 }
 
 /**
- * Manager approves or dismisses a complaint
+ * Manager approves or dismisses a complaint.
+ *
+ * - "approved"  → complaint is valid, warn / reward the target based on kind + weight
+ * - "dismissed" → frivolous complaint, warn the complainant (customer)
+ * - "no_action" → simply mark as resolved with no warnings/commendations
  */
 export async function resolveComplaint(params: {
   complaintId: string;
-  decision: "approved" | "dismissed";
+  decision: "approved" | "dismissed" | "no_action";
   managerNotes?: string;
 }) {
   const { complaintId, decision, managerNotes } = params;
@@ -268,14 +272,24 @@ export async function resolveComplaint(params: {
   }
   
   const complaint = snap.data();
-  const { targetId, customerId, kind, weight } = complaint;  
-  // Update complaint status
+  const { targetId, customerId, kind, weight } = complaint;
+
+  // Compute Firestore status field
+  const status =
+    decision === "approved"
+      ? "resolved"
+      : decision === "dismissed"
+      ? "dismissed"
+      : "resolved_no_action";
+
+  // Update complaint status + notes
   await updateDoc(complaintRef, {
-    status: decision === "approved" ? "resolved" : "dismissed",
+    status,
     managerNotes: managerNotes ?? "",
     resolvedAt: serverTimestamp(),
   });
-  
+
+  // Apply side effects based on decision
   if (decision === "approved") {
     // Apply the warning/commendation to target
     if (kind === "COMPLAINT") {
@@ -291,11 +305,13 @@ export async function resolveComplaint(params: {
         deltaCommendations: weight,
       });
     }
-  } else {
+  } else if (decision === "dismissed") {
     // Frivolous complaint - warn the complainant
     await applyFeedbackToEmployee({
       targetId: customerId,
       deltaWarnings: 1,
     });
+  } else {
+    // "no_action" → just close the complaint, no reputation changes
   }
 }
