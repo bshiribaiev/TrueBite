@@ -1,9 +1,10 @@
 import { Suspense, lazy } from "react";
-import { Routes, Route, NavLink, useNavigate, Navigate } from "react-router-dom";
+import { Routes, Route, NavLink, useNavigate, Navigate, useLocation } from "react-router-dom";
 import "./styles.css";
 import ErrorBoundary from "./ErrorBoundary";
 import { useAuth } from "./context/AuthContext";
 import { useCart } from "./context/CartContext";
+import ChatWidget from "./components/ChatWidget";
 
 const Home = lazy(() => import("./pages/Home"));
 const Menu = lazy(() => import("./pages/Menu"));
@@ -20,9 +21,14 @@ export default function App() {
   const { user, loading, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Calculate total items in cart
   const cartCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+  // Don't show chat widget on the dedicated Chat page or for staff
+  const isStaffRole = user && (user.role === "chef" || user.role === "manager" || user.role === "delivery");
+  const showChatWidget = location.pathname !== "/chat" && !isStaffRole;
 
   const handleLogout = async () => {
     await logout();
@@ -264,6 +270,9 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+
+      {/* Floating Chat Widget - shows on all pages except /chat and for staff */}
+      {showChatWidget && <ChatWidget />}
 
       {/* Cart badge styles */}
       <style>{`
