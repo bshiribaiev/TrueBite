@@ -52,9 +52,6 @@ export default function App() {
 
   const roleInfo = getRoleDisplay();
 
-  // Check if user is a customer (can see cart)
-  const isCustomer = !user || user.role === "registered" || user.role === "vip" || user.role === "customer";
-
   return (
     <div>
       <header className="topbar">
@@ -88,6 +85,11 @@ export default function App() {
             </NavLink>
           )}
 
+          {/* Forum visible to everyone (visitors can view, logged-in can post) */}
+          <NavLink to="/forum" className="navlink">
+            Forum
+          </NavLink>
+
           {/* Not logged in - show Login */}
           {!user && (
             <NavLink to="/login" className="navlink">
@@ -98,7 +100,7 @@ export default function App() {
           {/* Logged in users */}
           {user && (
             <>
-              {/* Customers see Dashboard, Checkout (Cart), Forum */}
+              {/* Customers see Dashboard, Checkout (Cart) */}
               {(user.role === "registered" || user.role === "vip" || user.role === "customer") && (
                 <>
                   <NavLink to="/dashboard" className="navlink">
@@ -109,9 +111,6 @@ export default function App() {
                     {cartCount > 0 && (
                       <span className="cart-badge">{cartCount}</span>
                     )}
-                  </NavLink>
-                  <NavLink to="/forum" className="navlink">
-                    Forum
                   </NavLink>
                 </>
               )}
